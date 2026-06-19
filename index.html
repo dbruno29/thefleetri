@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fleet RI — Point Judith Fishing Charters</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="nav">
+  <a href="index.html" class="brand">THE&nbsp;FLEET<span class="brand-sub">POINT JUDITH · RI</span></a>
+  <input type="checkbox" id="navtoggle" class="navtoggle">
+  <label for="navtoggle" class="hamburger"><span></span><span></span><span></span></label>
+  <nav class="links">
+    <a href="index.html" class="active">Home</a>
+    <a href="trips.html">Trips</a>
+    <a href="about.html">About</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="contact.html" class="cta-link">Book / Shop</a>
+  </nav>
+</header>
+<section class="hero" style="background-image:linear-gradient(180deg,rgba(8,17,28,.30),rgba(8,17,28,.82)),url('images/striper-sunset.jpg');">
+  <div class="hero-inner">
+    <p class="kicker">Saltwater charters out of Point Judith</p>
+    <h1>CATCH YOUR<br>ADVENTURE</h1>
+    <p class="hero-lede">We run sick fishing trips and bring people into the outdoor life — bluewater tuna, striper at first light, sharks, spearfishing the wrecks. No fluff. Just the water.</p>
+    <div class="hero-btns">
+      <a href="contact.html" class="btn btn-amber">Book a Trip</a>
+      <a href="trips.html" class="btn btn-ghost">See What We Run</a>
+    </div>
+  </div>
+</section>
+<section class="stats">
+  <div class="stat"><span class="num">3</span><span class="lbl">Boats in the fleet</span></div>
+  <div class="stat"><span class="num">[XX]+</span><span class="lbl">Trips run last season</span></div>
+  <div class="stat"><span class="num">5</span><span class="lbl">Fisheries, one zip code</span></div>
+  <div class="stat"><span class="num">RI</span><span class="lbl">Born on Block Island Sound</span></div>
+</section>
+<section class="intro">
+  <div class="intro-text">
+    <p class="kicker amber">Who we are</p>
+    <h2>Built for people already in the water.</h2>
+    <p>The Fleet is a crew out of Point Judith chasing whatever the season gives us — yellowfin and mahi offshore, striped bass on the troll, threshers and makos when they push in, and tog on the end of a spear. We love sharing the experience and pulling more people into an outdoor life.</p>
+    <a href="about.html" class="textlink">Read our story →</a>
+  </div>
+  <div class="intro-img"><img src="images/spearo-tog.jpg" alt="Diver with two tautog and speargun at sunset"></div>
+</section>
+<section class="trips-preview">
+  <p class="kicker amber center">What we run</p>
+  <h2 class="center">Pick your water</h2>
+  <div class="cards">
+    <a href="trips.html" class="card" style="background-image:linear-gradient(180deg,rgba(8,17,28,.1),rgba(8,17,28,.85)),url('images/tuna-haul.jpg');"><div class="card-body"><h3>Offshore Bluewater</h3><p>Yellowfin, bluefin &amp; mahi runs to the canyons.</p></div></a>
+    <a href="trips.html" class="card" style="background-image:linear-gradient(180deg,rgba(8,17,28,.1),rgba(8,17,28,.85)),url('images/striper-sunset.jpg');"><div class="card-body"><h3>Inshore Striper</h3><p>First-light bass on Block Island Sound.</p></div></a>
+    <a href="trips.html" class="card" style="background-image:linear-gradient(180deg,rgba(8,17,28,.1),rgba(8,17,28,.85)),url('images/thresher-crew.jpg');"><div class="card-body"><h3>Shark Trips</h3><p>Threshers &amp; makos when they push in.</p></div></a>
+    <a href="trips.html" class="card" style="background-image:linear-gradient(180deg,rgba(8,17,28,.1),rgba(8,17,28,.85)),url('images/mahi-pair.jpg');"><div class="card-body"><h3>Spearfishing</h3><p>Tog and bottom fish on the wrecks &amp; reefs.</p></div></a>
+  </div>
+</section>
+<section class="quote-band"><p>“The best fishing account of all time.”</p><span>— actual comment on our feed</span></section>
+<section class="cta-band">
+  <h2>Tides won't wait.</h2>
+  <p>Lock in a date and we'll put you on fish.</p>
+  <a href="contact.html" class="btn btn-amber">Book Your Trip</a>
+</section>
+<footer class="footer">
+  <div class="foot-cols">
+    <div><span class="brand">THE FLEET</span><p class="foot-sub">⚓ Point Judith, Rhode Island</p></div>
+    <div><h4>Fleet</h4><p>21′ Sea Hunt</p><p>26′ Edgewater</p><p>29′ Albemarle</p></div>
+    <div><h4>Explore</h4><a href="trips.html">Trips</a><a href="about.html">About</a><a href="gallery.html">Gallery</a><a href="contact.html">Book / Shop</a></div>
+    <div><h4>Follow</h4><a href="https://www.instagram.com/thefleetri/" target="_blank">@thefleetri</a><p>[email@thefleetri.com]</p><p>[(XXX) XXX-XXXX]</p></div>
+  </div>
+  <p class="copyright">© <span id="yr"></span> The Fleet RI — All rights reserved.</p>
+</footer>
+<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+</body>
+</html>
