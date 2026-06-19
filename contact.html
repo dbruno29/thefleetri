@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Book / Shop — The Fleet RI</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="nav">
+  <a href="index.html" class="brand">THE&nbsp;FLEET<span class="brand-sub">POINT JUDITH · RI</span></a>
+  <input type="checkbox" id="navtoggle" class="navtoggle">
+  <label for="navtoggle" class="hamburger"><span></span><span></span><span></span></label>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="trips.html">Trips</a>
+    <a href="about.html">About</a>
+    <a href="gallery.html">Gallery</a>
+    <a href="contact.html" class="active cta-link">Book / Shop</a>
+  </nav>
+</header>
+<section class="page-head short" style="background-image:linear-gradient(180deg,rgba(8,17,28,.45),rgba(8,17,28,.85)),url('images/striper-bay.jpg');">
+  <div><p class="kicker">Lock it in</p><h1>Book a Trip</h1></div>
+</section>
+<section class="contact-wrap">
+  <div class="contact-form">
+    <p class="kicker amber">Drop us a line</p>
+    <h2>Tell us what you want to fish.</h2>
+    <form onsubmit="event.preventDefault(); this.reset(); document.getElementById('sent').style.display='block';">
+      <div class="row2">
+        <label>Name<input type="text" required placeholder="Your name"></label>
+        <label>Email<input type="email" required placeholder="you@email.com"></label>
+      </div>
+      <div class="row2">
+        <label>Trip type
+          <select>
+            <option>Offshore Bluewater</option>
+            <option>Inshore Striper</option>
+            <option>Shark Trip</option>
+            <option>Spearfishing</option>
+            <option>Clam · Clean · Cook</option>
+            <option>Not sure yet</option>
+          </select>
+        </label>
+        <label>Preferred date<input type="date"></label>
+      </div>
+      <label>Message<textarea rows="5" placeholder="How many anglers, experience level, what you're after..."></textarea></label>
+      <button type="submit" class="btn btn-amber">Send Request</button>
+      <p id="sent" class="sent-msg">Thanks — we'll be in touch shortly to lock in your trip. [Connect this form to your email / booking system.]</p>
+    </form>
+  </div>
+</section>
+<section class="shop-band">
+  <p class="kicker amber center">The Fleet Shop</p>
+  <h2>Gear &amp; merch</h2>
+  <p>Hats, hoodies, and tees — wear the colors. [Link your shop / store here once it's live.]</p>
+  <a href="#" class="btn btn-amber">[Shop Coming Soon]</a>
+</section>
+<footer class="footer">
+  <div class="foot-cols">
+    <div><span class="brand">THE FLEET</span><p class="foot-sub">⚓ Point Judith, Rhode Island</p></div>
+    <div><h4>Fleet</h4><p>21′ Sea Hunt</p><p>26′ Edgewater</p><p>29′ Albemarle</p></div>
+    <div><h4>Explore</h4><a href="trips.html">Trips</a><a href="about.html">About</a><a href="gallery.html">Gallery</a><a href="contact.html">Book / Shop</a></div>
+    <div><h4>Follow</h4><a href="https://www.instagram.com/thefleetri/" target="_blank">@thefleetri</a><p>[email@thefleetri.com]</p><p>[(XXX) XXX-XXXX]</p></div>
+  </div>
+  <p class="copyright">© <span id="yr"></span> The Fleet RI — All rights reserved.</p>
+</footer>
+<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+</body>
+</html>
