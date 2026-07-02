@@ -29,14 +29,18 @@
 <div class="contact-form">
 <p class="kicker amber">Drop us a line</p>
 <h2>Tell us what you want to fish.</h2>
-<form onsubmit="event.preventDefault(); this.reset(); document.getElementById('sent').style.display='block';">
+<form id="bookingForm">
+<input type="hidden" name="access_key" value="660d2ae7-a3a9-432b-9794-0523596f135f">
+<input type="hidden" name="subject" value="New Booking Request — The Fleet RI">
+<input type="hidden" name="from_name" value="The Fleet RI Website">
+<input type="checkbox" name="botcheck" style="display:none">
 <div class="row2">
-<label>Name<input type="text" required placeholder="Your name"></label>
-<label>Email<input type="email" required placeholder="you@email.com"></label>
+<label>Name<input type="text" name="name" required placeholder="Your name"></label>
+<label>Email<input type="email" name="email" required placeholder="you@email.com"></label>
 </div>
 <div class="row2">
 <label>Trip type
-<select>
+<select name="trip_type">
 <option>Offshore Bluewater</option>
 <option>Inshore Striper</option>
 <option>Shark Trip</option>
@@ -45,9 +49,9 @@
 <option>Not sure yet</option>
 </select>
 </label>
-<label>Preferred date<input type="date"></label>
+<label>Preferred date<input type="date" name="preferred_date"></label>
 </div>
-<label>Message<textarea rows="5" placeholder="How many anglers, experience level, what you're after..."></textarea></label>
+<label>Message<textarea name="message" rows="5" placeholder="How many anglers, experience level, what you're after..."></textarea></label>
 <button type="submit" class="btn btn-amber">Send Request</button>
 <p id="sent" class="sent-msg">Thanks — we'll be in touch shortly to lock in your trip. Or reach us anytime at <a href="mailto:thefleetri5@gmail.com">thefleetri5@gmail.com</a>.</p>
 </form>
@@ -69,5 +73,28 @@
 <p class="copyright">© <span id="yr"></span> The Fleet RI — All rights reserved.</p>
 </footer>
 <script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+<script>
+document.getElementById('bookingForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  var form = this;
+  var status = document.getElementById('sent');
+  var data = new FormData(form);
+  fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    body: data
+  }).then(function(response){ return response.json(); })
+    .then(function(result){
+      if (result.success) {
+        form.reset();
+        status.style.display = 'block';
+      } else {
+        alert('Something went wrong sending your request. Please email us directly at thefleetri5@gmail.com');
+      }
+    })
+    .catch(function(){
+      alert('Something went wrong sending your request. Please email us directly at thefleetri5@gmail.com');
+    });
+});
+</script>
 </body>
 </html>
