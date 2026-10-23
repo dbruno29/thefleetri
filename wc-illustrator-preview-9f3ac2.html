@@ -200,6 +200,10 @@ input[type="range"] { width: 100%; margin: 0; accent-color: var(--navy); height:
 .kstat:first-child { border-left: 0; padding-left: 0; }
 .kstat .label { font-size: 12px; color: var(--ink-2); line-height: 1.3; }
 .kstat .value { font-family: var(--display); font-weight: 700; font-size: 26px; color: var(--ink); line-height: 1.05; overflow-wrap: anywhere; }
+.kstat .value.fit-1 { font-size: 21px; }
+.kstat .value.fit-2 { font-size: 17px; }
+.primary .value.fit-1 { font-size: clamp(34px, 4.2vw, 48px); }
+.primary .value.fit-2 { font-size: clamp(28px, 3.4vw, 38px); }
 .kstat .sub { font-size: 11.5px; color: var(--muted); line-height: 1.3; }
 .kstat.accent .value { color: var(--green-text); }
 @media (max-width: 640px) { .kstats { grid-template-columns: repeat(2, 1fr); } .kstat:nth-child(3) { border-left: 0; padding-left: 0; } .kstat:nth-child(n+3) { border-top: 1px solid var(--line-soft); } }
@@ -345,6 +349,9 @@ button.tag:hover { filter: brightness(.96); }
 .rstat:first-child { border-left: 0; padding-left: 0; }
 .rstat .l { font-size: 10.5px; color: #555; }
 .rstat .v { font-size: 15px; font-weight: 700; color: #1C2030; line-height: 1.25; font-family: Arial, Helvetica, sans-serif; }
+.rstat .v.fit-1 { font-size: 13px; }
+.rstat .v.fit-2 { font-size: 11.5px; }
+.rprimary .v.fit-2 { font-size: 21px; }
 .rstat .s { font-size: 10px; color: #777; }
 .rstat.accent .v { color: #2F6B12; }
 .robs { font-size: 12px; color: #333; max-width: 95ch; }
@@ -464,6 +471,7 @@ const DEFAULTS = {
 /* ---------- Formatting ---------- */
 const money = v => (v < 0 ? '-' : '') + '$' + Math.round(Math.abs(v)).toLocaleString('en-US');
 const compact = v => { const a = Math.abs(v); const s = v < 0 ? '-' : '';
+  if (a >= 1e12) return s + '$' + (a / 1e12).toFixed(a >= 1e13 ? 0 : 1).replace(/\.0$/, '') + 'T';
   if (a >= 1e9) return s + '$' + (a / 1e9).toFixed(a >= 1e10 ? 0 : 1).replace(/\.0$/, '') + 'B';
   if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
   if (a >= 1e3) return s + '$' + Math.round(a / 1e3) + 'K';
@@ -729,7 +737,7 @@ function intField(id, label, min, max, step, value, help) { return { id, label, 
 function segField(id, label, options, value) { return { id, label, kind: 'seg', options, value }; }
 
 // Sliders cover the usual range; a typed value may go beyond it, up to a safety ceiling by kind. Floors stay, since negative or zero-length inputs break the math.
-const HARD_MAX = { money: 1e9, pct: 100, int: 120 };
+const HARD_MAX = { money: 1e11, pct: 100, int: 120 };
 const clampTyped = (f, v) => Math.min(HARD_MAX[f.kind] || Infinity, Math.max(f.min, v));
 function buildFields(container, specs, state, onChange) {
   specs.forEach(f => {
@@ -1484,6 +1492,8 @@ const MODULES = [
 
 /* Fee disclosure: every investment figure is gross of fees; loan and mortgage math involves no advisory fee */
 const FEE_FREE = ['loan', 'mortgage', 'mortcmp', 'networth'];
+// Long figures (billions and up) get a smaller size instead of wrapping mid-number
+const fitClass = v => { const n = String(v).length; return n >= 17 ? ' fit-2' : n >= 13 ? ' fit-1' : ''; };
 const FEE_SHORT = 'Balances, growth, and rates of return are shown before advisory fees and other costs, such as fund expenses and transaction costs. Results net of fees would be lower.';
 const FEE_LONG = 'All investment balances, growth amounts, income figures drawn from investments, and rates of return in this illustration are shown gross of fees; that is, before the deduction of investment advisory fees and other costs, including fund operating expenses, transaction costs, and custodial or account fees. Assumed rates of return are gross figures. Fees and expenses are deducted from an account over time and reduce returns, and their effect compounds: results net of fees would be lower than those shown, and the difference grows with the size of the account and the length of the period. WealthCare Investment Partners’ advisory fees are described in its Form ADV Part 2A, available upon request.';
 /* ---------- Build the page ---------- */
@@ -1596,8 +1606,8 @@ MODULES.forEach(mod => {
   let lastResult = null;
   const update = () => {
     const r = mod.compute(state); lastResult = r;
-    primary.replaceChildren(h('div', { class: 'label' }, r.hero.label), h('div', { class: 'value' }, r.hero.value), h('div', { class: 'sub' }, r.hero.sub));
-    kstats.replaceChildren(...r.tiles.map(t => h('div', { class: 'kstat' + (t.accent ? ' accent' : '') }, h('div', { class: 'label' }, t.label), h('div', { class: 'value' }, t.value), t.sub ? h('div', { class: 'sub' }, t.sub) : null)));
+    primary.replaceChildren(h('div', { class: 'label' }, r.hero.label), h('div', { class: 'value' + fitClass(r.hero.value) }, r.hero.value), h('div', { class: 'sub' }, r.hero.sub));
+    kstats.replaceChildren(...r.tiles.map(t => h('div', { class: 'kstat' + (t.accent ? ' accent' : '') }, h('div', { class: 'label' }, t.label), h('div', { class: 'value' + fitClass(t.value) }, t.value), t.sub ? h('div', { class: 'sub' }, t.sub) : null)));
     obs.innerHTML = r.callout;
     extra.replaceChildren();
     if (r.extra) extra.append(sec(r.extraTitle || 'Reference', h('div', { html: r.extra }), r.extraSub || null));
@@ -1889,8 +1899,8 @@ function openReport(andPrint) {
       blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Assumptions used', plan.pl_highlight ? h('span', {}, nCustom ? nCustom + ' input' + (nCustom === 1 ? '' : 's') + ' differ' + (nCustom === 1 ? 's' : '') + ' from the plan' : 'all shared inputs match the plan') : null), h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Input'), h('th', { class: 'v' }, 'Value'), h('th', {}, ''))), h('tbody', {}, ...rows))));
     }
     if (plan.pp_stats) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Key statistics', h('span', {}, FEE_FREE.includes(mod.id) ? 'hypothetical' : 'hypothetical · gross of fees')),
-      h('div', { class: 'rprimary' }, h('div', { class: 'l' }, r.hero.label), h('div', { class: 'v' }, r.hero.value), h('div', { class: 's' }, r.hero.sub)),
-      h('div', { class: 'rstats' }, ...r.tiles.map(t => h('div', { class: 'rstat' + (t.accent ? ' accent' : '') }, h('div', { class: 'l' }, t.label), h('div', { class: 'v' }, t.value), t.sub ? h('div', { class: 's' }, t.sub) : null)))));
+      h('div', { class: 'rprimary' }, h('div', { class: 'l' }, r.hero.label), h('div', { class: 'v' + fitClass(r.hero.value) }, r.hero.value), h('div', { class: 's' }, r.hero.sub)),
+      h('div', { class: 'rstats' }, ...r.tiles.map(t => h('div', { class: 'rstat' + (t.accent ? ' accent' : '') }, h('div', { class: 'l' }, t.label), h('div', { class: 'v' + fitClass(t.value) }, t.value), t.sub ? h('div', { class: 's' }, t.sub) : null)))));
     if (plan.pp_obs) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Observation'), h('p', { class: 'robs', html: r.callout })));
     const chartBlocks = [];
     if (plan.pp_charts) [[mod.chart, r.chart], [mod.chart2, r.chart2]].forEach(([cfg, data]) => { if (!cfg || !data) return;
