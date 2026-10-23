@@ -439,7 +439,7 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
     </div>
     <div class="fine">
       <p><b>Gross of fees.</b> All investment balances, growth amounts, income figures drawn from investments, and rates of return in this illustration are shown gross of fees; that is, before the deduction of investment advisory fees and other costs, including fund operating expenses, transaction costs, and custodial or account fees. Assumed rates of return are gross figures. Fees and expenses are deducted from an account over time and reduce returns, and their effect compounds: results net of fees would be lower than those shown, and the difference grows with the size of the account and the length of the period. WealthCare Investment Partners&rsquo; advisory fees are described in its Form ADV Part 2A, available upon request.</p>
-      <p>All results are hypothetical illustrations for educational purposes only and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period; actual returns vary from year to year, and investments can lose value, including loss of principal. Figures do not reflect taxes unless explicitly stated. Savings account comparisons assume a fixed annual percentage yield; bank deposits are typically FDIC-insured up to applicable limits, investments are not. This tool does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice; please consult your advisor, tax professional, or attorney about your individual situation. Links to third-party websites are provided for convenience only; WealthCare Investment Partners does not control, endorse, or guarantee their content, and their calculators use their own assumptions and methods.</p>
+      <p>All results are hypothetical illustrations for educational purposes only and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period; actual returns vary from year to year, and investments can lose value, including loss of principal. Figures do not reflect taxes unless explicitly stated. Social Security amounts are user estimates in today&rsquo;s dollars, assumed to rise with inflation; actual benefits depend on the earnings record, claiming age, and future law. RMD estimates use the IRS Uniform Lifetime Table and current starting ages and are not tax advice. Savings account comparisons assume a fixed annual percentage yield; bank deposits are typically FDIC-insured up to applicable limits, investments are not. This tool does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice; please consult your advisor, tax professional, or attorney about your individual situation. Links to third-party websites are provided for convenience only; WealthCare Investment Partners does not control, endorse, or guarantee their content, and their calculators use their own assumptions and methods.</p>
       <p class="disclosure">Securities offered by Registered Representatives through Private Client Services. Member FINRA/SIPC. Advisory products and services offered through WealthCare Investment Partners, a Registered Investment Advisor. Private Client Services &amp; WealthCare Investment Partners are unaffiliated entities.</p>
       <p>© <span id="foot-year"></span> WealthCare Investment Partners, LLC</p>
     </div>
@@ -456,7 +456,8 @@ const DEFAULTS = {
   savingsApy: 4.0, inflation: 3.0,
   retireBalance: 1000000, retireMonthly: 4000, retireRate: 5.0, retirePct: 4.0,
   waitYears: 5, goalTarget: 1000000,
-  cfBalance: 1000000, cfExpenses: 80000, cfIncome: 40000, cfIncomeStart: 0, cfRate: 5.0, cfYears: 30,
+  cfBalance: 1000000, cfExpenses: 80000, cfIncome: 10000, cfIncomeStart: 0, cfRate: 5.0, cfYears: 30,
+  age: 45, retireAge: 67, endAge: 95, ss: 30000, ssAge: 67, savingsNow: 250000, mortgage: 300000, taxNow: 24, taxRetire: 22,
   loanAmount: 350000, loanRate: 6.5, loanYears: 30
 };
 
@@ -534,23 +535,51 @@ function amortize(P, r, years, extra) {
 }
 // Income & expenses: monthly simulation. The gap (expenses minus other income) comes from the portfolio;
 // a surplus is invested. Expenses rise with inflation; other income rises only if incAdj is true.
-function simulateCashflow({ B, exp, inc, incStart, r, infl, incAdj, years, extra = 0 }) {
+// Social Security is entered in today's dollars, begins after ssStart years, and rises with inflation every year (cost-of-living adjustment).
+// Other income rises with inflation only if incAdj is true. 'offset' shifts the inflation clock when the simulation starts in a future year.
+function simulateCashflow({ B, exp, inc, incStart, r, infl, incAdj, years, extra = 0, ss = 0, ssStart = 0, offset = 0 }) {
   const m = r / 12; let bal = B, depletedAt = null;
-  const rows = [{ t: 0, bal: B, real: B, exp: 0, incUsed: 0, wd: 0, short: 0, surplus: 0 }];
+  const rows = [{ t: 0, bal: B, real: B, exp: 0, incUsed: 0, ssUsed: 0, wd: 0, short: 0, surplus: 0 }];
   for (let y = 0; y < years; y++) {
-    const expY = (exp + extra) * Math.pow(1 + infl, y);
-    const incY = y >= incStart ? inc * (incAdj ? Math.pow(1 + infl, y) : 1) : 0;
+    const expY = (exp + extra) * Math.pow(1 + infl, offset + y);
+    const ssY = y >= ssStart ? ss * Math.pow(1 + infl, offset + y) : 0;
+    const incY = y >= incStart ? inc * (incAdj ? Math.pow(1 + infl, offset + y) : 1) : 0;
     let wd = 0, short = 0, surplus = 0;
     for (let mo = 1; mo <= 12; mo++) {
       bal *= (1 + m);
-      const gap = (expY - incY) / 12;
+      const gap = (expY - ssY - incY) / 12;
       if (gap > 0) { const take = Math.min(gap, Math.max(0, bal)); bal -= take; wd += take; short += gap - take; if (bal <= 0.005 && depletedAt === null && gap - take > 0.005) depletedAt = y + mo / 12; }
       else { bal -= gap; surplus -= gap; }
     }
     bal = Math.max(0, bal);
-    rows.push({ t: y + 1, bal, real: bal / Math.pow(1 + infl, y + 1), exp: expY, incUsed: Math.min(incY, expY), wd, short, surplus });
+    const ssUsed = Math.min(ssY, expY);
+    rows.push({ t: y + 1, bal, real: bal / Math.pow(1 + infl, offset + y + 1), exp: expY, incUsed: Math.min(incY, expY - ssUsed), ssUsed, wd, short, surplus });
   }
   return { rows, depletedAt, endBal: bal };
+}
+// Smallest starting balance that funds the drawdown described by p for its full length.
+function neededBalance(p) {
+  const ok = B => { const r = simulateCashflow(Object.assign({}, p, { B })); return r.depletedAt === null && r.endBal >= 0; };
+  if (ok(0)) return 0;
+  let lo = 0, hi = Math.max(1000, p.exp * Math.pow(1 + p.infl, p.offset || 0) * p.years * 2);
+  while (!ok(hi)) hi *= 2;
+  for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (ok(mid)) hi = mid; else lo = mid; }
+  return hi;
+}
+// IRS Uniform Lifetime Table (effective 2022) and the RMD starting age under SECURE 2.0.
+const RMD_TABLE = { 72: 27.4, 73: 26.5, 74: 25.5, 75: 24.6, 76: 23.7, 77: 22.9, 78: 22.0, 79: 21.1, 80: 20.2, 81: 19.4, 82: 18.5, 83: 17.7, 84: 16.8, 85: 16.0, 86: 15.2, 87: 14.4, 88: 13.7, 89: 12.9, 90: 12.2, 91: 11.5, 92: 10.8, 93: 10.1, 94: 9.5, 95: 8.9, 96: 8.4, 97: 7.8, 98: 7.3, 99: 6.8, 100: 6.4, 101: 6.0, 102: 5.6, 103: 5.2, 104: 4.9, 105: 4.6 };
+const rmdStartAge = birthYear => birthYear >= 1960 ? 75 : 73;
+// Year-by-year pre-tax balance with monthly growth, contributions until retirement, and RMDs taken at year end from the RMD age on.
+function simulateRmd({ bal, age, retAge, pmt, r1, r2, startAge, toAge }) {
+  const rows = []; let b = bal;
+  for (let a = age; a <= toAge; a++) {
+    const r = a < retAge ? r1 : r2, m = r / 12, before = b;
+    for (let mo = 1; mo <= 12; mo++) { b *= (1 + m); if (a < retAge) b += pmt; }
+    const div = a >= startAge ? (RMD_TABLE[Math.min(105, a)] || RMD_TABLE[105]) : null;
+    const rmd = div ? before / div : 0; b = Math.max(0, b - rmd);
+    rows.push({ age: a, before, div, rmd, bal: b });
+  }
+  return rows;
 }
 function spendingCapacity(p) {
   // The change in today's-dollar annual spending (positive = room to spend more, negative = cut needed)
@@ -621,9 +650,10 @@ function makeChart(card, cfg) {
     } else {
       const span = xMax - xMin; const step = span <= 12 ? 1 : span <= 25 ? 5 : 10;
       const x0 = Math.ceil(xMin / step) * step;
-      if (xMin > 0 && x0 - xMin > step * 0.45) out += `<text class="tick" x="${sx(xMin)}" y="${H - mb + 18}" text-anchor="middle">Yr ${xMin}</text>`;
-      for (let x = x0; x <= xMax; x += step) { if (xMax - x < step * 0.45 && x !== xMax) continue; out += `<text class="tick" x="${sx(x)}" y="${H - mb + 18}" text-anchor="middle">${x === 0 ? 'Now' : 'Yr ' + x}</text>`; }
-      if (xMax % step !== 0) out += `<text class="tick" x="${sx(xMax)}" y="${H - mb + 18}" text-anchor="middle">Yr ${Math.round(xMax * 10) / 10}</text>`;
+      const xl = x => data.xUnit ? data.xUnit + ' ' + x : (x === 0 ? 'Now' : 'Yr ' + x);
+      if (xMin > 0 && x0 - xMin > step * 0.45) out += `<text class="tick" x="${sx(xMin)}" y="${H - mb + 18}" text-anchor="middle">${xl(xMin)}</text>`;
+      for (let x = x0; x <= xMax; x += step) { if (xMax - x < step * 0.45 && x !== xMax) continue; out += `<text class="tick" x="${sx(x)}" y="${H - mb + 18}" text-anchor="middle">${xl(x)}</text>`; }
+      if (xMax % step !== 0) out += `<text class="tick" x="${sx(xMax)}" y="${H - mb + 18}" text-anchor="middle">${xl(Math.round(xMax * 10) / 10)}</text>`;
     }
     out += `<line class="axis" x1="${ml}" x2="${W - mr}" y1="${sy(0)}" y2="${sy(0)}"/>`;
     if (bars) {
@@ -658,9 +688,9 @@ function makeChart(card, cfg) {
     svg = wrap.querySelector('svg');
     if (!bars) { svg.addEventListener('pointermove', onMove); svg.addEventListener('pointerleave', hide); svg.addEventListener('keydown', onKey); svg.addEventListener('blur', hide); }
     else { svg.addEventListener('pointermove', onBarMove); svg.addEventListener('pointerleave', hide); }
-    const hdr = bars ? [data.xName || 'Milestone', series[0].name] : ['Year', ...series.map(s => s.name)];
+    const hdr = bars ? [data.xName || 'Milestone', series[0].name] : [data.xUnit || 'Year', ...series.map(s => s.name)];
     let t = '<table><thead><tr>' + hdr.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
-    for (let i = 0; i < n; i++) t += '<tr><td>' + (bars ? esc(data.xLabels[i]) : (xs[i] === 0 ? 'Now' : Math.round(xs[i] * 10) / 10)) + '</td>' + series.map(s => `<td>${money(s.values[i])}</td>`).join('') + '</tr>';
+    for (let i = 0; i < n; i++) t += '<tr><td>' + (bars ? esc(data.xLabels[i]) : (xs[i] === 0 && !data.xUnit ? 'Now' : Math.round(xs[i] * 10) / 10)) + '</td>' + series.map(s => `<td>${money(s.values[i])}</td>`).join('') + '</tr>';
     table.innerHTML = t + '</tbody></table>';
   }
   function showAt(i) {
@@ -674,7 +704,7 @@ function makeChart(card, cfg) {
     if (stacked) { circles[0].setAttribute('cx', x); circles[0].setAttribute('cy', geo.sy(tops[tops.length - 1])); }
     else data.series.forEach((s, j) => { circles[j].setAttribute('cx', x); circles[j].setAttribute('cy', geo.sy(s.values[idx])); });
     const xv = data.x[idx];
-    tip.innerHTML = `<b>${xv === 0 ? 'Now' : 'Year ' + (Math.round(xv * 10) / 10)}</b>` + data.series.map(s => `<div><span><i style="background:${s.color}"></i>${esc(s.name)}</span><span>${money(s.values[idx])}</span></div>`).join('') + (stacked ? `<div style="border-top:1px solid rgba(255,255,255,.25);margin-top:4px;padding-top:4px"><span>${esc(data.totalLabel || 'Total')}</span><span>${money(tops[tops.length - 1])}</span></div>` : '');
+    tip.innerHTML = `<b>${data.xUnit ? data.xUnit + ' ' + (Math.round(xv * 10) / 10) : xv === 0 ? 'Now' : 'Year ' + (Math.round(xv * 10) / 10)}</b>` + data.series.map(s => `<div><span><i style="background:${s.color}"></i>${esc(s.name)}</span><span>${money(s.values[idx])}</span></div>`).join('') + (stacked ? `<div style="border-top:1px solid rgba(255,255,255,.25);margin-top:4px;padding-top:4px"><span>${esc(data.totalLabel || 'Total')}</span><span>${money(tops[tops.length - 1])}</span></div>` : '');
     tip.hidden = false;
     const r = wrap.getBoundingClientRect(), px = x / geo.W * r.width;
     tip.style.top = '8px';
@@ -979,12 +1009,15 @@ const MODULES = [
     }
   },
   {
-    output: 'Coverage period; spending capacity', desc: 'Combines living expenses, other income such as Social Security or a pension, and an investment balance. Shows whether the portfolio covers the gap, for how long, and how much extra spending it could support.', id: 'cashflow', group: 'live', tab: 'Income & expenses', title: 'Will your investments support your life?', question: 'With your income and expenses, how far do your investments go?',
-    lede: 'Enter what you spend and what comes in from other sources. The portfolio covers the gap. This shows whether it can, for how long, and what else it could do for you.',
+    output: 'Coverage period; spending capacity', desc: 'Combines living expenses, Social Security, other income such as a pension, and an investment balance. Shows whether the portfolio covers the gap, for how long, and how much extra spending it could support.', id: 'cashflow', group: 'live', tab: 'Income & expenses', title: 'Will your investments support your life?', question: 'With your income, Social Security, and expenses, how far do your investments go?',
+    lede: 'Enter what you spend and what comes in from Social Security and other sources. The portfolio covers the gap. This shows whether it can, for how long, and what else it could do for you.',
     fields: [
       moneyField('f_bal', 'Investment balance', 0, 10000000, 10000, DEFAULTS.cfBalance),
       moneyField('f_exp', 'Annual living expenses (today)', 0, 500000, 1000, DEFAULTS.cfExpenses, 'Everything you spend in a year, in today’s dollars.'),
-      moneyField('f_inc', 'Other annual income (today)', 0, 500000, 1000, DEFAULTS.cfIncome, 'Social Security, pension, rental, part-time work.'),
+      intField('f_age', 'Current age', 18, 100, 1, DEFAULTS.age),
+      moneyField('f_ss', 'Social Security (annual, today’s dollars)', 0, 200000, 1000, DEFAULTS.ss, 'Your estimated benefit from ssa.gov. Rises with inflation each year once it starts.'),
+      intField('f_ssage', 'Social Security claiming age', 62, 70, 1, DEFAULTS.ssAge, 'If you are already past this age, it starts now.'),
+      moneyField('f_inc', 'Other annual income (today)', 0, 500000, 1000, DEFAULTS.cfIncome, 'Pension, rental, part-time work. Not Social Security.'),
       intField('f_incStart', 'Years until other income starts', 0, 20, 1, DEFAULTS.cfIncomeStart, '0 = already receiving it.'),
       segField('f_incAdj', 'Other income rises with inflation', [{ v: 1, label: 'Yes' }, { v: 0, label: 'No' }], 1),
       pctField('f_rate', 'Assumed return', 0, 12, 0.1, DEFAULTS.cfRate),
@@ -994,20 +1027,23 @@ const MODULES = [
     chart: { title: 'How each year’s expenses are covered', subtitle: 'Stacked: portfolio withdrawals, other income, and any shortfall' },
     chart2: { title: 'Investment balance over time', subtitle: 'Nominal and in today’s dollars' },
     compute(s) {
-      const p = { B: s.f_bal, exp: s.f_exp, inc: s.f_inc, incStart: s.f_incStart, r: s.f_rate / 100, infl: s.f_infl / 100, incAdj: !!s.f_incAdj, years: s.f_years };
+      const ssStart = Math.max(0, s.f_ssage - s.f_age);
+      const p = { B: s.f_bal, exp: s.f_exp, inc: s.f_inc, incStart: s.f_incStart, r: s.f_rate / 100, infl: s.f_infl / 100, incAdj: !!s.f_incAdj, years: s.f_years, ss: s.f_ss, ssStart };
       const res = simulateCashflow(p); const rows = res.rows; const last = rows[rows.length - 1];
-      const gap1 = s.f_exp - (s.f_incStart === 0 ? s.f_inc : 0); const wdRate1 = s.f_bal > 0 ? Math.max(0, gap1) / s.f_bal * 100 : 0;
+      const gap1 = s.f_exp - (s.f_incStart === 0 ? s.f_inc : 0) - (ssStart === 0 ? s.f_ss : 0); const wdRate1 = s.f_bal > 0 ? Math.max(0, gap1) / s.f_bal * 100 : 0;
+      const ssNote = s.f_ss > 0 ? (ssStart === 0 ? `Social Security of ${money(s.f_ss)} a year is already counted.` : `Social Security of ${money(s.f_ss)} a year (today’s dollars) begins in year ${ssStart}, at age ${s.f_ssage}.`) : 'No Social Security is entered.';
+      const totalSs = rows.reduce((a, r) => a + r.ssUsed, 0);
       const cap = spendingCapacity(p); const depleted = res.depletedAt !== null;
       const totalWd = rows.reduce((a, r) => a + r.wd, 0), totalShort = rows.reduce((a, r) => a + r.short, 0);
       const firstShort = rows.find(r => r.short > 0.5);
       return {
         hero: depleted
-          ? { label: 'How long your investments cover the gap', value: yrs(res.depletedAt), sub: `Expenses outrun other income by ${money(Math.max(0, gap1))} in year one and the gap grows with inflation. The portfolio covers it until year ${Math.ceil(res.depletedAt)}; after that, ${money(totalShort)} of expenses would go unfunded over the rest of the ${s.f_years} years.` }
-          : { label: `Covered for all ${s.f_years} years, with` , value: money(last.bal) + ' left', sub: `Worth ${money(last.real)} in today’s dollars at year ${s.f_years}. ${gap1 > 0 ? `The portfolio funds ${money(gap1)} of expenses in year one, and the gap grows with inflation.` : 'Other income more than covers expenses, so the portfolio keeps growing.'}` },
+          ? { label: 'How long your investments cover the gap', value: yrs(res.depletedAt), sub: `Expenses outrun Social Security and other income by ${money(Math.max(0, gap1))} in year one and the gap grows with inflation. The portfolio covers it until year ${Math.ceil(res.depletedAt)}; after that, ${money(totalShort)} of expenses would go unfunded over the rest of the ${s.f_years} years. ${ssNote}` }
+          : { label: `Covered for all ${s.f_years} years, with` , value: money(last.bal) + ' left', sub: `Worth ${money(last.real)} in today’s dollars at year ${s.f_years}. ${gap1 > 0 ? `The portfolio funds ${money(gap1)} of expenses in year one, and the gap grows with inflation.` : 'Social Security and other income more than cover expenses, so the portfolio keeps growing.'} ${ssNote}` },
         tiles: [
-          { label: 'Year-1 gap the portfolio must fill', value: money(Math.max(0, gap1)), sub: gap1 > 0 ? `${pct(wdRate1)} of the balance` : `other income exceeds expenses by ${money(-gap1)}` },
+          { label: 'Year-1 gap the portfolio must fill', value: money(Math.max(0, gap1)), sub: gap1 > 0 ? `${pct(wdRate1)} of the balance, after ${money((ssStart === 0 ? s.f_ss : 0) + (s.f_incStart === 0 ? s.f_inc : 0))} of income` : `income exceeds expenses by ${money(-gap1)}` },
           { label: `Balance at year ${s.f_years}`, value: depleted ? '$0' : money(last.bal), sub: depleted ? `runs out in year ${Math.ceil(res.depletedAt)}` : `${money(last.real)} in today’s dollars` },
-          { label: 'Total drawn from the portfolio', value: money(totalWd), sub: `over ${depleted ? yrs(res.depletedAt) : plural(s.f_years, 'year')}` },
+          { label: 'Total drawn from the portfolio', value: money(totalWd), sub: `over ${depleted ? yrs(res.depletedAt) : plural(s.f_years, 'year')}; Social Security pays ${money(totalSs)} of expenses` },
           cap >= 0
             ? { label: 'What else it could do', value: money(cap) + '/yr', accent: true, sub: `extra spending, in today’s dollars, and still last ${s.f_years} years` }
             : { label: 'Spending change to last the full period', value: money(cap) + '/yr', accent: true, sub: `cut needed, in today’s dollars, to reach year ${s.f_years}` }
@@ -1015,17 +1051,18 @@ const MODULES = [
         callout: cap >= 0
           ? `Under these assumptions the portfolio could support about <b>${money(cap)}</b> more a year in today’s dollars, whether that is travel, gifts to family, or a larger cushion, and still last ${s.f_years} years. Leaving it uninvested is a choice too: it becomes the <b>${money(last.real)}</b> left at the end, in today’s dollars.`
           : `At this spending the portfolio runs out in <b>${yrs(res.depletedAt)}</b>. Closing the gap takes about <b>${money(-cap)}</b> a year less spending in today’s dollars, more other income, or a different balance between the two.`,
-        teach: '<b>The gap is what matters, not the balance alone.</b> Expenses rise with inflation every year; other income may not. The portfolio has to cover a gap that widens over time, which is why a plan that works in year one can fall short in year twenty.',
+        teach: '<b>The gap is what matters, not the balance alone.</b> Expenses rise with inflation every year; Social Security rises with it too, but a pension often does not. The portfolio has to cover a gap that can widen over time, which is why a plan that works in year one can fall short in year twenty. Social Security is usually the largest inflation-protected income a retiree has, so the benefit amount and the claiming age move these results more than almost any other input.',
         chart: { kind: 'stack', x: rows.slice(1).map(r => r.t), totalLabel: 'Expenses', series: [
           { name: 'Portfolio withdrawals', color: 'var(--c1)', values: rows.slice(1).map(r => r.wd) },
+          { name: 'Social Security', color: 'var(--c3)', values: rows.slice(1).map(r => r.ssUsed) },
           { name: 'Other income', color: 'var(--c2)', values: rows.slice(1).map(r => r.incUsed) },
-          { name: 'Shortfall', color: 'var(--c3)', values: rows.slice(1).map(r => r.short) }
+          { name: 'Shortfall', color: '#9AA0B2', values: rows.slice(1).map(r => r.short) }
         ], aria: 'Stacked area chart of how each year’s expenses are covered' },
         chart2: { kind: 'line', x: rows.map(r => r.t), series: [
           { name: 'In today’s dollars', color: 'var(--c1)', values: rows.map(r => r.real), area: true },
           { name: 'Nominal balance', color: 'var(--c2)', values: rows.map(r => r.bal) }
         ], endLabels: !depleted, marker: depleted ? { x: Math.min(s.f_years, Math.round(res.depletedAt * 10) / 10), y: 0, label: 'Depleted, year ' + (Math.round(res.depletedAt * 10) / 10) } : null, aria: 'Line chart of investment balance, nominal and inflation-adjusted' },
-        copy: [`Balance ${money(s.f_bal)}; expenses ${money(s.f_exp)}/yr; other income ${money(s.f_inc)}/yr starting in year ${s.f_incStart}${s.f_incAdj ? ' (inflation-adjusted)' : ' (level)'}; ${pct(s.f_rate)} return compounded monthly; ${pct(s.f_infl)} inflation; ${s.f_years} years.`, depleted ? `Portfolio covers the gap for ${yrs(res.depletedAt)}; spending change needed to last ${s.f_years} years: ${money(cap)}/yr in today’s dollars.` : `Balance at year ${s.f_years}: ${money(last.bal)} (${money(last.real)} today’s dollars); extra spending capacity about ${money(cap)}/yr in today’s dollars.`]
+        copy: [`Balance ${money(s.f_bal)}; expenses ${money(s.f_exp)}/yr; Social Security ${money(s.f_ss)}/yr (today’s dollars) from age ${s.f_ssage} (current age ${s.f_age}), inflation-adjusted; other income ${money(s.f_inc)}/yr starting in year ${s.f_incStart}${s.f_incAdj ? ' (inflation-adjusted)' : ' (level)'}; ${pct(s.f_rate)} return compounded monthly; ${pct(s.f_infl)} inflation; ${s.f_years} years.`, depleted ? `Portfolio covers the gap for ${yrs(res.depletedAt)}; spending change needed to last ${s.f_years} years: ${money(cap)}/yr in today’s dollars.` : `Balance at year ${s.f_years}: ${money(last.bal)} (${money(last.real)} today’s dollars); extra spending capacity about ${money(cap)}/yr in today’s dollars.`]
       };
     }
   },
@@ -1193,11 +1230,255 @@ const MODULES = [
         copy: [`Replace ${money(I)}/yr (${money(s.n_income)} income less ${money(s.n_ss)} survivor benefits) for ${n} years (${pct(s.n_infl)} inflation, ${pct(s.n_rate)} return compounded annually); mortgage ${money(s.n_mortgage)}; other debts ${money(s.n_debts)}; education ${money(s.n_edu)}; final expenses ${money(s.n_final)}; existing coverage ${money(s.n_cover)}; assets ${money(s.n_assets)}.`, `Total need ${money(total)}; already in place ${money(have)}; ${gap > 0 ? 'additional coverage indicated ' + money(gap) : 'coverage exceeds need by ' + money(-gap)}.`]
       };
     }
+  },
+  {
+    output: 'Amount needed at retirement; on-track check', desc: 'Starts from retirement spending, subtracts Social Security and other income, and finds the balance needed at retirement to fund the gap through a chosen age. Compares it with where current savings and contributions are headed.', id: 'retire', group: 'live', tab: 'How much to retire', title: 'How much do I need to retire?', question: 'What balance funds retirement spending after Social Security, and are you on track?',
+    lede: 'Spending less Social Security and other income is the gap a portfolio has to fill. This finds the balance that fills it from retirement age through the age you plan for, and compares it with where today’s savings are headed.',
+    fields: [
+      intField('r2_age', 'Current age', 18, 80, 1, DEFAULTS.age),
+      intField('r2_retage', 'Retirement age', 50, 80, 1, DEFAULTS.retireAge),
+      intField('r2_endage', 'Plan through age', 70, 105, 1, DEFAULTS.endAge, 'The age the money should last to.'),
+      moneyField('r2_now', 'Retirement savings today', 0, 10000000, 10000, DEFAULTS.savingsNow),
+      moneyField('r2_pmt', 'Monthly contribution', 0, 20000, 50, DEFAULTS.monthly, 'Until retirement age.'),
+      pctField('r2_ret', 'Return before retirement', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.'),
+      pctField('r2_retret', 'Return in retirement', 0, 12, 0.1, DEFAULTS.retireRate, 'Gross of fees. Often lower than during working years.'),
+      pctField('r2_infl', 'Inflation', 0, 10, 0.1, DEFAULTS.inflation),
+      moneyField('r2_exp', 'Annual spending in retirement (today’s dollars)', 0, 500000, 1000, DEFAULTS.cfExpenses),
+      moneyField('r2_ss', 'Social Security (annual, today’s dollars)', 0, 200000, 1000, DEFAULTS.ss, 'Your estimated benefit from ssa.gov. Rises with inflation once it starts.'),
+      intField('r2_ssage', 'Social Security claiming age', 62, 70, 1, DEFAULTS.ssAge),
+      moneyField('r2_inc', 'Other retirement income (today’s dollars)', 0, 500000, 1000, DEFAULTS.cfIncome, 'Pension, rental, part-time work. Not Social Security.'),
+      segField('r2_incAdj', 'Other income rises with inflation', [{ v: 1, label: 'Yes' }, { v: 0, label: 'No' }], 1)
+    ],
+    chart: { title: 'Projected balance from today through retirement', subtitle: 'Saving until retirement age, then drawing the gap; the dashed line is the balance needed at retirement' },
+    chart2: { title: 'Where year-one retirement spending comes from', subtitle: 'Social Security, other income, and the portfolio' },
+    compute(s) {
+      const N = Math.max(0, s.r2_retage - s.r2_age), R = Math.max(1, s.r2_endage - s.r2_retage), infl = s.r2_infl / 100;
+      const ssStart = Math.max(0, s.r2_ssage - s.r2_retage);
+      const draw = { exp: s.r2_exp, inc: s.r2_inc, incStart: 0, r: s.r2_retret / 100, infl, incAdj: !!s.r2_incAdj, years: R, ss: s.r2_ss, ssStart, offset: N };
+      const need = neededBalance(draw); const needNoSs = neededBalance(Object.assign({}, draw, { ss: 0 }));
+      const acc = simulate({ P: s.r2_now, pmt: s.r2_pmt, r: s.r2_ret / 100, years: N }); const projected = acc[acc.length - 1].bal;
+      const gap = need - projected; const onTrack = gap <= 0;
+      const extraPmt = N > 0 ? Math.max(0, requiredPmt(need, s.r2_now, s.r2_ret / 100, N) - s.r2_pmt) : null;
+      const exp1 = s.r2_exp * Math.pow(1 + infl, N), ss1 = ssStart === 0 ? s.r2_ss * Math.pow(1 + infl, N) : 0, inc1 = s.r2_inc * (s.r2_incAdj ? Math.pow(1 + infl, N) : 1);
+      const port1 = Math.max(0, exp1 - ss1 - inc1); const ssShare = exp1 > 0 ? Math.min(ss1, exp1) / exp1 * 100 : 0;
+      const dd = simulateCashflow(Object.assign({ B: projected }, draw)); const depleted = dd.depletedAt !== null;
+      const x = [...acc.map(r => r.t), ...dd.rows.slice(1).map(r => N + r.t)], vals = [...acc.map(r => r.bal), ...dd.rows.slice(1).map(r => r.bal)];
+      const depAge = depleted ? s.r2_retage + dd.depletedAt : null;
+      return {
+        hero: { label: `Needed at age ${s.r2_retage} to fund ${plural(R, 'year')} of spending`, value: money(need), sub: `Spending of ${money(exp1)} a year at ${s.r2_retage} (${money(s.r2_exp)} today, rising ${pct(s.r2_infl)}), less Social Security and other income, through age ${s.r2_endage} at an assumed ${pct(s.r2_retret)} return.` },
+        tiles: [
+          { label: `Projected savings at ${s.r2_retage}`, value: money(projected), sub: N > 0 ? `${money(s.r2_now)} today plus ${money(s.r2_pmt)} a month for ${plural(N, 'year')} at ${pct(s.r2_ret)}` : 'retirement age is now' },
+          onTrack ? { label: 'Projected surplus at retirement', value: money(-gap), accent: true, sub: 'projected savings exceed the amount needed' } : { label: 'Projected shortfall at retirement', value: money(gap), sub: `${pct(need > 0 ? projected / need * 100 : 100, 0)} of the need is covered` },
+          { label: onTrack ? 'Additional saving needed' : 'Extra monthly saving to close the gap', value: onTrack ? 'None' : extraPmt === null ? '—' : money(extraPmt) + '/mo', accent: !onTrack && extraPmt !== null, sub: onTrack ? 'under these assumptions' : extraPmt === null ? 'no years left to save' : `on top of ${money(s.r2_pmt)} a month, for ${plural(N, 'year')}` },
+          { label: 'Social Security’s share of year-one spending', value: pct(ssShare, 0), sub: ssStart === 0 ? `${money(ss1)} a year from age ${s.r2_ssage}` : `benefit begins at ${s.r2_ssage}, ${plural(ssStart, 'year')} after retirement` }
+        ],
+        callout: `Without Social Security the balance needed would be <b>${money(needNoSs)}</b>, about <b>${money(needNoSs - need)}</b> more. ${onTrack ? `Current savings and contributions are projected to reach <b>${money(projected)}</b>, which is <b>${money(-gap)}</b> above the need.` : depleted ? `On the current path the portfolio would run out around age <b>${Math.round(depAge)}</b>, ${plural(Math.round(s.r2_endage - depAge), 'year')} short of the plan.` : `On the current path the portfolio lasts to age ${s.r2_endage} but leaves less cushion than planned.`} ${!onTrack && extraPmt !== null ? `Saving an extra <b>${money(extraPmt)}</b> a month until ${s.r2_retage} closes the gap under these assumptions.` : ''}`,
+        teach: '<b>Social Security is the hinge.</b> It is inflation-protected income for life, so every dollar of benefit is a dollar the portfolio never has to produce, every year, for as long as retirement lasts. This calculator uses the benefit you enter at the age you enter; it does not adjust the benefit for claiming early or late. Claiming before full retirement age permanently reduces the monthly benefit, and each year of delay up to 70 increases it. Check your estimate at ssa.gov and ask your advisor how claiming age fits the rest of the plan.',
+        chart: { kind: 'line', x, series: [{ name: 'Projected balance', color: 'var(--c1)', values: vals, area: true }], goal: { value: need, label: 'Needed at ' + s.r2_retage + ': ' + compact(need) }, endLabels: !depleted, marker: depleted ? { x: N + dd.depletedAt, y: 0, label: 'Runs out, age ' + Math.round(depAge) } : null, aria: 'Area chart of the projected balance from today through retirement, with the needed amount as a dashed line' },
+        chart2: { kind: 'bars', x: [0, 1, 2], xLabels: ['Social Security', 'Other income', 'Portfolio'], xName: 'Source', colors: ['var(--c3)', 'var(--c2)', 'var(--c1)'], series: [{ name: `Year-one spending (${money(exp1)})`, color: 'var(--c1)', values: [Math.min(ss1, exp1), Math.min(inc1, Math.max(0, exp1 - ss1)), port1] }], aria: 'Column chart of year-one retirement spending by source' },
+        copy: [`Age ${s.r2_age}, retire at ${s.r2_retage}, plan to ${s.r2_endage}; savings ${money(s.r2_now)} + ${money(s.r2_pmt)}/mo at ${pct(s.r2_ret)} before retirement, ${pct(s.r2_retret)} after; spending ${money(s.r2_exp)}/yr today’s dollars; Social Security ${money(s.r2_ss)}/yr from ${s.r2_ssage}; other income ${money(s.r2_inc)}/yr${s.r2_incAdj ? ' inflation-adjusted' : ' level'}; ${pct(s.r2_infl)} inflation.`, `Needed at ${s.r2_retage}: ${money(need)} (${money(needNoSs)} without Social Security); projected ${money(projected)}; ${onTrack ? 'surplus ' + money(-gap) : 'shortfall ' + money(gap) + (extraPmt !== null ? ', extra saving needed ' + money(extraPmt) + '/mo' : '')}.`]
+      };
+    }
+  },
+  {
+    output: 'First RMD, tax, income with Social Security', desc: 'Grows a pre-tax balance to the age required minimum distributions begin, then applies the IRS Uniform Lifetime Table year by year. Shows the first RMD, the tax it may carry, and total income with Social Security.', id: 'rmd', group: 'live', tab: 'Estimate your RMD', title: 'Required minimum distributions', question: 'How much must come out of pre-tax accounts each year, and what does it add to taxable income?',
+    lede: 'From the required age, a slice of every traditional IRA and 401(k) balance must be withdrawn each year and taxed as ordinary income, whether or not the money is needed. This estimates the size of that slice over time.',
+    fields: [
+      intField('d_age', 'Current age', 18, 100, 1, DEFAULTS.age),
+      moneyField('d_bal', 'Pre-tax retirement balance today', 0, 10000000, 10000, DEFAULTS.savingsNow, 'Traditional IRA and 401(k) balances. Roth IRAs have no lifetime RMDs.'),
+      intField('d_retage', 'Retirement age', 50, 80, 1, DEFAULTS.retireAge, 'Contributions stop here.'),
+      moneyField('d_pmt', 'Monthly contribution until retirement', 0, 20000, 50, DEFAULTS.monthly),
+      pctField('d_ret', 'Return before retirement', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.'),
+      pctField('d_retret', 'Return after retirement', 0, 12, 0.1, DEFAULTS.retireRate, 'Gross of fees.'),
+      pctField('d_tax', 'Tax rate in retirement', 0, 50, 1, DEFAULTS.taxRetire, 'Applied to the RMD as ordinary income.'),
+      moneyField('d_ss', 'Social Security (annual, today’s dollars)', 0, 200000, 1000, DEFAULTS.ss, 'Shown alongside the RMD to size total income.'),
+      pctField('d_infl', 'Inflation', 0, 10, 0.1, DEFAULTS.inflation)
+    ],
+    chart: { title: 'Required distribution by age', subtitle: 'The RMD grows as the balance grows and the divisor shrinks' },
+    chart2: { title: 'Pre-tax balance by age', subtitle: 'Growth, then required withdrawals' },
+    compute(s) {
+      const year = new Date().getFullYear(), birth = year - s.d_age, startAge = rmdStartAge(birth); const infl = s.d_infl / 100;
+      const rows = simulateRmd({ bal: s.d_bal, age: s.d_age, retAge: s.d_retage, pmt: s.d_pmt, r1: s.d_ret / 100, r2: s.d_retret / 100, startAge, toAge: Math.max(startAge, 95, s.d_age + 1) });
+      const first = rows.find(r => r.age === startAge) || rows.find(r => r.rmd > 0) || rows[0]; const yearsAway = Math.max(0, startAge - s.d_age);
+      const ssAt = s.d_ss * Math.pow(1 + infl, yearsAway); const deflate = v => v / Math.pow(1 + infl, yearsAway);
+      const at85 = rows.find(r => r.age === 85); const rmdRows = rows.filter(r => r.rmd > 0); const totalRmd = rmdRows.reduce((a, r) => a + r.rmd, 0);
+      const tax1 = first.rmd * s.d_tax / 100;
+      const sched = `<table><thead><tr><th>Age</th><th>Divisor</th><th>Balance (prior year end)</th><th>RMD</th><th>After tax</th><th>Balance after RMD</th></tr></thead><tbody>${rmdRows.map(r => `<tr><td>${r.age}</td><td>${r.div}</td><td>${money(r.before)}</td><td>${money(r.rmd)}</td><td>${money(r.rmd * (1 - s.d_tax / 100))}</td><td>${money(r.bal)}</td></tr>`).join('')}</tbody></table>`;
+      return {
+        hero: { label: `Estimated first RMD at age ${startAge}${yearsAway ? ', in ' + plural(yearsAway, 'year') : ''}`, value: money(first.rmd), sub: `${money(first.before)} balance ÷ ${first.div} (IRS Uniform Lifetime Table) = ${pct(100 / first.div, 2)} of the account. Worth about ${money(deflate(first.rmd))} in today’s dollars.` },
+        tiles: [
+          { label: `Pre-tax balance at ${startAge}`, value: money(first.before), sub: s.d_age < s.d_retage ? `${money(s.d_bal)} today, contributions to ${s.d_retage}, then ${pct(s.d_retret)}` : `${money(s.d_bal)} today at ${pct(s.d_retret)}` },
+          { label: 'Tax on the first RMD', value: money(tax1), sub: `at ${pct(s.d_tax, 0)}; ${money(first.rmd - tax1)} after tax` },
+          { label: `RMD plus Social Security at ${startAge}`, value: money(first.rmd + ssAt), accent: true, sub: `${money(ssAt)} Social Security (${money(s.d_ss)} today, inflation-adjusted); about ${money(deflate(first.rmd + ssAt))} in today’s dollars` },
+          { label: 'RMD at age 85', value: at85 ? money(at85.rmd) : '—', sub: at85 ? `${pct(100 / at85.div, 2)} of a ${money(at85.before)} balance` : '' }
+        ],
+        callout: `Required distributions start at <b>${pct(100 / first.div, 2)}</b> of the account and rise every year: by 85 the required share is <b>${at85 ? pct(100 / at85.div, 2) : '—'}</b>, by 90 about <b>${pct(100 / RMD_TABLE[90], 2)}</b>. Over ages ${startAge}–95 the schedule above withdraws <b>${money(totalRmd)}</b>, all taxable as ordinary income. Together with Social Security, the RMD can push a retiree into a higher bracket, affect Medicare premiums, and make more of the Social Security benefit taxable; those are the reasons advisors look at Roth conversions and withdrawal timing before the required age.`,
+        teach: `<b>The rules in brief.</b> The required age is 73 for people born 1951–1959 and 75 for those born in 1960 or later (born ${birth} here). The first RMD may be delayed to April 1 of the following year, but that doubles up two distributions in one tax year. Missing an RMD carries a 25% excise tax, reduced to 10% if corrected promptly. Roth IRAs and, since 2024, Roth 401(k)s have no lifetime RMDs. Inherited accounts follow different rules. This estimate uses the Uniform Lifetime Table, which assumes a spouse not more than ten years younger.`,
+        extraTitle: 'RMD schedule', extraSub: `ages ${startAge}–95, Uniform Lifetime Table`, extra: `<div class="sched">${sched}</div>`,
+        chart: { kind: 'line', x: rmdRows.map(r => r.age), xUnit: 'Age', series: [{ name: 'Required distribution', color: 'var(--c1)', values: rmdRows.map(r => r.rmd), area: true }], endLabels: false, aria: 'Area chart of the required minimum distribution by age' },
+        chart2: { kind: 'line', x: rows.map(r => r.age), xUnit: 'Age', series: [{ name: 'Pre-tax balance', color: 'var(--c2)', values: rows.map(r => r.bal), area: true }], endLabels: false, marker: { x: startAge, y: first.before, label: 'RMDs begin at ' + startAge }, aria: 'Area chart of the pre-tax balance by age' },
+        copy: [`Age ${s.d_age} (born ${birth}), pre-tax balance ${money(s.d_bal)}, ${money(s.d_pmt)}/mo to ${s.d_retage} at ${pct(s.d_ret)}, then ${pct(s.d_retret)}; RMDs from ${startAge}; tax ${pct(s.d_tax, 0)}; Social Security ${money(s.d_ss)}/yr today’s dollars; ${pct(s.d_infl)} inflation.`, `First RMD ${money(first.rmd)} (${pct(100 / first.div, 2)} of ${money(first.before)}), tax ${money(tax1)}; RMD + Social Security ${money(first.rmd + ssAt)}; RMD at 85 ${at85 ? money(at85.rmd) : '—'}.`]
+      };
+    }
+  },
+  {
+    output: 'After-tax value of each account; break-even tax rate', desc: 'Compares a traditional (pre-tax) 401(k) with a Roth 401(k) on the same take-home pay, or the same contribution. Shows the after-tax value of each at the end and the retirement tax rate at which they tie.', id: 'roth', group: 'grow', tab: 'Roth vs. Traditional 401(k)', title: 'Roth vs. Traditional 401(k)', question: 'Pay the tax now or later: which leaves more after tax?',
+    lede: 'A traditional contribution skips tax today and pays it on every dollar withdrawn. A Roth contribution pays tax today and nothing later. Which wins depends almost entirely on your tax rate now versus in retirement.',
+    manual: [],
+    fields: [
+      moneyField('h_contrib', 'Annual contribution (pre-tax dollars)', 0, 100000, 500, DEFAULTS.monthly * 12, 'What goes into the traditional account; the Roth comparison is built from it.'),
+      segField('h_basis', 'Compare on', [{ v: 'take', label: 'Same take-home pay' }, { v: 'same', label: 'Same contribution' }], 'take'),
+      intField('h_years', 'Years', 1, 50, 1, DEFAULTS.years),
+      pctField('h_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded annually.'),
+      pctField('h_now', 'Marginal tax rate today', 0, 50, 1, DEFAULTS.taxNow),
+      pctField('h_wd', 'Tax rate in retirement', 0, 50, 1, DEFAULTS.taxRetire)
+    ],
+    chart: { title: 'After-tax value of each account over time' },
+    compute(s) {
+      const r = s.h_rate / 100, tn = s.h_now / 100, tw = s.h_wd / 100, C = s.h_contrib, same = s.h_basis === 'same';
+      const rothC = same ? C : C * (1 - tn);
+      const trad = simulate({ P: 0, pmt: C, pmtPerYear: 1, r, k: 1, years: s.h_years }), roth = simulate({ P: 0, pmt: rothC, pmtPerYear: 1, r, k: 1, years: s.h_years });
+      const tradAfter = trad.map(x => x.bal * (1 - tw)), rothAfter = roth.map(x => x.bal);
+      const tEnd = tradAfter[tradAfter.length - 1], rEnd = rothAfter[rothAfter.length - 1], diff = rEnd - tEnd;
+      const taxLater = trad[trad.length - 1].bal * tw;
+      const rothCostNow = same ? C * tn / (1 - tn) : 0; // extra take-home pay the Roth costs each year when contributing the same amount
+      const tie = same ? null : s.h_now;
+      const who = Math.abs(diff) < 1 ? 'tie' : diff > 0 ? 'roth' : 'trad';
+      return {
+        hero: who === 'tie' ? { label: 'The two accounts tie', value: money(rEnd), sub: 'With the same tax rate now and in retirement, paying tax before or after growth leaves the same amount.' }
+          : { label: who === 'roth' ? 'Roth ahead, after tax, by' : 'Traditional ahead, after tax, by', value: money(Math.abs(diff)), sub: `After ${plural(s.h_years, 'year')} at ${pct(s.h_rate)}: Roth ${money(rEnd)} tax-free versus traditional ${money(tEnd)} after ${pct(s.h_wd, 0)} tax on withdrawal.${same ? ` Contributing the same ${money(C)} to the Roth costs ${money(rothCostNow)} more take-home pay each year.` : ''}` },
+        tiles: [
+          { label: 'Traditional, after tax at withdrawal', value: money(tEnd), sub: `${money(trad[trad.length - 1].bal)} before ${money(taxLater)} of tax` },
+          { label: 'Roth, tax-free', value: money(rEnd), accent: who === 'roth', sub: same ? `${money(C)} a year after tax` : `${money(rothC)} a year, the after-tax cost of ${money(C)} pre-tax` },
+          { label: 'Tax paid now (Roth)', value: money(same ? rothCostNow * s.h_years : C * tn * s.h_years), sub: `over ${plural(s.h_years, 'year')} at ${pct(s.h_now, 0)}` },
+          same ? { label: 'Extra take-home cost of the Roth', value: money(rothCostNow) + '/yr', sub: 'to contribute the same amount' } : { label: 'Retirement tax rate where they tie', value: pct(tie, 0), sub: s.h_wd > s.h_now ? 'a higher rate later favors the Roth' : s.h_wd < s.h_now ? 'a lower rate later favors traditional' : 'equal rates, equal result' }
+        ],
+        callout: same ? `On the same contribution the Roth wins by <b>${money(Math.abs(diff))}</b>, but only because more is going in: ${money(C)} after tax is worth ${money(C / (1 - tn))} pre-tax. Compare on the same take-home pay to isolate the tax effect.` : `With the same take-home pay, the comparison reduces to one question: is your tax rate in retirement (<b>${pct(s.h_wd, 0)}</b>) higher or lower than today (<b>${pct(s.h_now, 0)}</b>)? ${who === 'tie' ? 'Here they are equal, so the accounts tie.' : who === 'roth' ? 'Here it is higher, so paying tax now at the lower rate leaves more.' : 'Here it is lower, so deferring the tax to the lower rate leaves more.'} Many people split contributions to hedge, since future rates and brackets are unknown.`,
+        teach: '<b>Beyond the arithmetic.</b> Traditional contributions reduce taxable income this year; Roth withdrawals are tax-free when qualified, and Roth accounts have no lifetime RMDs, which can keep later Social Security and Medicare costs lower. Employer matching contributions are usually pre-tax regardless of your choice. Contribution limits apply to the two accounts combined, and some plans do not offer a Roth option.',
+        chart: { kind: 'line', x: trad.map(x => x.t), series: [{ name: 'Roth (tax-free)', color: 'var(--c1)', values: rothAfter }, { name: 'Traditional (after tax)', color: 'var(--c2)', values: tradAfter }], aria: 'Line chart of the after-tax value of a Roth and a traditional account by year' },
+        copy: [`${money(C)}/yr pre-tax for ${plural(s.h_years, 'year')} at ${pct(s.h_rate)} compounded annually; tax ${pct(s.h_now, 0)} now, ${pct(s.h_wd, 0)} at withdrawal; compared on ${same ? 'the same contribution' : 'the same take-home pay'}.`, `Traditional after tax ${money(tEnd)}; Roth ${money(rEnd)}; ${who === 'tie' ? 'tie' : (who === 'roth' ? 'Roth' : 'Traditional') + ' ahead by ' + money(Math.abs(diff))}.`]
+      };
+    }
+  },
+  {
+    output: 'Interest saved; payment difference; payoff time', desc: 'Puts two mortgage terms side by side, such as 30 years against 15, or a refinance against the current loan, and shows the payment difference, total interest, and payoff time. Option B can be paid bi-weekly.', id: 'mortcmp', group: 'borrow', tab: 'Comparing mortgage terms', title: 'Comparing mortgage terms', question: 'A shorter term or a lower rate: what does it save, and what does it cost each month?',
+    lede: 'Two loans on the same balance. A shorter term raises the payment and cuts total interest; a lower rate does both at once. Bi-weekly payments add one extra monthly payment a year.',
+    manual: ['x_rateA', 'x_rateB'],
+    fields: [
+      moneyField('x_amount', 'Loan amount', 0, 3000000, 5000, DEFAULTS.mortgage),
+      intField('x_yearsA', 'Option A: term', 5, 40, 1, 30),
+      pctField('x_rateA', 'Option A: rate', 0.5, 15, 0.05, 6.5),
+      intField('x_yearsB', 'Option B: term', 5, 40, 1, 15),
+      pctField('x_rateB', 'Option B: rate', 0.5, 15, 0.05, 5.9),
+      segField('x_biweekly', 'Option B paid bi-weekly', [{ v: 0, label: 'No' }, { v: 1, label: 'Yes' }], 0)
+    ],
+    chart: { title: 'Remaining balance under each option' },
+    chart2: { title: 'Total interest over the life of each loan' },
+    compute(s) {
+      const A = amortize(s.x_amount, s.x_rateA / 100, s.x_yearsA, 0); const base = amortize(s.x_amount, s.x_rateB / 100, s.x_yearsB, 0);
+      const bi = s.x_biweekly === 1; const B = bi ? amortize(s.x_amount, s.x_rateB / 100, s.x_yearsB, base.pay / 12) : base;
+      const saved = A.totI - B.totI; const monthlyB = bi ? base.pay * 13 / 12 : base.pay; const more = monthlyB - A.pay;
+      const yrsMax = Math.max(s.x_yearsA, s.x_yearsB); const xs = Array.from({ length: yrsMax + 1 }, (_, i) => i);
+      const balOf = (res, t) => t === 0 ? s.x_amount : ((res.yearly.find(y => y.t === t) || { bal: 0 }).bal);
+      const fmtMo = mo => yrs(mo / 12);
+      return {
+        hero: saved >= 0 ? { label: 'Interest saved with Option B', value: money(saved), sub: `Option B costs ${money(B.totI)} in interest against ${money(A.totI)} for Option A, and is paid off in ${fmtMo(B.months)} instead of ${fmtMo(A.months)}.` }
+          : { label: 'Extra interest with Option B', value: money(-saved), sub: `Option B costs ${money(B.totI)} in interest against ${money(A.totI)} for Option A.` },
+        tiles: [
+          { label: 'Option A payment', value: money(A.pay) + '/mo', sub: `${plural(s.x_yearsA, 'year')} at ${pct(s.x_rateA, 2)}` },
+          { label: 'Option B payment', value: bi ? money(base.pay / 2) + ' bi-weekly' : money(base.pay) + '/mo', accent: true, sub: bi ? `${money(monthlyB)} a month equivalent; ${plural(s.x_yearsB, 'year')} at ${pct(s.x_rateB, 2)}` : `${plural(s.x_yearsB, 'year')} at ${pct(s.x_rateB, 2)}` },
+          { label: more >= 0 ? 'Extra each month for Option B' : 'Monthly saving with Option B', value: money(Math.abs(more)), sub: more >= 0 ? `${pct(A.pay > 0 ? more / A.pay * 100 : 0, 0)} more than Option A` : `${pct(A.pay > 0 ? -more / A.pay * 100 : 0, 0)} less than Option A` },
+          { label: 'Option B paid off in', value: fmtMo(B.months), sub: `${fmtMo(Math.abs(A.months - B.months))} ${A.months >= B.months ? 'sooner' : 'later'} than Option A${bi ? '; bi-weekly payments cut ' + fmtMo(base.months - B.months) + ' off the term' : ''}` }
+        ],
+        callout: `Every dollar of the higher payment goes to principal sooner, so the balance that interest is charged on falls faster. ${saved >= 0 ? `Here the extra <b>${money(Math.max(0, more))}</b> a month buys <b>${money(saved)}</b> of avoided interest and a loan that ends <b>${fmtMo(Math.abs(A.months - B.months))}</b> sooner.` : 'Here the lower payment costs more interest over the life of the loan.'} The trade-off is flexibility: a longer term with voluntary extra payments can reach a similar result while keeping the required payment lower.`,
+        teach: '<b>Bi-weekly payments:</b> half the monthly payment every two weeks is 26 half-payments, or 13 full payments a year instead of 12. This illustration models that as one-twelfth of a payment added to principal each month, which is how most lenders and bi-weekly programs apply it. Confirm there is no prepayment penalty or program fee, and that extra amounts are applied to principal.',
+        chart: { kind: 'line', x: xs, endLabels: false, series: [{ name: 'Option A', color: 'var(--c2)', values: xs.map(t => balOf(A, t)) }, { name: 'Option B', color: 'var(--c1)', values: xs.map(t => balOf(B, t)), area: true }], aria: 'Line chart of the remaining balance under each option by year' },
+        chart2: { kind: 'bars', x: [0, 1], xLabels: ['Option A', 'Option B'], xName: 'Option', colors: ['var(--c2)', 'var(--c1)'], series: [{ name: 'Total interest', color: 'var(--c1)', values: [A.totI, B.totI] }], aria: 'Column chart of total interest under each option' },
+        copy: [`Loan ${money(s.x_amount)}. Option A: ${s.x_yearsA} years at ${pct(s.x_rateA, 2)}. Option B: ${s.x_yearsB} years at ${pct(s.x_rateB, 2)}${bi ? ', paid bi-weekly' : ''}.`, `Payments ${money(A.pay)} vs ${money(monthlyB)}/mo; total interest ${money(A.totI)} vs ${money(B.totI)}; ${saved >= 0 ? 'interest saved ' + money(saved) : 'extra interest ' + money(-saved)}; payoff ${fmtMo(A.months)} vs ${fmtMo(B.months)}.`]
+      };
+    }
+  },
+  {
+    output: 'Which path ends ahead, and by how much', desc: 'Puts the same extra monthly amount toward either paying down a loan or investing, and compares net position at the loan’s original payoff date. Includes the interest saved, the break-even return, and the value of investing the freed payment after an early payoff.', id: 'debtinv', group: 'borrow', tab: 'Debt vs. investment', title: 'Pay down the loan, or invest?', question: 'For the same extra dollars each month, which path ends further ahead?',
+    lede: 'Extra principal earns a guaranteed return equal to the loan rate. Investing offers a higher but uncertain return. This compares the two over the remaining life of the loan, with the freed payment invested once the loan is gone.',
+    manual: ['v_rate', 'v_term'],
+    fields: [
+      moneyField('v_extra', 'Extra amount each month', 0, 20000, 50, DEFAULTS.monthly),
+      moneyField('v_bal', 'Loan balance', 0, 3000000, 5000, DEFAULTS.mortgage),
+      pctField('v_rate', 'Loan interest rate', 0, 20, 0.05, 6.5),
+      intField('v_term', 'Years remaining on the loan', 1, 40, 1, 25),
+      pctField('v_ret', 'Assumed investment return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.')
+    ],
+    chart: { title: 'Net position over time', subtitle: 'Investments minus loan balance, under each path' },
+    compute(s) {
+      const rl = s.v_rate / 100, ri = s.v_ret / 100, X = s.v_extra;
+      const base = amortize(s.v_bal, rl, s.v_term, 0), accel = X > 0 ? amortize(s.v_bal, rl, s.v_term, X) : base;
+      const T = base.months, pay = base.pay;
+      const run = r => { const m = r / 12; let invA = 0, invB = 0; const a = [], b = [];
+        for (let mo = 1; mo <= T; mo++) { invA = invA * (1 + m) + X; invB = invB * (1 + m) + (mo > accel.months ? pay + X : 0);
+          const balA = (base.monthly[mo - 1] || { bal: 0 }).bal, balB = mo > accel.months ? 0 : (accel.monthly[mo - 1] || { bal: 0 }).bal;
+          if (mo % 12 === 0 || mo === T) { a.push(invA - balA); b.push(invB - balB); } }
+        return { invA, invB, a, b }; };
+      const res = run(ri); const diff = res.invA - res.invB; const saved = base.totI - accel.totI;
+      let lo = 0, hi = 0.5; for (let i = 0; i < 50; i++) { const mid = (lo + hi) / 2; const t = run(mid); if (t.invA - t.invB < 0) lo = mid; else hi = mid; } const breakeven = run(0.5).invA - run(0.5).invB < 0 ? null : (lo + hi) / 2 * 100;
+      const xs = []; for (let mo = 12; mo < T; mo += 12) xs.push(mo / 12); xs.push(T / 12);
+      const who = X <= 0 ? 'none' : Math.abs(diff) < 1 ? 'tie' : diff > 0 ? 'invest' : 'pay';
+      const yrsF = mo => yrs(mo / 12);
+      return {
+        hero: who === 'none' ? { label: 'Enter an extra monthly amount', value: '—', sub: 'The comparison needs an amount to direct to one path or the other.' }
+          : { label: who === 'tie' ? 'The two paths tie at year ' + Math.round(T / 12) : (who === 'invest' ? 'Investing ends ahead by' : 'Paying down the loan ends ahead by'), value: who === 'tie' ? money(res.invA) : money(Math.abs(diff)), sub: `At the loan’s scheduled payoff in ${yrsF(T)}: investing ${money(X)} a month at ${pct(s.v_ret)} reaches ${money(res.invA)}; paying it to the loan clears it ${yrsF(T - accel.months)} early, then investing the freed ${money(pay + X)} a month reaches ${money(res.invB)}.` },
+        tiles: [
+          { label: 'Interest saved by paying down', value: money(saved), accent: who === 'pay', sub: `loan paid off in ${yrsF(accel.months)} instead of ${yrsF(T)}` },
+          { label: 'Investing the extra: value at payoff date', value: money(res.invA), accent: who === 'invest', sub: `${money(X)} a month for ${yrsF(T)} at ${pct(s.v_ret)}` },
+          { label: 'Pay down, then invest the freed payment', value: money(res.invB), sub: `${money(pay + X)} a month for ${yrsF(T - accel.months)} after payoff` },
+          { label: 'Break-even investment return', value: breakeven === null ? '—' : pct(breakeven, 1), sub: breakeven === null ? '' : `above this, investing wins; it is ${breakeven > s.v_rate ? 'above' : 'near'} the ${pct(s.v_rate, 2)} loan rate` }
+        ],
+        callout: who === 'none' ? 'Add an extra monthly amount to compare the two paths.' : `Paying down the loan is a guaranteed <b>${pct(s.v_rate, 2)}</b> return; investing is an assumed <b>${pct(s.v_ret)}</b> that is not guaranteed and is shown gross of fees. ${who === 'invest' ? `Under these assumptions investing ends <b>${money(diff)}</b> ahead, but the margin depends entirely on earning the assumed return.` : who === 'pay' ? `Under these assumptions paying down the loan ends <b>${money(-diff)}</b> ahead, with no market risk.` : 'Under these assumptions they tie.'} Taxes on investment gains, any deductibility of loan interest, liquidity, and the value of being debt-free are not in these figures.`,
+        teach: '<b>What the numbers leave out.</b> Money sent to a loan cannot be withdrawn in an emergency; an investment can, though possibly at a loss. Higher-rate debt such as credit cards almost always beats an assumed investment return, and most employer 401(k) matches beat paying down a mortgage. The comparison here is for one loan and one extra amount; the order in which returns arrive would change the investing result in real life.',
+        chart: { kind: 'line', x: xs, series: [{ name: 'Invest the extra', color: 'var(--c1)', values: res.a }, { name: 'Pay down the loan', color: 'var(--c2)', values: res.b }], endLabels: false, aria: 'Line chart of net position under each path by year' },
+        copy: [`Extra ${money(X)}/mo; loan ${money(s.v_bal)} at ${pct(s.v_rate, 2)} with ${plural(s.v_term, 'year')} remaining; investment return ${pct(s.v_ret)} compounded monthly, gross of fees.`, `At scheduled payoff (${yrsF(T)}): investing ${money(res.invA)}; pay-down-then-invest ${money(res.invB)}; interest saved ${money(saved)}; ${who === 'invest' ? 'investing ahead by ' + money(diff) : who === 'pay' ? 'paying down ahead by ' + money(-diff) : 'tie'}; break-even return ${breakeven === null ? 'n/a' : pct(breakeven, 1)}.`]
+      };
+    }
+  },
+  {
+    output: 'Net worth; assets, liabilities, equity', desc: 'Adds up what you own, subtracts what you owe, and shows net worth, home equity, and investable assets. A snapshot to repeat each year.', id: 'networth', group: 'grow', tab: 'Net worth', title: 'What is my net worth?', question: 'What do you own, what do you owe, and what is the difference?',
+    lede: 'Net worth is the scoreboard the other calculators move. Assets less liabilities, with a look at how much of it is liquid and how much is tied up in the house.',
+    manual: ['w_cash', 'w_tax', 'w_home', 'w_other', 'w_debt'],
+    fields: [
+      moneyField('w_cash', 'Cash and savings', 0, 5000000, 1000, 25000, 'Checking, savings, CDs, money market.'),
+      moneyField('w_ret', 'Retirement accounts', 0, 10000000, 10000, DEFAULTS.savingsNow, 'IRAs, 401(k)s, pensions with a cash value.'),
+      moneyField('w_tax', 'Taxable investments', 0, 10000000, 5000, 50000, 'Brokerage accounts, stock, bonds, funds.'),
+      moneyField('w_home', 'Home value', 0, 10000000, 10000, 450000, 'A realistic sale value today.'),
+      moneyField('w_other', 'Other assets', 0, 5000000, 5000, 30000, 'Vehicles, business interests, other property, valuables.'),
+      moneyField('w_mort', 'Mortgage balance', 0, 5000000, 5000, DEFAULTS.mortgage),
+      moneyField('w_debt', 'Other debts', 0, 5000000, 1000, 25000, 'Auto, student, and credit card balances; other loans.')
+    ],
+    chart: { title: 'What you own and what you owe', subtitle: 'Assets in green, liabilities in orange' },
+    compute(s) {
+      const assets = s.w_cash + s.w_ret + s.w_tax + s.w_home + s.w_other, liabs = s.w_mort + s.w_debt, nw = assets - liabs;
+      const equity = s.w_home - s.w_mort, investable = s.w_cash + s.w_tax + s.w_ret, liquid = s.w_cash + s.w_tax;
+      const share = v => assets > 0 ? pct(v / assets * 100, 0) : '—';
+      const table = `<table><thead><tr><th>Item</th><th>Amount</th><th>Share of assets</th></tr></thead><tbody>${[['Cash and savings', s.w_cash], ['Retirement accounts', s.w_ret], ['Taxable investments', s.w_tax], ['Home value', s.w_home], ['Other assets', s.w_other]].map(([l, v]) => `<tr><td>${l}</td><td>${money(v)}</td><td>${share(v)}</td></tr>`).join('')}<tr class="tot"><td>Total assets</td><td>${money(assets)}</td><td>100%</td></tr><tr><td>Mortgage balance</td><td>${money(s.w_mort)}</td><td></td></tr><tr><td>Other debts</td><td>${money(s.w_debt)}</td><td></td></tr><tr class="tot"><td>Total liabilities</td><td>${money(liabs)}</td><td></td></tr><tr class="tot"><td>Net worth</td><td>${money(nw)}</td><td></td></tr></tbody></table>`;
+      return {
+        hero: { label: 'Net worth', value: money(nw), sub: `${money(assets)} of assets less ${money(liabs)} of liabilities.` },
+        tiles: [
+          { label: 'Total assets', value: money(assets), sub: `home ${share(s.w_home)}, retirement ${share(s.w_ret)}` },
+          { label: 'Total liabilities', value: money(liabs), sub: assets > 0 ? `${pct(liabs / assets * 100, 0)} of assets` : '' },
+          { label: 'Home equity', value: money(equity), sub: s.w_home > 0 ? `${pct(equity / s.w_home * 100, 0)} of the home’s value` : 'no home entered' },
+          { label: 'Investable assets', value: money(investable), accent: true, sub: `${money(liquid)} outside retirement accounts` }
+        ],
+        callout: nw > 0 ? `Home equity is <b>${pct(equity / nw * 100, 0)}</b> of net worth and investable assets are <b>${pct(investable / nw * 100, 0)}</b>. ${liquid > 0 ? `Cash and taxable investments of <b>${money(liquid)}</b> are what can be reached without selling the house or tapping retirement accounts.` : 'Nothing is held outside the house and retirement accounts, so there is no reserve that can be reached without penalty or a sale.'} Repeat this snapshot once a year; the trend matters more than any single figure.` : `Liabilities exceed assets by <b>${money(liabs - assets)}</b>. Paying down debt raises net worth dollar for dollar; see Debt vs. investment for the trade-off.`,
+        teach: '<b>Reading it:</b> net worth that is mostly home equity is real but not spendable; investable assets fund goals and emergencies. Retirement accounts count fully here, though withdrawals before 59½ generally carry tax and a penalty, and all pre-tax balances carry a future tax bill.',
+        extraTitle: 'Balance sheet', extra: `<div class="sched">${table}</div>`,
+        chart: { kind: 'bars', x: [0, 1, 2, 3, 4, 5, 6], xLabels: ['Cash', 'Retirement', 'Taxable', 'Home', 'Other', 'Mortgage', 'Other debts'], xName: 'Item', colors: ['var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c3)', 'var(--c3)'], series: [{ name: 'Amount', color: 'var(--c1)', values: [s.w_cash, s.w_ret, s.w_tax, s.w_home, s.w_other, s.w_mort, s.w_debt] }], aria: 'Column chart of assets and liabilities' },
+        copy: [`Cash ${money(s.w_cash)}; retirement ${money(s.w_ret)}; taxable ${money(s.w_tax)}; home ${money(s.w_home)}; other ${money(s.w_other)}; mortgage ${money(s.w_mort)}; other debts ${money(s.w_debt)}.`, `Assets ${money(assets)}; liabilities ${money(liabs)}; net worth ${money(nw)}; home equity ${money(equity)}; investable ${money(investable)}.`]
+      };
+    }
   }
 ];
 
 /* Fee disclosure: every investment figure is gross of fees; loan and mortgage math involves no advisory fee */
-const FEE_FREE = ['loan', 'mortgage'];
+const FEE_FREE = ['loan', 'mortgage', 'mortcmp', 'networth'];
 const FEE_SHORT = 'Balances, growth, and rates of return are shown before advisory fees and other costs, such as fund expenses and transaction costs. Results net of fees would be lower.';
 const FEE_LONG = 'All investment balances, growth amounts, income figures drawn from investments, and rates of return in this illustration are shown gross of fees; that is, before the deduction of investment advisory fees and other costs, including fund operating expenses, transaction costs, and custodial or account fees. Assumed rates of return are gross figures. Fees and expenses are deducted from an account over time and reduce returns, and their effect compounds: results net of fees would be lower than those shown, and the difference grows with the size of the account and the length of the period. WealthCare Investment Partners’ advisory fees are described in its Form ADV Part 2A, available upon request.';
 /* ---------- Build the page ---------- */
@@ -1240,7 +1521,7 @@ home.append(
     h('div', { class: 'stat' }, h('b', {}, 'PDF'), h('span', {}, 'Printable plan, your logo on it')))),
   h('section', { class: 'sec' }, h('div', { class: 'wrap' }, h('div', { class: 'two' },
     h('div', { class: 'text' }, h('span', { class: 'eyebrow' }, 'How it works'), h('h2', { class: 'disp' }, 'Enter your numbers once.'),
-      h('p', { class: 'lead' }, 'Client name, starting balance, contributions, return, inflation, household income and debts, and retirement withdrawals live in one place. Every calculator reads from them, flags anything you change for a single scenario, and the printout shows exactly which inputs were used and which were entered by hand.'),
+      h('p', { class: 'lead' }, 'Client name, ages, Social Security, starting balance, contributions, return, inflation, household income and debts, and retirement withdrawals live in one place. Every calculator reads from them, flags anything you change for a single scenario, and the printout shows exactly which inputs were used and which were entered by hand.'),
       h('div', {}, h('button', { type: 'button', class: 'arrow-link', onclick: () => show('plan', true) }, 'Set up a plan'))),
     h('div', { class: 'figure', html: growthFigure() + '<div class="cap">Illustrative: ' + money(DEFAULTS.principal) + ' to start, ' + money(DEFAULTS.monthly) + ' a month, ' + DEFAULTS.rate + '% assumed, 30 years. Hypothetical, gross of fees.</div>' })))),
   h('section', { class: 'sec' }, h('div', { class: 'wrap' },
@@ -1347,27 +1628,33 @@ const PLAN_INFO = [
 ];
 const PLAN_ASSUMP = [
   { id: 'pl_start', label: 'Starting amount', kind: 'money', value: DEFAULTS.principal, map: ['g_principal', 'c_principal', 'i_principal', 'o_principal', 'r_principal'] },
-  { id: 'pl_pmt', label: 'Monthly contribution', kind: 'money', value: DEFAULTS.monthly, map: ['g_pmt', 'c_pmt', 'i_pmt', 'w_pmt', 'o_pmt', 't_contrib*12'] },
-  { id: 'pl_ret', label: 'Assumed annual return', kind: 'pct', value: DEFAULTS.rate, map: ['g_rate', 'c_inv', 'i_rate', 'r_rate', 'w_rate', 'o_rate', 't_rate'] },
+  { id: 'pl_now', label: 'Retirement savings today', kind: 'money', value: DEFAULTS.savingsNow, map: ['r2_now', 'd_bal', 'w_ret'] },
+  { id: 'pl_pmt', label: 'Monthly contribution', kind: 'money', value: DEFAULTS.monthly, map: ['g_pmt', 'c_pmt', 'i_pmt', 'w_pmt', 'o_pmt', 't_contrib*12', 'h_contrib*12', 'r2_pmt', 'd_pmt', 'v_extra'] },
+  { id: 'pl_ret', label: 'Assumed annual return', kind: 'pct', value: DEFAULTS.rate, map: ['g_rate', 'c_inv', 'i_rate', 'r_rate', 'w_rate', 'o_rate', 't_rate', 'h_rate', 'r2_ret', 'd_ret', 'v_ret'] },
   { id: 'pl_save', label: 'Savings account rate', kind: 'pct', value: DEFAULTS.savingsApy, map: ['c_save'] },
-  { id: 'pl_retret', label: 'Return in retirement', kind: 'pct', value: DEFAULTS.retireRate, map: ['p_rate', 'f_rate', 'n_rate'] },
-  { id: 'pl_infl', label: 'Inflation', kind: 'pct', value: DEFAULTS.inflation, map: ['i_infl', 'p_infl', 'f_infl', 'n_infl'] },
-  { id: 'pl_years', label: 'Years / horizon', kind: 'int', value: DEFAULTS.years, map: ['g_years', 'c_years', 'i_years', 'r_years', 'w_years', 'o_years', 't_years', 'f_years'] },
+  { id: 'pl_retret', label: 'Return in retirement', kind: 'pct', value: DEFAULTS.retireRate, map: ['p_rate', 'f_rate', 'n_rate', 'r2_retret', 'd_retret'] },
+  { id: 'pl_infl', label: 'Inflation', kind: 'pct', value: DEFAULTS.inflation, map: ['i_infl', 'p_infl', 'f_infl', 'n_infl', 'r2_infl', 'd_infl'] },
+  { id: 'pl_years', label: 'Years / horizon', kind: 'int', value: DEFAULTS.years, map: ['g_years', 'c_years', 'i_years', 'r_years', 'w_years', 'o_years', 't_years', 'f_years', 'h_years'] },
   { id: 'pl_bal', label: 'Retirement balance / goal', kind: 'money', value: DEFAULTS.retireBalance, map: ['p_bal', 'f_bal', 'o_target'] },
-  { id: 'pl_exp', label: 'Annual expenses (today)', kind: 'money', value: DEFAULTS.cfExpenses, map: ['f_exp'] },
-  { id: 'pl_inc', label: 'Other annual income (today)', kind: 'money', value: DEFAULTS.cfIncome, map: ['f_inc'] },
+  { id: 'pl_exp', label: 'Annual expenses (today)', kind: 'money', value: DEFAULTS.cfExpenses, map: ['f_exp', 'r2_exp'] },
+  { id: 'pl_inc', label: 'Other income, not Social Security (today)', kind: 'money', value: DEFAULTS.cfIncome, map: ['f_inc', 'r2_inc'] },
   { id: 'pl_wdmode', label: 'Withdrawal set as', kind: 'seg', group: 'wd', value: 'amt', options: [{ v: 'amt', label: 'Monthly amount' }, { v: 'pct', label: '% of starting balance' }], map: ['p_mode'] },
   { id: 'pl_wd', label: 'Monthly withdrawal (first year)', kind: 'money', group: 'wd', value: DEFAULTS.retireMonthly, map: ['p_wd'], when: () => plan.pl_wdmode === 'amt' },
   { id: 'pl_wdpct', label: 'Withdrawal rate (% of starting balance)', kind: 'pct', group: 'wd', value: Math.round(DEFAULTS.retireMonthly * 12 / DEFAULTS.retireBalance * 1000) / 10, map: ['p_pct'], when: () => plan.pl_wdmode === 'pct' },
   { id: 'pl_wdadj', label: 'Withdrawals rise with inflation', kind: 'seg', group: 'wd', value: 1, options: [{ v: 1, label: 'Yes' }, { v: 0, label: 'No' }], map: ['p_adj'] },
   { id: 'pl_hhinc', label: 'Gross annual household income', kind: 'money', group: 'hh', value: 150000, map: ['m_income', 'n_income'] },
-  { id: 'pl_tax', label: 'Marginal tax rate today', kind: 'pct', group: 'hh', value: 24, map: ['t_now'] },
-  { id: 'pl_taxret', label: 'Tax rate in retirement', kind: 'pct', group: 'hh', value: 22, map: ['t_wd'] },
-  { id: 'pl_mort', label: 'Mortgage balance', kind: 'money', group: 'hh', value: 300000, map: ['n_mortgage'] },
+  { id: 'pl_tax', label: 'Marginal tax rate today', kind: 'pct', group: 'hh', value: DEFAULTS.taxNow, map: ['t_now', 'h_now'] },
+  { id: 'pl_taxret', label: 'Tax rate in retirement', kind: 'pct', group: 'hh', value: DEFAULTS.taxRetire, map: ['t_wd', 'h_wd', 'd_tax'] },
+  { id: 'pl_mort', label: 'Mortgage balance', kind: 'money', group: 'hh', value: DEFAULTS.mortgage, map: ['n_mortgage', 'x_amount', 'v_bal', 'w_mort'] },
   { id: 'pl_debt', label: 'Other monthly debt payments', kind: 'money', group: 'hh', value: 500, map: ['m_debts'] },
-  { id: 'pl_cover', label: 'Existing life insurance', kind: 'money', group: 'hh', value: 250000, map: ['n_cover'] }
+  { id: 'pl_cover', label: 'Existing life insurance', kind: 'money', group: 'hh', value: 250000, map: ['n_cover'] },
+  { id: 'pl_age', label: 'Current age', kind: 'int', unit: 'yrs', group: 'age', value: DEFAULTS.age, map: ['f_age', 'r2_age', 'd_age'] },
+  { id: 'pl_retage', label: 'Retirement age', kind: 'int', unit: 'yrs', group: 'age', value: DEFAULTS.retireAge, map: ['r2_retage', 'd_retage'] },
+  { id: 'pl_endage', label: 'Plan through age', kind: 'int', unit: 'yrs', group: 'age', value: DEFAULTS.endAge, map: ['r2_endage'] },
+  { id: 'pl_ss', label: 'Social Security benefit (annual, today’s dollars)', kind: 'money', group: 'age', value: DEFAULTS.ss, map: ['f_ss', 'r2_ss', 'd_ss'] },
+  { id: 'pl_ssage', label: 'Social Security claiming age', kind: 'int', unit: 'yrs', group: 'age', value: DEFAULTS.ssAge, map: ['f_ssage', 'r2_ssage'] }
 ];
-const HH_USERS = 'tax-deferred, mortgage and life insurance';
+const HH_USERS = 'tax, mortgage, debt, net worth and life insurance';
 const PARTS = [
   { id: 'pp_assump', label: 'Assumptions used', value: true },
   { id: 'pp_stats', label: 'Key statistics', value: true },
@@ -1464,6 +1751,15 @@ PLAN_ASSUMP.filter(f => !f.group).forEach(f => {
   });
   colAs.append(hh);
 }
+{
+  const ag = h('div', { class: 'wd-group' }, h('div', { class: 'wd-h' }, 'Ages & Social Security', h('span', {}, 'feeds Income & expenses, How much to retire, and the RMD estimate')));
+  PLAN_ASSUMP.filter(f => f.group === 'age').forEach(f => {
+    const input = f.kind === 'money' ? moneyIn(f.id, plan[f.id], v => { plan[f.id] = v; planChanged(); }) : numIn(f);
+    ag.append(h('div', { class: 'prow' }, h('label', { for: f.id }, f.label), valBox(f, input)));
+  });
+  ag.append(h('div', { class: 'wd-help', style: 'border-bottom:0' }, 'Enter the benefit at the claiming age from the client’s ssa.gov statement; the calculators do not adjust it for claiming earlier or later.'));
+  colAs.append(ag);
+}
 const applyStatus = h('span', { class: 'status' });
 const applyBtn = h('button', { type: 'button', class: 'btn btn-primary', id: 'pl_apply' }, 'Apply to all calculators');
 applyBtn.addEventListener('click', () => { const n = applyPlanAll(); applyStatus.textContent = n ? 'Applied to ' + n + ' calculator' + (n === 1 ? '' : 's') : 'All calculators already match the plan'; setTimeout(() => { applyStatus.textContent = ''; }, 3000); });
@@ -1518,7 +1814,7 @@ MODULES.forEach(m => markCustom(m.id));
 /* Report */
 const reportEl = h('div', { id: 'report' });
 document.body.insertBefore(reportEl, document.querySelector('main'));
-const fmtVal = (f, v, state) => { if (f.kind === 'seg') { const o = f.options.find(o => o.v === state[f.id]); return o ? o.label : String(v); } if (f.kind === 'money') return money(v); if (f.kind === 'pct') return (Math.round(v * 100) / 100) + '%'; return v + (v === 1 ? ' year' : ' years'); };
+const fmtVal = (f, v, state) => { if (f.kind === 'seg') { const o = f.options.find(o => o.v === state[f.id]); return o ? o.label : String(v); } if (f.kind === 'money') return money(v); if (f.kind === 'pct') return (Math.round(v * 100) / 100) + '%'; if (/age$/i.test(f.label) || /^Current age/.test(f.label)) return 'age ' + v; return v + (v === 1 ? ' year' : ' years'); };
 const LOGO_SRC = document.querySelector('.brandmark img').getAttribute('src');
 function openReport(andPrint) {
   if (plan.pl_source === 'plan') applyPlanAll();
@@ -1543,11 +1839,14 @@ function openReport(andPrint) {
     h('tr', {}, h('td', {}, 'Prepared by'), h('td', { class: 'v' }, plan.pl_advisor)),
     h('tr', {}, h('td', {}, 'Date'), h('td', { class: 'v' }, date)),
     h('tr', {}, h('td', {}, 'Basis'), h('td', { class: 'v' }, plan.pl_source === 'plan' ? 'Plan assumptions applied to every calculator' : 'Each calculator’s inputs as set, flagged where they differ from the plan'))));
-  const assump = h('table', { class: 'rtab wide1' }, h('thead', {}, h('tr', {}, h('th', {}, 'Standard assumption'), h('th', { class: 'v' }, 'Value'), h('th', {}, 'Used by'))), h('tbody', {}, ...PLAN_ASSUMP.filter(a => !a.when || a.when()).map(a => {
+  const assumpTable = rows => h('table', { class: 'rtab wide1' }, h('thead', {}, h('tr', {}, h('th', {}, 'Standard assumption'), h('th', { class: 'v' }, 'Value'), h('th', {}, 'Used by'))), h('tbody', {}, ...rows.map(a => {
     const users = [...new Set(a.map.map(fid => fieldById[fid.split('*')[0]].mod).filter(m => mods.includes(m)).map(m => m.tab))];
     return h('tr', {}, h('td', {}, a.label), h('td', { class: 'v' }, fmtVal({ kind: a.kind, id: a.id, options: a.options }, plan[a.id], plan)), h('td', {}, users.join(', ') || '—'));
   })));
-  const list = h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Calculator'), h('th', {}, 'What it shows'), h('th', {}, 'Basis'))), h('tbody', {}, ...mods.map(m => { const b = basisOf(m);
+  const g_name = g => g.name;
+  const live = PLAN_ASSUMP.filter(a => !a.when || a.when());
+  const assumpGroups = [['Standard assumptions', 'shared across the calculators that use them', live.filter(a => !a.group)], ['Retirement withdrawals', 'applies to Retirement payout', live.filter(a => a.group === 'wd')], ['Household', 'feeds the ' + HH_USERS + ' calculators', live.filter(a => a.group === 'hh')], ['Ages & Social Security', 'feeds Income & expenses, How much to retire, and the RMD estimate', live.filter(a => a.group === 'age')]];
+  const listTable = ms => h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Calculator'), h('th', {}, 'What it shows'), h('th', {}, 'Basis'))), h('tbody', {}, ...ms.map(m => { const b = basisOf(m);
     return h('tr', {}, h('td', {}, m.tab), h('td', {}, m.question), h('td', {}, b.standard ? 'Standard assumptions' : 'Entered in the calculator: ' + b.manual.map(f => f.label).join(', ') + (b.todo.length ? ' (' + (b.todo.length === b.manual.length ? 'default values' : b.todo.length + ' at default values') + ')' : ''))); })));
   reportEl.append(bar, pages);
   document.body.classList.add('report-mode'); reportEl.classList.add('is-on'); window.scrollTo({ top: 0 });
@@ -1564,8 +1863,8 @@ function openReport(andPrint) {
   };
   paginate('Plan assumptions', 'The figures in this document are hypothetical illustrations built from the assumptions below. Rates of return and inflation are held constant in every period; actual results will vary. All investment figures and rates of return are shown gross of advisory fees and other costs; results net of fees would be lower.', [
     h('div', { class: 'rsec' }, h('h3', {}, 'General information'), info),
-    h('div', { class: 'rsec' }, h('h3', {}, 'Standard assumptions', h('span', {}, 'shared across the calculators that use them')), assump),
-    h('div', { class: 'rsec' }, h('h3', {}, 'Calculators included'), list)]);
+    ...assumpGroups.filter(g => g[2].length).map(g => h('div', { class: 'rsec' }, h('h3', {}, g[0], h('span', {}, g[1])), assumpTable(g[2]))),
+    ...GROUPS.map(g => ({ g, ms: mods.filter(m => m.group === g.id) })).filter(x => x.ms.length).map((x, i) => h('div', { class: 'rsec' }, h('h3', {}, i ? g_name(x.g) : 'Calculators included', h('span', {}, i ? '' : g_name(x.g))), listTable(x.ms)))]);
   // Calculator pages
   const compactTable = data => {
     const xs = data.x, n = xs.length; let idxs = [];
@@ -1607,9 +1906,10 @@ function openReport(andPrint) {
       h('p', {}, 'All results are hypothetical illustrations and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period. Actual returns vary from year to year, and investments can lose value, including loss of principal. The order in which returns occur can materially change outcomes, particularly when withdrawals are being taken.'),
       h('p', {}, 'Figures do not reflect taxes unless explicitly stated; taxes would reduce the results shown. Where tax rates are used, they are simplified assumptions, not tax advice; qualified dividends and long-term gains are often taxed at lower rates than illustrated, and penalties and required distributions are not modeled.'),
       h('p', {}, 'Savings account comparisons assume a fixed annual percentage yield; actual yields change over time. Bank deposits are typically FDIC-insured up to applicable limits; investments are not. Mortgage affordability figures are a rough screen using common lender ratios and do not represent a credit decision. Life insurance figures are a needs-based estimate and do not recommend any product or carrier; any insurance decision involves product features, costs, and underwriting not addressed here.'),
+      h('p', {}, 'Social Security figures are estimates entered by the client or advisor in today’s dollars and are assumed to rise with inflation once they begin. Actual benefits depend on the earnings record, the claiming age, and future law; the calculators do not adjust the entered benefit for claiming earlier or later than the stated age. Required minimum distribution estimates use the IRS Uniform Lifetime Table and the starting age under current law (73, or 75 for those born in 1960 or later); they are simplified, do not reflect inherited accounts, Roth accounts, or the April 1 first-year deferral, and are not tax advice.'),
       h('p', {}, 'This document does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice. Please consult your advisor, tax professional, or attorney about your individual situation.'),
       h('h4', {}, 'Methods'),
-      h('p', {}, 'Growth and withdrawal calculators compound monthly at the stated annual rate, with contributions or withdrawals applied at the end of each month, unless a calculator states a different compounding frequency. Inflation-adjusted (“today’s dollars”) figures divide nominal values by cumulative inflation. The Rule of 72 and the tax-deferred comparison compound annually. Loan figures use a level monthly payment with interest accrued monthly on the remaining balance.'),
+      h('p', {}, 'Growth and withdrawal calculators compound monthly at the stated annual rate, with contributions or withdrawals applied at the end of each month, unless a calculator states a different compounding frequency. Inflation-adjusted (“today’s dollars”) figures divide nominal values by cumulative inflation. The Rule of 72, the tax-deferred comparison, and the Roth comparison compound annually. Loan figures use a level monthly payment with interest accrued monthly on the remaining balance; bi-weekly payments are modeled as one-twelfth of a payment added to principal each month. The retirement-need calculation finds, by search, the smallest balance at retirement that funds the spending gap through the planning age. RMDs are taken at the end of each year from the prior year-end balance.'),
       h('h4', {}, 'Definitions'),
       h('div', { class: 'def' }, h('dt', {}, 'Compounding: '), h('dd', {}, 'earning a return on both the original amount and on previously earned returns.')),
       h('div', { class: 'def' }, h('dt', {}, 'Nominal vs. real: '), h('dd', {}, 'a nominal figure is the dollar amount on a statement; a real figure is the same amount expressed in today’s purchasing power after inflation.')),
