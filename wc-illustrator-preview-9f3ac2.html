@@ -304,7 +304,69 @@ svg .cross { stroke: var(--line); stroke-width: 1; }
 .sub-h { font-size: 13px; font-weight: 700; margin-top: 8px; }
 .field.is-custom .field-head label::after { content: " \25CF"; color: var(--green); font-size: 9px; vertical-align: 2px; }
 .plan-status { font-size: 11.5px; color: var(--muted); flex-basis: 100%; }
-.assump-foot .btn-pdf { flex-basis: 100%; }
+.assump-foot .btn-pdf { flex: 1 1 auto; }
+.assump-foot .btn-hold { flex-basis: 100%; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.is-warn { border-color: var(--c3); color: #8A4B00; background: #FCF2E2; }
+.act-note { font-size: 11.5px; color: var(--green-text); flex-basis: 100%; }
+.act-note:empty { display: none; }
+/* "More" menu beside Print / PDF */
+.menu { position: relative; }
+.menu > summary { list-style: none; display: inline-flex; align-items: center; gap: 7px; user-select: none; }
+.menu > summary::-webkit-details-marker { display: none; }
+.menu > summary::after { content: ""; width: 5px; height: 5px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); }
+.menu[open] > summary { border-color: var(--ink-2); }
+.menu-list { position: absolute; right: 0; top: calc(100% + 4px); z-index: 5; background: var(--bg); border: 1px solid var(--line); border-radius: 2px; box-shadow: 0 8px 22px rgba(0,0,0,.12); width: 250px; padding: 4px 0; display: grid; }
+.menu-list button { border: 0; background: none; text-align: left; font: 600 13px/1.25 var(--ui); color: var(--ink); padding: 9px 14px; cursor: pointer; }
+.menu-list button:hover, .menu-list button:focus-visible { background: var(--surface-2); outline: none; }
+.menu-list .mi-sub { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+/* "More assumptions" on the longer calculators */
+details.adv > summary { list-style: none; cursor: pointer; padding: 9px 0; display: grid; gap: 3px; }
+details.adv > summary::-webkit-details-marker { display: none; }
+details.adv > summary .t { font-size: 13px; font-weight: 600; color: var(--ink-2); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+details.adv > summary .t::before { content: "+"; display: inline-grid; place-items: center; width: 16px; height: 16px; border: 1px solid var(--line); border-radius: 2px; font-size: 13px; line-height: 1; color: var(--ink-2); }
+details.adv[open] > summary .t::before { content: "\2212"; }
+details.adv > summary .n { font-size: 11.5px; font-weight: 600; color: var(--green-text); }
+details.adv > summary .v { font-size: 11.5px; color: var(--muted); line-height: 1.4; padding-left: 24px; }
+details.adv[open] > summary .v { display: none; }
+details.adv > summary:hover .t { color: var(--ink); }
+details.adv > .field:first-of-type { border-top: 1px solid var(--line-soft); }
+/* Scenario A vs. B */
+.scen .sec-h { align-items: center; }
+.scen-act { display: flex; gap: 6px; flex-wrap: wrap; }
+.scen-tab { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.scen-tab th, .scen-tab td { padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line-soft); text-align: left; vertical-align: top; }
+.scen-tab th { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); border-bottom-color: var(--line); }
+.scen-tab .v { text-align: right; }
+.scen-tab td.v { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.scen-tab td.d { color: var(--ink-2); font-weight: 600; }
+.scen-tab th:last-child, .scen-tab td:last-child { padding-right: 0; }
+.scen-tab .al, .rtab .al { display: block; font-size: 11px; font-weight: 500; color: var(--muted); white-space: normal; }
+.scen-sub { font: 600 11px/1 var(--ui); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); margin: 18px 0 6px; display: flex; gap: 8px; align-items: center; }
+.scen-sub span { font-size: 10.5px; letter-spacing: 0; background: var(--surface-2); border: 1px solid var(--line); border-radius: 2px; padding: 2px 6px; }
+.scen-none { font-size: 13px; color: var(--muted); }
+@media (max-width: 560px) { .scen-tab { font-size: 12px; } .scen-tab th, .scen-tab td { padding-right: 8px; } }
+.legend i.ov { height: 0; width: 14px; border-top: 2.5px dotted; border-radius: 0; }
+/* Plan inputs: hover shows which calculators use each input */
+.prow label.feeds { text-decoration: underline dotted var(--line); text-underline-offset: 4px; cursor: help; }
+/* Client plans */
+.clients { border: 1px solid var(--line); border-radius: 2px; padding: 14px 20px 14px; margin-bottom: 18px; display: grid; gap: 10px; }
+.cl-head { display: flex; gap: 6px 12px; align-items: baseline; flex-wrap: wrap; }
+.cl-head h3 { font: 600 11px/1 var(--ui); letter-spacing: .18em; text-transform: uppercase; color: var(--green-text); }
+.cl-head span { font-size: 12.5px; color: var(--muted); }
+.cl-row { display: flex; gap: 10px 22px; align-items: center; flex-wrap: wrap; }
+.cl-grp { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.cl-grp + .cl-grp { padding-left: 22px; border-left: 1px solid var(--line-soft); }
+.clients .select-wrap select { min-width: 240px; }
+.cl-status { font-size: 13px; color: var(--ink-2); }
+.cl-status b { color: var(--ink); }
+.cl-status .dirty { color: #8A4B00; }
+.cl-msg { font-size: 12.5px; color: var(--green-text); }
+.cl-msg:empty { display: none; }
+@media (max-width: 760px) { .cl-grp + .cl-grp { padding-left: 0; border-left: 0; } .clients .select-wrap select { min-width: 0; } .clients { padding: 12px 14px; } }
+.client-chip { margin-left: auto; font: 600 12px/1.2 var(--ui); color: var(--ink-2); border: 1px solid var(--line); border-radius: 2px; padding: 4px 9px; max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.client-chip b { color: var(--ink); }
+@media (hover: none) { .hover-hint { display: none; } }
 /* One-calculator printout */
 .rsec.rsingle { display: flex; justify-content: space-between; align-items: center; gap: 16px; border: 1px solid #D5D9E0; padding: 6px 12px; }
 .rsingle img { width: 104px; height: auto; flex: none; }
@@ -658,7 +720,7 @@ function makeChart(card, cfg) {
   const table = h('div', { class: 'dtable', hidden: '' });
   card.append(top, wrap, foot, table);
   wrap.append(tip);
-  let data = null, svg = null, geo = null, idx = -1;
+  let data = null, svg = null, geo = null, idx = -1, mainS = [];
 
   tableBtn.addEventListener('click', () => { const open = table.hidden; table.hidden = !open; tableBtn.textContent = open ? 'Hide table' : 'Show table'; tableBtn.setAttribute('aria-expanded', String(open)); });
 
@@ -667,17 +729,18 @@ function makeChart(card, cfg) {
   function render() {
     if (!data) return;
     const W = Math.max(280, wrap.clientWidth || 600), H = Math.min(380, Math.max(220, Math.round(W * (data.ratio || 0.5))));
-    const series = data.series, xs = data.x, n = xs.length;
+    const series = data.series.filter(s => !s.overlay), over = data.series.filter(s => s.overlay), xs = data.x, n = xs.length; mainS = series; // overlay = Scenario A, drawn dotted on its own x values
     const bars = data.kind === 'bars', stacked = data.kind === 'stack';
-    legend.replaceChildren(...(series.length > 1 ? series.map(s => h('span', {}, h('i', { class: stacked ? 'sw' : '', style: 'background:' + s.color }), s.name)) : []));
+    legend.replaceChildren(...(series.length + over.length > 1 ? series.map(s => h('span', {}, h('i', { class: stacked ? 'sw' : '', style: 'background:' + s.color }), s.name)).concat(over.map(s => h('span', {}, h('i', { class: 'ov', style: 'border-top-color:' + s.color }), s.name))) : []));
     let maxV = 0, stackTops = null;
     if (stacked) { stackTops = series.map(() => []); for (let i = 0; i < n; i++) { let acc = 0; series.forEach((s, j) => { acc += s.values[i]; stackTops[j][i] = acc; }); maxV = Math.max(maxV, acc); } }
     else series.forEach(s => s.values.forEach(v => { if (v > maxV) maxV = v; }));
+    over.forEach(s => s.values.forEach(v => { if (v > maxV) maxV = v; }));
     if (data.goal) maxV = Math.max(maxV, data.goal.value);
     const ticks = niceTicks(maxV * (bars ? 1.18 : 1.05), H > 300 ? 5 : 4); const yMax = ticks[ticks.length - 1];
     const ml = 8 + Math.max(...ticks.map(t => compact(t).length)) * 7, mr = data.endLabels === false ? 30 : 62, mt = 16, mb = 30;
     const pw = W - ml - mr, ph = H - mt - mb;
-    const xMin = xs[0], xMax = xs[n - 1] || 1;
+    const xMin = Math.min(xs[0], ...over.map(s => s.x[0])), xMax = Math.max(xs[n - 1] || 1, ...over.map(s => s.x[s.x.length - 1]));
     const sx = x => ml + (xMax === xMin ? 0 : (x - xMin) / (xMax - xMin)) * pw;
     const sy = v => mt + (1 - v / yMax) * ph;
     geo = { sx, sy, ml, mr, mt, mb, pw, ph, W, H };
@@ -710,6 +773,8 @@ function makeChart(card, cfg) {
         series.forEach(s => { if (s.area) out += `<path d="${path(s.values, xs.map(() => 0))}" fill="${s.color}" fill-opacity="0.1"/>`; });
         series.forEach(s => { out += `<path d="${path(s.values)}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"${s.dash ? ' stroke-dasharray="5 4"' : ''}/>`; });
       }
+      over.forEach(s => { let d = ''; s.values.forEach((v, i) => { d += (i ? 'L' : 'M') + sx(s.x[i]).toFixed(1) + ',' + sy(v).toFixed(1); });
+        out += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.2" stroke-opacity=".7" stroke-dasharray="1 4.5" stroke-linecap="round"/><circle cx="${sx(s.x[s.x.length - 1])}" cy="${sy(s.values[s.values.length - 1])}" r="3.5" fill="var(--surface)" stroke="${s.color}" stroke-width="2"/>`; });
       if (data.goal) { const y = sy(data.goal.value); out += `<line x1="${ml}" x2="${W - mr}" y1="${y}" y2="${y}" stroke="var(--c3)" stroke-width="2" stroke-dasharray="6 5"/><text class="end-label" x="${ml + 4}" y="${y - 6}">${esc(data.goal.label)}</text>`; }
       if (data.marker) { const x = sx(data.marker.x), y = sy(data.marker.y); out += `<circle cx="${x}" cy="${y}" r="6" fill="var(--c3)" stroke="var(--surface)" stroke-width="2"/><text class="end-label" x="${x}" y="${y - 12}" text-anchor="${x > W - mr - 80 ? 'end' : 'middle'}">${esc(data.marker.label)}</text>`; }
       const ends = series.map((s, j) => ({ s, j, y: sy(stacked ? stackTops[j][n - 1] : s.values[n - 1]), v: stacked ? stackTops[j][n - 1] : s.values[n - 1] }));
@@ -735,14 +800,14 @@ function makeChart(card, cfg) {
     if (!data || !geo) return; idx = Math.max(0, Math.min(data.x.length - 1, i));
     const g = svg.querySelector('.hover'); if (!g) return;
     const stacked = data.kind === 'stack';
-    let tops = null; if (stacked) { tops = []; let acc = 0; data.series.forEach(s => { acc += s.values[idx]; tops.push(acc); }); }
+    let tops = null; if (stacked) { tops = []; let acc = 0; mainS.forEach(s => { acc += s.values[idx]; tops.push(acc); }); }
     const x = geo.sx(data.x[idx]);
     g.style.display = ''; g.querySelector('line').setAttribute('x1', x); g.querySelector('line').setAttribute('x2', x);
     const circles = g.querySelectorAll('circle');
     if (stacked) { circles[0].setAttribute('cx', x); circles[0].setAttribute('cy', geo.sy(tops[tops.length - 1])); }
-    else data.series.forEach((s, j) => { circles[j].setAttribute('cx', x); circles[j].setAttribute('cy', geo.sy(s.values[idx])); });
+    else mainS.forEach((s, j) => { circles[j].setAttribute('cx', x); circles[j].setAttribute('cy', geo.sy(s.values[idx])); });
     const xv = data.x[idx];
-    tip.innerHTML = `<b>${data.xUnit ? data.xUnit + ' ' + (Math.round(xv * 10) / 10) : xv === 0 ? 'Now' : 'Year ' + (Math.round(xv * 10) / 10)}</b>` + data.series.map(s => `<div><span><i style="background:${s.color}"></i>${esc(s.name)}</span><span>${money(s.values[idx])}</span></div>`).join('') + (stacked ? `<div style="border-top:1px solid rgba(255,255,255,.25);margin-top:4px;padding-top:4px"><span>${esc(data.totalLabel || 'Total')}</span><span>${money(tops[tops.length - 1])}</span></div>` : '');
+    tip.innerHTML = `<b>${data.xUnit ? data.xUnit + ' ' + (Math.round(xv * 10) / 10) : xv === 0 ? 'Now' : 'Year ' + (Math.round(xv * 10) / 10)}</b>` + mainS.map(s => `<div><span><i style="background:${s.color}"></i>${esc(s.name)}</span><span>${money(s.values[idx])}</span></div>`).join('') + data.series.filter(s => s.overlay).map(s => { const k = s.x.indexOf(xv); return k < 0 ? '' : `<div><span><i style="background:${s.color};opacity:.55"></i>${esc(s.name)}</span><span>${money(s.values[k])}</span></div>`; }).join('') + (stacked ? `<div style="border-top:1px solid rgba(255,255,255,.25);margin-top:4px;padding-top:4px"><span>${esc(data.totalLabel || 'Total')}</span><span>${money(tops[tops.length - 1])}</span></div>` : '');
     tip.hidden = false;
     const r = wrap.getBoundingClientRect(), px = x / geo.W * r.width;
     tip.style.top = '8px';
@@ -809,7 +874,7 @@ const GROUPS = [
 const MODULES = [
   {
     output: 'Ending balance; share from growth', desc: 'Projects a balance from a starting amount, regular contributions, an assumed return, and a time horizon. Shows how much of the ending balance came from your deposits and how much came from growth.', id: 'grow', group: 'grow', tab: 'Compound growth', title: 'Compound growth of savings', question: 'How does a balance grow when growth earns growth?',
-    lede: 'Growth earns growth. Early on, most of your balance is money you put in. Later, most of it is money your money made.',
+    lede: 'Shows how a starting amount and regular contributions grow at an assumed annual return, and how much of the ending balance is deposits and how much is growth.',
     fields: [
       moneyField('g_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
       segField('g_freq', 'Contribution frequency', [{ v: 12, label: 'Monthly' }, { v: 1, label: 'Annual' }], 12),
@@ -845,7 +910,7 @@ const MODULES = [
   },
   {
     output: 'Dollar gap between two rates', desc: 'Runs the same deposits at two different rates side by side, such as a savings account yield and an assumed investment return, and shows the dollar difference that builds over time.', id: 'compare', group: 'grow', tab: 'Investing vs. savings', title: 'Investing compared with a savings account', question: 'What does a few percent more in return do over decades?',
-    lede: 'Same deposits, two different rates. The gap between the lines is nothing but compounding at work.',
+    lede: 'Compares the same deposits at a savings account rate and at an assumed investment return over the same period.',
     fields: [
       moneyField('c_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
       moneyField('c_pmt', 'Monthly contribution', 0, 10000, 50, DEFAULTS.monthly),
@@ -879,7 +944,7 @@ const MODULES = [
   },
   {
     output: 'Balance in today\u2019s dollars', desc: 'Converts a future balance into today\u2019s purchasing power at an assumed inflation rate, and shows the real (after-inflation) rate of return.', id: 'inflation', group: 'grow', tab: 'Inflation', title: 'Effect of inflation on a future balance', question: 'What will a future balance actually buy?',
-    lede: 'A balance in 30 years buys less than the same balance today. The green line shows your balance in today’s dollars.',
+    lede: 'Shows a projected balance in future dollars and in today’s dollars, after an assumed rate of inflation.',
     fields: [
       moneyField('i_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
       moneyField('i_pmt', 'Monthly contribution', 0, 10000, 50, DEFAULTS.monthly),
@@ -912,7 +977,7 @@ const MODULES = [
   },
   {
     output: 'Years to double', desc: 'Estimates how many years it takes money to double at a given rate, compares the shortcut with the exact answer, and shows each doubling milestone over a horizon.', id: 'rule72', group: 'grow', tab: 'Rule of 72', title: 'Rule of 72: years for money to double', question: 'How long does it take money to double?',
-    lede: 'Divide 72 by the annual rate and you get the years it takes money to double. It is mental math, and it is close enough to be useful.',
+    lede: 'Estimates the years needed for money to double by dividing 72 by the annual rate, and compares the estimate with the exact figure.',
     fields: [
       pctField('r_rate', 'Annual rate', 0.5, 15, 0.1, DEFAULTS.rate),
       moneyField('r_principal', 'Starting amount', 100, 1000000, 100, DEFAULTS.principal),
@@ -943,7 +1008,7 @@ const MODULES = [
   },
   {
     output: 'Cost of delay; catch-up contribution', desc: 'Compares a saver who starts contributing today with one who starts a few years later. Shows the gap at the goal date and the larger contribution the late starter would need to catch up.', id: 'wait', group: 'grow', tab: 'Cost of waiting', title: 'Cost of delaying contributions', question: 'What does starting a few years late really cost?',
-    lede: 'Two savers put away the same amount each month. One starts today; the other starts a few years from now. The gap is bigger than the missed deposits.',
+    lede: 'Compares two savers who contribute the same monthly amount toward the same date, one starting now and one after a delay.',
     fields: [
       moneyField('w_pmt', 'Monthly contribution', 0, 10000, 50, DEFAULTS.monthly),
       pctField('w_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.'),
@@ -979,7 +1044,7 @@ const MODULES = [
   },
   {
     output: 'Required contribution, years, or return', desc: 'Starts from a target amount and works backward: the monthly contribution, the number of years, or the rate of return needed to reach it.', id: 'goal', group: 'grow', tab: 'Reach a goal', title: 'Contributions needed to reach a goal', question: 'What would it take to reach a specific number?',
-    lede: 'Pick the number you want to reach. Three levers can get you there: how much you save, how long you save, and the return you earn.',
+    lede: 'Shows the monthly contribution, the time, or the return needed to reach a goal amount from a starting balance.',
     fields: [
       moneyField('o_target', 'Goal amount', 10000, 10000000, 10000, DEFAULTS.goalTarget),
       moneyField('o_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
@@ -1010,7 +1075,7 @@ const MODULES = [
   },
   {
     output: 'Years the balance lasts; sustainable withdrawal', desc: 'Draws a balance down with monthly withdrawals, optionally rising with inflation. Shows how long the money lasts and what withdrawal it could sustain for 30 years.', id: 'payout', group: 'live', tab: 'Retirement payout', title: 'Retirement withdrawals: how long a balance lasts', question: 'How long will a balance last at a given withdrawal?',
-    lede: 'Compounding keeps working in retirement, now against your withdrawals. This shows how long a balance lasts and what it could sustainably pay.',
+    lede: 'Shows how long a retirement balance lasts at a given withdrawal and assumed return, and the first-year withdrawal that would last 30 years.',
     fields: [
       moneyField('p_bal', 'Starting balance at retirement', 0, 5000000, 10000, DEFAULTS.retireBalance),
       segField('p_mode', 'Withdrawal set as', [{ v: 'amt', label: 'Monthly amount' }, { v: 'pct', label: '% of starting balance' }], 'amt'),
@@ -1052,7 +1117,7 @@ const MODULES = [
   },
   {
     output: 'Coverage period; spending capacity', desc: 'Combines living expenses, Social Security, pension and other retirement income, and an investment balance. Shows whether the portfolio covers the gap, for how long, and how much extra spending it could support.', id: 'cashflow', group: 'live', tab: 'Income & expenses', title: 'Retirement income and expenses', question: 'With your income, Social Security, and expenses, how far do your investments go?',
-    lede: 'Enter what you spend and what comes in from Social Security and other sources. The portfolio covers the gap. This shows whether it can, for how long, and what else it could do for you.',
+    lede: 'Projects a portfolio that covers the gap between annual expenses and income from Social Security, pensions, and other sources, and shows how long it lasts and the spending it could support.',
     fields: [
       moneyField('f_bal', 'Investment balance', 0, 10000000, 10000, DEFAULTS.cfBalance),
       moneyField('f_exp', 'Annual living expenses (today)', 0, 500000, 1000, DEFAULTS.cfExpenses, 'Everything you spend in a year, in today’s dollars.'),
@@ -1111,7 +1176,7 @@ const MODULES = [
   {
     output: 'Payment, total interest, payoff with extra payments', desc: 'Computes the payment on a fixed-rate loan, splits each year\u2019s payments into principal and interest, and shows how an extra monthly payment shortens the term and reduces total interest.', id: 'loan', group: 'borrow', tab: 'Loan amortization', title: 'Loan amortization', question: 'Where does each loan payment go, and what does an extra payment do?',
     manual: ['l_amount', 'l_rate', 'l_years'],
-    lede: 'A loan is compounding in reverse. Early payments are mostly interest; later ones are mostly principal. See the split, and what an extra payment does to it.',
+    lede: 'Shows the monthly payment on a loan, how each payment divides between interest and principal, and the effect of extra principal payments.',
     fields: [
       moneyField('l_amount', 'Loan amount', 1000, 2000000, 1000, DEFAULTS.loanAmount),
       pctField('l_rate', 'Annual interest rate', 0, 15, 0.05, DEFAULTS.loanRate, 'Fixed rate, compounded monthly.'),
@@ -1160,7 +1225,7 @@ const MODULES = [
   {
     id: 'taxdef', group: 'grow', tab: 'Tax-deferred vs. taxable', title: 'Tax-deferred vs. taxable growth', question: 'What does deferring tax on growth do to an ending balance?',
     desc: 'Compares the same pre-tax dollars in a tax-deferred account, taxed once at withdrawal, against a taxable account where contributions are made after tax and earnings are taxed every year. Shows the after-tax difference.',
-    lede: 'Same pre-tax dollars, two accounts. In the tax-deferred account the full amount grows and tax is paid once at withdrawal; in the taxable account you invest what is left after tax and pay tax on earnings each year.',
+    lede: 'Compares the same pre-tax contributions in a tax-deferred account, taxed once at withdrawal, and in a taxable account, funded after tax with earnings taxed each year.',
     fields: [
       moneyField('t_contrib', 'Annual contribution (pre-tax dollars)', 0, 100000, 500, 10000),
       intField('t_years', 'Years', 1, 50, 1, DEFAULTS.years),
@@ -1275,7 +1340,7 @@ const MODULES = [
   },
   {
     output: 'Amount needed at retirement; on-track check', desc: 'Starts from retirement spending, subtracts Social Security and pension & other income, and finds the balance needed at retirement to fund the gap through a chosen age. Compares it with where current savings and contributions are headed.', id: 'retire', group: 'live', tab: 'How much to retire', title: 'Savings needed at retirement', question: 'What balance funds retirement spending after Social Security, and are you on track?',
-    lede: 'Spending less Social Security and pension & other income is the gap a portfolio has to fill. This finds the balance that fills it from retirement age through the age you plan for, and compares it with where today’s savings are headed.',
+    lede: 'Estimates the balance needed at retirement to cover spending, less Social Security and pension & other income, through the planning age, and compares it with projected savings.',
     fields: [
       intField('r2_age', 'Current age', 18, 80, 1, DEFAULTS.age),
       intField('r2_retage', 'Retirement age', 50, 80, 1, DEFAULTS.retireAge),
@@ -1324,7 +1389,7 @@ const MODULES = [
   },
   {
     output: 'First RMD, tax, income with Social Security', desc: 'Grows a pre-tax balance to the age required minimum distributions begin, then applies the IRS Uniform Lifetime Table year by year. Shows the first RMD, the tax it may carry, and total income with Social Security.', id: 'rmd', group: 'live', tab: 'Estimate your RMD', title: 'Required minimum distributions', question: 'How much must come out of pre-tax accounts each year, and what does it add to taxable income?',
-    lede: 'From the required age, a slice of every traditional IRA and 401(k) balance must be withdrawn each year and taxed as ordinary income, whether or not the money is needed. This estimates the size of that slice over time.',
+    lede: 'Estimates required minimum distributions from traditional IRA and 401(k) balances, which must be withdrawn each year from the required age and are taxed as ordinary income.',
     fields: [
       intField('d_age', 'Current age', 18, 100, 1, DEFAULTS.age),
       moneyField('d_bal', 'Pre-tax retirement balance today', 0, 10000000, 10000, DEFAULTS.savingsNow, 'Traditional IRA and 401(k) balances. Roth IRAs have no lifetime RMDs.'),
@@ -1367,7 +1432,7 @@ const MODULES = [
   },
   {
     output: 'After-tax value of each account; break-even tax rate', desc: 'Compares a traditional (pre-tax) 401(k) with a Roth 401(k) on the same take-home pay, or the same contribution. Shows the after-tax value of each at the end and the retirement tax rate at which they tie.', id: 'roth', group: 'grow', tab: 'Roth vs. Traditional 401(k)', title: 'Roth vs. Traditional 401(k)', question: 'Pay the tax now or later: which leaves more after tax?',
-    lede: 'A traditional contribution skips tax today and pays it on every dollar withdrawn. A Roth contribution pays tax today and nothing later. Which wins depends almost entirely on your tax rate now versus in retirement.',
+    lede: 'Compares traditional (pre-tax) and Roth (after-tax) contributions. The result depends mainly on the tax rate today compared with the tax rate in retirement.',
     manual: [],
     fields: [
       moneyField('h_contrib', 'Annual contribution (pre-tax dollars)', 0, 100000, 500, DEFAULTS.monthly * 12, 'What goes into the traditional account; the Roth comparison is built from it.'),
@@ -1408,7 +1473,7 @@ const MODULES = [
   },
   {
     output: 'Interest saved; payment difference; payoff time', desc: 'Puts two mortgage terms side by side, such as 30 years against 15, or a refinance against the current loan, and shows the payment difference, total interest, and payoff time. Option B can be paid bi-weekly.', id: 'mortcmp', group: 'borrow', tab: 'Comparing mortgage terms', title: 'Comparing mortgage terms', question: 'A shorter term or a lower rate: what does it save, and what does it cost each month?',
-    lede: 'Two loans on the same balance. A shorter term raises the payment and cuts total interest; a lower rate does both at once. Bi-weekly payments add one extra monthly payment a year.',
+    lede: 'Compares the payment and total interest of two loans on the same balance with different terms or rates, including the effect of bi-weekly payments.',
     manual: ['x_rateA', 'x_rateB'],
     fields: [
       moneyField('x_amount', 'Loan amount', 0, 3000000, 5000, DEFAULTS.mortgage),
@@ -1446,7 +1511,7 @@ const MODULES = [
   },
   {
     output: 'Which path ends ahead, and by how much', desc: 'Puts the same extra monthly amount toward either paying down a loan or investing, and compares net position at the loan’s original payoff date. Includes the interest saved, the break-even return, and the value of investing the freed payment after an early payoff.', id: 'debtinv', group: 'borrow', tab: 'Debt vs. investment', title: 'Paying down a loan compared with investing', question: 'For the same extra dollars each month, which path ends further ahead?',
-    lede: 'Extra principal earns a guaranteed return equal to the loan rate. Investing offers a higher but uncertain return. This compares the two over the remaining life of the loan, with the freed payment invested once the loan is gone.',
+    lede: 'Compares putting an extra monthly amount toward loan principal with investing it, over the remaining term of the loan. Paying down the loan saves interest at the loan rate; the investment return is an assumption and is not guaranteed.',
     manual: ['v_rate', 'v_term'],
     fields: [
       moneyField('v_extra', 'Extra amount each month', 0, 20000, 50, DEFAULTS.monthly),
@@ -1489,7 +1554,7 @@ const MODULES = [
   },
   {
     output: 'Net worth; assets, liabilities, equity', desc: 'Adds up what you own, subtracts what you owe, and shows net worth, home equity, and investable assets. A snapshot to repeat each year.', id: 'networth', group: 'live', tab: 'Net worth', title: 'Net worth statement', question: 'What do you own, what do you owe, and what is the difference?',
-    lede: 'Net worth is the scoreboard the other calculators move. Assets less liabilities, with a look at how much of it is liquid and how much is tied up in the house.',
+    lede: 'Totals assets less liabilities, and shows how much of net worth is investable and how much is home equity.',
     manual: ['w_cash', 'w_tax', 'w_home', 'w_other', 'w_debt'],
     fields: [
       moneyField('w_cash', 'Cash and savings', 0, 5000000, 1000, 25000, 'Checking, savings, CDs, money market.'),
@@ -1619,24 +1684,82 @@ footExplore.append(h('li', {}, h('a', { href: 'https://www.wcipllc.com/', target
 document.getElementById('foot-year').textContent = String(new Date().getFullYear());
 
 /* Calculator pages */
+// Rarely changed inputs sit under "More assumptions" on the longer calculators; they still print and still count toward plan flags
+const ADV = { grow: ['g_comp'], cashflow: ['f_incStart', 'f_incAdj', 'f_infl'], mortgage: ['m_years', 'm_front', 'm_back'], insure: ['n_rate', 'n_infl'], retire: ['r2_retret', 'r2_infl', 'r2_incAdj'], rmd: ['d_retret', 'd_infl'] };
+const fmtVal = (f, v, state) => { if (f.kind === 'seg') { const o = f.options.find(o => o.v === state[f.id]); return o ? o.label : String(v); } if (f.kind === 'money') return money(v); if (f.kind === 'pct') return (Math.round(v * 100) / 100) + '%'; if (/age$/i.test(f.label) || /^Current age/.test(f.label)) return 'age ' + v; return v + (v === 1 ? ' year' : ' years'); };
+const defaultsOf = m => { const s = {}; m.fields.forEach(f => { s[f.id] = f.value; }); return s; };
+const stateKey = s => JSON.stringify(s);
+
+/* Scenario A vs. B: A is a held copy of a calculator's inputs; B is whatever the inputs show now */
+const scenA = {};
+const forCompute = (mod, s) => mod.id === 'loan' && s.l_view !== 'y' ? Object.assign({}, s, { l_view: 'y' }) : s;
+// Read a displayed figure back into a number so A and B can be differenced; anything else shows "—"
+function readShown(t) {
+  t = String(t).trim(); let m;
+  if ((m = /^(-)?\$([\d,]+)(\/mo)?$/.exec(t))) return { k: 'money' + (m[3] || ''), v: (m[1] ? -1 : 1) * Number(m[2].replace(/,/g, '')) };
+  if ((m = /^(-?\d+(?:\.(\d+))?)%$/.exec(t))) return { k: 'pct', v: Number(m[1]), d: (m[2] || '').length };
+  if ((m = /^(\d+) years?(?: (\d+) mo)?$/.exec(t))) return { k: 'mo', v: Number(m[1]) * 12 + Number(m[2] || 0) };
+  if ((m = /^(\d+\.\d) years$/.exec(t))) return { k: 'yr', v: Number(m[1]) };
+  if ((m = /^Year (\d+)$/.exec(t))) return { k: 'year', v: Number(m[1]) };
+  if ((m = /^([\d,]+(?:\.\d+)?)×$/.exec(t))) return { k: 'x', v: Number(m[1].replace(/,/g, '')) };
+  return null;
+}
+function changeText(a, b) {
+  const A = readShown(a), B = readShown(b); if (!A || !B || A.k !== B.k) return '—';
+  const d = B.v - A.v; if (Math.abs(d) < 1e-9) return 'No change';
+  const sg = d > 0 ? '+' : '−', ad = Math.abs(d);
+  if (A.k.startsWith('money')) return sg + '$' + Math.round(ad).toLocaleString('en-US') + (A.k.endsWith('/mo') ? '/mo' : '');
+  if (A.k === 'pct') return sg + ad.toFixed(Math.max(A.d, B.d)) + ' pts';
+  if (A.k === 'mo') { const y = Math.floor(ad / 12), mo = Math.round(ad - y * 12); return sg + (y ? y + (y === 1 ? ' year' : ' years') : '') + (y && mo ? ' ' : '') + (mo ? mo + ' mo' : ''); }
+  if (A.k === 'yr') return sg + ad.toFixed(1) + ' years';
+  if (A.k === 'year') return sg + ad + (ad === 1 ? ' year' : ' years');
+  return sg + ad.toFixed(1) + '×';
+}
+// Results (hero + tiles) side by side, and the inputs that differ; cls picks the page or the printout table style
+function scenTables(mod, sA, sB, rA, rB, cls) {
+  const pairs = [[rA.hero, rB.hero]].concat(rB.tiles.map((t, i) => [rA.tiles[i] || { label: '', value: '—' }, t]));
+  const rows = pairs.map(([a, b]) => ({ label: b.label, aLabel: a.label !== b.label ? a.label : '', a: a.value, b: b.value, d: a.label === b.label ? changeText(a.value, b.value) : '—' }));
+  const diffs = mod.fields.filter(f => f.kind === 'seg' ? sA[f.id] !== sB[f.id] : Math.abs(sA[f.id] - sB[f.id]) > 1e-9).map(f => ({ label: f.label, a: fmtVal(f, sA[f.id], sA), b: fmtVal(f, sB[f.id], sB) }));
+  const results = h('table', { class: cls }, h('thead', {}, h('tr', {}, h('th', {}, 'Result'), h('th', { class: 'v' }, 'Scenario A'), h('th', { class: 'v' }, 'Scenario B'), h('th', { class: 'v' }, 'B vs. A'))),
+    h('tbody', {}, ...rows.map(r => h('tr', {}, h('td', {}, r.label), h('td', { class: 'v' }, r.a, r.aLabel ? h('span', { class: 'al' }, 'A: ' + r.aLabel) : null), h('td', { class: 'v' }, r.b), h('td', { class: 'v d' }, r.d)))));
+  const inputs = diffs.length ? h('table', { class: cls }, h('thead', {}, h('tr', {}, h('th', {}, 'Input'), h('th', { class: 'v' }, 'Scenario A'), h('th', { class: 'v' }, 'Scenario B'))),
+    h('tbody', {}, ...diffs.map(r => h('tr', {}, h('td', {}, r.label), h('td', { class: 'v' }, r.a), h('td', { class: 'v' }, r.b))))) : null;
+  return { results, inputs, n: diffs.length };
+}
+// Scenario A's lines drawn dotted over B's chart: each solid line for a line chart, the total for a stacked chart; bar charts are left alone
+function withA(data, a) {
+  if (!a || !data || data.kind === 'bars' || a.kind === 'bars') return data;
+  const over = data.kind === 'stack'
+    ? [{ name: (data.totalLabel || 'Total') + ' (A)', color: 'var(--ink-2)', x: a.x, values: a.x.map((_, i) => a.series.reduce((t, s) => t + s.values[i], 0)), overlay: true }]
+    : a.series.filter(s => !s.dash).map(s => ({ name: s.name + ' (A)', color: s.color, x: a.x, values: s.values, overlay: true }));
+  return Object.assign({}, data, { series: data.series.concat(over) });
+}
+
 MODULES.forEach(mod => {
   const state = {}; const section = h('section', { class: 'module wrap', id: 'mod_' + mod.id, hidden: '' });
   const g = GROUPS.find(x => x.id === mod.group);
-  section.append(h('div', { class: 'module-head' }, h('div', { class: 'crumbs' }, h('button', { type: 'button', class: 'arrow-link', onclick: () => show('list', true) }, 'All calculators'), h('span', { class: 'eyebrow' }, g.name)), h('h2', {}, mod.title), h('p', { class: 'lede' }, mod.lede)));
+  section.append(h('div', { class: 'module-head' }, h('div', { class: 'crumbs' }, h('button', { type: 'button', class: 'arrow-link', onclick: () => show('list', true) }, 'All calculators'), h('span', { class: 'eyebrow' }, g.name), h('span', { class: 'client-chip', hidden: '' })), h('h2', {}, mod.title), h('p', { class: 'lede' }, mod.lede)));
   const fields = h('div', { class: 'fields' });
-  const copyBtn = h('button', { type: 'button', class: 'btn', id: 'copy_' + mod.id }, 'Copy scenario');
-  const resetBtn = h('button', { type: 'button', class: 'btn', id: 'reset_' + mod.id }, 'Reset');
-  const usePlanBtn = h('button', { type: 'button', class: 'btn', id: 'useplan_' + mod.id, title: 'Set the shared inputs to the plan’s standard assumptions' }, 'Use plan');
   const pdfBtn = h('button', { type: 'button', class: 'btn btn-primary btn-pdf', id: 'pdf_' + mod.id, title: 'A one- to two-page printout of this calculator with its current inputs' }, 'Print / PDF');
   pdfBtn.addEventListener('click', () => openReport(true, mod.id));
+  const holdBtn = h('button', { type: 'button', class: 'btn btn-hold', id: 'hold_' + mod.id, title: 'Keep a copy of the current inputs as Scenario A, then change any input to build Scenario B' }, 'Hold as Scenario A');
+  const item = (id, t, sub) => h('button', { type: 'button', role: 'menuitem', id }, t, h('span', { class: 'mi-sub' }, sub));
+  const copyBtn = item('copy_' + mod.id, 'Copy summary', 'Inputs and results as text, with disclosures');
+  const usePlanBtn = item('useplan_' + mod.id, 'Use plan assumptions', 'Set the shared inputs to the plan');
+  const resetBtn = item('reset_' + mod.id, 'Reset to defaults', 'Every input back to its starting value');
+  const menu = h('details', { class: 'menu' }, h('summary', { class: 'btn', id: 'menu_' + mod.id }, 'More'), h('div', { class: 'menu-list', role: 'menu' }, usePlanBtn, copyBtn, resetBtn));
+  const actNote = h('span', { class: 'act-note', 'aria-live': 'polite' });
+  const say = t => { actNote.textContent = t; clearTimeout(say.t); say.t = setTimeout(() => { actNote.textContent = ''; }, 2600); };
   const planStatus = h('span', { class: 'plan-status' });
-  const assump = h('aside', { class: 'assump' }, h('h3', {}, 'Inputs'), fields, h('div', { class: 'assump-foot' }, pdfBtn, copyBtn, resetBtn, usePlanBtn, planStatus));
+  const assump = h('aside', { class: 'assump' }, h('h3', {}, 'Inputs'), fields, h('div', { class: 'assump-foot' }, pdfBtn, menu, holdBtn, actNote, planStatus));
   const primary = h('div', { class: 'primary' }), kstats = h('div', { class: 'kstats' }), obs = h('p', { class: 'obs' });
   const feeNote = FEE_FREE.includes(mod.id) ? null : h('p', { class: 'feenote' }, h('b', {}, 'Gross of fees. '), FEE_SHORT);
+  const scenBox = h('div', { class: 'msec scen', id: 'scen_' + mod.id, hidden: '' });
   const chartBody = h('div'), chartBody2 = mod.chart2 ? h('div') : null;
   const extra = h('div', { class: 'extra' });
   const results = h('div', { class: 'results' },
     h('div', { class: 'msec', style: 'border-top:0;padding-top:0' }, primary, kstats, feeNote),
+    scenBox,
     sec(null, obs),
     sec(mod.chart.title, chartBody),
     chartBody2 ? sec(mod.chart2.title, chartBody2) : null,
@@ -1644,7 +1767,21 @@ MODULES.forEach(mod => {
   section.append(assump, results);
   mainEl.append(section);
   const chart = makeChart(chartBody, mod.chart); const chart2 = chartBody2 ? makeChart(chartBody2, mod.chart2) : null;
-  let lastResult = null;
+  let lastResult = null, aCache = { key: '', r: null }, advEl = null;
+  const resultA = () => { const sA = scenA[mod.id]; if (!sA) return null; const k = stateKey(sA); if (k !== aCache.key) aCache = { key: k, r: mod.compute(forCompute(mod, sA)) }; return aCache.r; };
+  const swapBtn = h('button', { type: 'button', class: 'btn', id: 'swap_' + mod.id, title: 'Put Scenario A’s inputs back on the left and hold the current inputs as A' }, 'Swap A and B');
+  const clearBtn = h('button', { type: 'button', class: 'btn', id: 'clear_' + mod.id }, 'Stop comparing');
+  const renderScen = r => {
+    const sA = scenA[mod.id]; scenBox.hidden = !sA; holdBtn.textContent = sA ? 'Hold current inputs as A' : 'Hold as Scenario A';
+    if (!sA) { scenBox.replaceChildren(); return null; }
+    const rA = resultA(); const t = scenTables(mod, sA, state, rA, r, 'scen-tab');
+    scenBox.replaceChildren(
+      h('div', { class: 'sec-h' }, h('h3', {}, 'Scenario A vs. B', h('span', { class: 'sub' }, 'A is held; B follows the inputs')), h('div', { class: 'scen-act' }, swapBtn, clearBtn)),
+      t.results,
+      h('div', { class: 'scen-sub' }, 'Inputs that differ', t.n ? h('span', {}, String(t.n)) : null),
+      t.inputs || h('p', { class: 'scen-none' }, 'None yet. Change any input on the left to build Scenario B.'));
+    return rA;
+  };
   const update = () => {
     const r = mod.compute(state); lastResult = r;
     primary.replaceChildren(h('div', { class: 'label' }, r.hero.label), h('div', { class: 'value' + fitClass(r.hero.value) }, r.hero.value), h('div', { class: 'sub' }, r.hero.sub));
@@ -1652,23 +1789,40 @@ MODULES.forEach(mod => {
     obs.innerHTML = r.callout;
     extra.replaceChildren();
     if (r.extra) extra.append(sec(r.extraTitle || 'Reference', h('div', { html: r.extra }), r.extraSub || null));
-    chart.update(r.chart); if (chart2 && r.chart2) chart2.update(r.chart2);
+    const rA = renderScen(r);
+    if (advEl) advEl._refresh();
+    chart.update(withA(r.chart, rA && rA.chart)); if (chart2 && r.chart2) chart2.update(withA(r.chart2, rA && rA.chart2));
     planHooks.forEach(fn => fn(mod.id));
   };
   const onChange = id => { if (mod.onChange) mod.onChange(id, state, mod.fields); update(); };
   buildFields(fields, mod.fields, state, onChange);
+  if (ADV[mod.id]) {
+    const advFields = ADV[mod.id].map(id => mod.fields.find(f => f.id === id)).filter(Boolean);
+    const vals = h('span', { class: 'v' });
+    advEl = h('details', { class: 'adv', id: 'adv_' + mod.id }, h('summary', {}, h('span', { class: 't' }, 'More assumptions', h('span', { class: 'n' })), vals));
+    advFields.forEach(f => { const fe = fields.querySelector('#' + f.id).closest('.field'); advEl.append(fe); });
+    fields.append(advEl);
+    advEl._refresh = () => { vals.textContent = advFields.map(f => f.label + ': ' + fmtVal(f, state[f.id], state)).join(' · '); };
+  }
   if (mod.onChange) mod.onChange(null, state, mod.fields);
-  resetBtn.addEventListener('click', () => { mod.fields.forEach(f => { if (f.kind === 'seg') { state[f.id] = f.value; fields.querySelectorAll('#' + f.id + ' button').forEach(b => { const on = b.id === f.id + '_' + f.value; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', String(on)); }); } else f._set(f.value); }); onChange(null); });
+  const setState = s => { mod.fields.forEach(f => { if (s[f.id] !== undefined) f._set(s[f.id]); }); };
+  resetBtn.addEventListener('click', () => { menu.open = false; setState(defaultsOf(mod)); onChange(null); say('Inputs reset to their defaults'); });
+  usePlanBtn.addEventListener('click', () => { menu.open = false; say(applyPlanTo(mod.id) ? 'Shared inputs set to the plan' : 'Shared inputs already match the plan'); });
   copyBtn.addEventListener('click', () => {
-    if (!lastResult) return;
+    menu.open = false; if (!lastResult) return;
     const text = `WealthCare Investment Partners — Compounding Illustrator\n${mod.title} (hypothetical illustration)\n\nAssumptions: ${lastResult.copy[0]}\nResults: ${lastResult.copy.slice(1).join(' ')}\n\nFor educational purposes only. Not a guarantee or projection of future performance; assumed rates held constant; ${FEE_FREE.includes(mod.id) ? '' : 'figures are gross of advisory fees and other costs, which would reduce results; '}excludes taxes unless stated; not investment, tax, or legal advice.`;
-    const done = () => { copyBtn.textContent = 'Copied'; copyBtn.classList.add('is-done'); setTimeout(() => { copyBtn.textContent = 'Copy scenario'; copyBtn.classList.remove('is-done'); }, 1800); };
-    const fallback = () => { const ta = h('textarea', { style: 'position:fixed;opacity:0', readonly: '' }, text); document.body.append(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { copyBtn.textContent = 'Copy not available'; } ta.remove(); };
+    const done = () => say('Summary copied to the clipboard');
+    const fallback = () => { const ta = h('textarea', { style: 'position:fixed;opacity:0', readonly: '' }, text); document.body.append(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { say('Copy is not available in this browser'); } ta.remove(); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
   });
-  usePlanBtn.addEventListener('click', () => applyPlanTo(mod.id));
-  built[mod.id] = { section, update, state, fields: mod.fields, onChange, planStatus };
+  holdBtn.addEventListener('click', () => { const had = !!scenA[mod.id]; scenA[mod.id] = Object.assign({}, state); update(); say(had ? 'Scenario A replaced with the current inputs' : 'Held as Scenario A. Change any input to build Scenario B.'); });
+  swapBtn.addEventListener('click', () => { const a = scenA[mod.id]; if (!a) return; scenA[mod.id] = Object.assign({}, state); setState(a); onChange(null); say('Swapped: the inputs now show the former Scenario A'); });
+  clearBtn.addEventListener('click', () => { delete scenA[mod.id]; update(); say('Comparison cleared'); });
+  built[mod.id] = { section, update, state, fields: mod.fields, onChange, planStatus, setState, adv: advEl, resultA };
 });
+// Close an open "More" menu when clicking anywhere else or pressing Escape
+document.addEventListener('click', e => { document.querySelectorAll('details.menu[open]').forEach(d => { if (!d.contains(e.target)) d.open = false; }); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('details.menu[open]').forEach(d => { d.open = false; d.querySelector('summary').focus(); }); });
 
 /* ---------- Methodology: written from the code, one entry per calculator ---------- */
 const METHODS_VERIFIED = 'October 23, 2026';
@@ -1777,15 +1931,37 @@ const PARTS = [
   { id: 'pp_tables', label: 'Data tables and schedules', value: false },
   { id: 'pp_methods', label: 'Methodology appendix', value: false }
 ];
-const plan = {}; PLAN_INFO.forEach(f => plan[f.id] = f.value); PLAN_ASSUMP.forEach(f => plan[f.id] = f.value); PARTS.forEach(f => plan[f.id] = f.value);
-plan.pl_include = MODULES.map(m => m.id); plan.pl_highlight = true; plan.pl_source = 'current';
-try { const saved = JSON.parse(localStorage.getItem('wcip-plan') || 'null'); if (saved && typeof saved === 'object') Object.assign(plan, saved); } catch (e) {}
-if (!Array.isArray(plan.pl_include)) plan.pl_include = MODULES.map(m => m.id);
-const savePlan = () => { try { localStorage.setItem('wcip-plan', JSON.stringify(plan)); } catch (e) {} };
+const defaultPlan = () => { const o = {}; PLAN_INFO.forEach(f => { o[f.id] = f.id === 'pl_date' ? todayISO() : f.value; }); PLAN_ASSUMP.forEach(f => { o[f.id] = f.value; }); PARTS.forEach(f => { o[f.id] = f.value; });
+  o.pl_include = MODULES.map(m => m.id); o.pl_highlight = true; o.pl_source = 'current'; return o; };
+/* Anything read back from browser storage or from a plan file is untrusted: keep only known inputs, of the right type, within the input limits */
+function cleanPlan(src) {
+  const out = {}; if (!src || typeof src !== 'object') return out;
+  PLAN_INFO.forEach(f => { const v = src[f.id]; if (f.type === 'select') { if (Number.isInteger(v) && v >= 0 && v < OFFICES.length) out[f.id] = v; } else if (typeof v === 'string') out[f.id] = v.slice(0, 200); });
+  PLAN_ASSUMP.forEach(f => { const v = src[f.id]; if (f.kind === 'seg') { if (f.options.some(o => o.v === v)) out[f.id] = v; } else if (typeof v === 'number' && isFinite(v)) out[f.id] = Math.max(0, Math.min(HARD_MAX[f.kind], v)); });
+  PARTS.forEach(p => { if (typeof src[p.id] === 'boolean') out[p.id] = src[p.id]; });
+  if (typeof src.pl_highlight === 'boolean') out.pl_highlight = src.pl_highlight;
+  if (src.pl_source === 'plan' || src.pl_source === 'current') out.pl_source = src.pl_source;
+  if (Array.isArray(src.pl_include)) out.pl_include = MODULES.map(m => m.id).filter(id => src.pl_include.includes(id));
+  return out;
+}
+function cleanStates(src) {
+  const out = {}; if (!src || typeof src !== 'object') return out;
+  MODULES.forEach(m => { const s = src[m.id]; if (!s || typeof s !== 'object') return; const o = {};
+    m.fields.forEach(f => { const v = s[f.id]; if (f.kind === 'seg') { if (f.options.some(x => x.v === v)) o[f.id] = v; } else if (typeof v === 'number' && isFinite(v)) o[f.id] = clampTyped(f, v); });
+    out[m.id] = o; });
+  return out;
+}
+const plan = defaultPlan();
+try { Object.assign(plan, cleanPlan(JSON.parse(localStorage.getItem('wcip-plan') || 'null'))); } catch (e) {}
+var onPlanSaved = null;
+const savePlan = () => { try { localStorage.setItem('wcip-plan', JSON.stringify(plan)); } catch (e) {} if (onPlanSaved) onPlanSaved(); };
 
 const fieldById = {}; MODULES.forEach(m => m.fields.forEach(f => { fieldById[f.id] = { mod: m, f }; }));
 const planMap = {}; PLAN_ASSUMP.forEach(a => a.map.forEach(m => { const [fid, k] = m.split('*'); planMap[fid] = { a, k: k ? Number(k) : 1 }; }));
 const planFor = fid => planMap[fid] ? planMap[fid].a : undefined;
+const feedsOf = a => [...new Set(a.map.map(fid => fieldById[fid.split('*')[0]].mod.tab))];
+const feedTitle = a => 'Used by: ' + feedsOf(a).join(', ');
+const planRow = (f, label, box, extra) => h('div', { class: 'prow' + (extra || ''), title: feedTitle(f) }, h('label', f.kind === 'seg' ? { class: 'feeds' } : { for: f.id, class: 'feeds' }, label), box);
 const planVal = fid => { const m = planMap[fid]; return m.a.kind === 'seg' ? plan[m.a.id] : plan[m.a.id] * m.k; };
 const fieldVisible = fid => { const el = document.getElementById(fid); const fe = el && el.closest('.field'); return !!fe && !fe.hidden; };
 const mappable = fid => { if (fid === 'g_pmt' && built.grow.state.g_freq !== 12) return false; const a = planFor(fid); return !(a && a.when && !a.when()); };
@@ -1795,9 +1971,10 @@ const manualFields = m => (m.manual || []).map(id => m.fields.find(f => f.id ===
 const atDefault = (m, f) => { const v = built[m.id].state[f.id]; return f.kind === 'seg' ? v === f.value : Math.abs(v - f.value) < 1e-9; };
 function basisOf(m) { const mf = manualFields(m); const todo = mf.filter(f => atDefault(m, f)); return { manual: mf, todo, standard: mf.length === 0 }; }
 function markCustom(modId) {
-  const b = built[modId]; let n = 0;
-  b.fields.forEach(f => { const el = document.getElementById(f.id); const fe = el && el.closest('.field'); if (!fe) return; const d = differs(f.id); fe.classList.toggle('is-custom', d); if (d && !fe.hidden) n++; });
+  const b = built[modId]; let n = 0, nAdv = 0;
+  b.fields.forEach(f => { const el = document.getElementById(f.id); const fe = el && el.closest('.field'); if (!fe) return; const d = differs(f.id); fe.classList.toggle('is-custom', d); if (d && !fe.hidden) { n++; if (b.adv && b.adv.contains(fe)) nAdv++; } });
   if (b.planStatus) b.planStatus.textContent = n ? n + ' input' + (n === 1 ? '' : 's') + ' differ' + (n === 1 ? 's' : '') + ' from plan' : 'Plan assumptions';
+  if (b.adv) b.adv.querySelector('.n').textContent = nAdv ? nAdv + ' differ' + (nAdv === 1 ? 's' : '') + ' from plan' : '';
 }
 function applyPlanTo(modId) {
   const b = built[modId]; let touched = false;
@@ -1822,7 +1999,7 @@ PLAN_INFO.forEach(f => {
   colInfo.append(h('div', { class: 'prow' }, h('label', { for: f.id }, f.label), h('div', { class: 'field-val' }, input)));
 });
 // Standard assumptions
-const colAs = h('div', { class: 'plan-col' }, h('h3', {}, 'Standard assumptions', h('span', {}, 'shared by every calculator')), h('div', { class: 'plan-fee' }, 'Rates of return are gross of advisory fees and other costs; results net of fees would be lower.'));
+const colAs = h('div', { class: 'plan-col' }, h('h3', {}, 'Standard assumptions', h('span', { class: 'hover-hint' }, 'hover over an input to see which calculators use it')), h('div', { class: 'plan-fee' }, 'Rates of return are gross of advisory fees and other costs; results net of fees would be lower.'));
 let wdUI = null;
 const syncWd = () => { const bal = plan.pl_bal; if (plan.pl_wdmode === 'amt') plan.pl_wdpct = bal > 0 ? Math.round(plan.pl_wd * 12 / bal * 1000) / 10 : 0; else plan.pl_wd = Math.round(bal * plan.pl_wdpct / 100 / 12); };
 function refreshWd() {
@@ -1840,21 +2017,21 @@ const segIn = f => { const seg = h('div', { class: 'seg', role: 'group', 'aria-l
   return seg; };
 PLAN_ASSUMP.filter(f => !f.group).forEach(f => {
   const input = f.kind === 'money' ? moneyIn(f.id, plan[f.id], v => { plan[f.id] = v; planChanged(); }) : numIn(f);
-  colAs.append(h('div', { class: 'prow' }, h('label', { for: f.id }, f.label), valBox(f, input)));
+  colAs.append(planRow(f, f.label, valBox(f, input)));
 });
 {
   const A = id => PLAN_ASSUMP.find(a => a.id === id);
   const fMode = A('pl_wdmode'), fAmt = A('pl_wd'), fPct = A('pl_wdpct'), fAdj = A('pl_wdadj');
   const amt = moneyIn(fAmt.id, plan[fAmt.id], v => { plan.pl_wd = v; planChanged(); });
   const pct = numIn(fPct);
-  const amtRow = h('div', { class: 'prow' }, h('label', { for: fAmt.id }, fAmt.label), valBox(fAmt, amt));
-  const pctRow = h('div', { class: 'prow' }, h('label', { for: fPct.id }, 'Withdrawal rate'), valBox(fPct, pct));
+  const amtRow = planRow(fAmt, fAmt.label, valBox(fAmt, amt));
+  const pctRow = planRow(fPct, 'Withdrawal rate', valBox(fPct, pct));
   const help = h('div', { class: 'wd-help', id: 'pl_wdhelp' });
   colAs.append(h('div', { class: 'wd-group' },
     h('div', { class: 'wd-h' }, 'Retirement withdrawals', h('span', {}, 'applies to Retirement payout')),
-    h('div', { class: 'prow stack' }, h('label', {}, fMode.label), segIn(fMode)),
+    planRow(fMode, fMode.label, segIn(fMode), ' stack'),
     amtRow, pctRow, help,
-    h('div', { class: 'prow stack' }, h('label', {}, fAdj.label), segIn(fAdj))));
+    planRow(fAdj, fAdj.label, segIn(fAdj), ' stack')));
   wdUI = { amt, pct, amtRow, pctRow, help };
   syncWd(); refreshWd();
 }
@@ -1862,7 +2039,7 @@ PLAN_ASSUMP.filter(f => !f.group).forEach(f => {
   const hh = h('div', { class: 'wd-group' }, h('div', { class: 'wd-h' }, 'Household', h('span', {}, 'feeds the ' + HH_USERS + ' calculators')));
   PLAN_ASSUMP.filter(f => f.group === 'hh').forEach(f => {
     const input = f.kind === 'money' ? moneyIn(f.id, plan[f.id], v => { plan[f.id] = v; planChanged(); }) : numIn(f);
-    hh.append(h('div', { class: 'prow' }, h('label', { for: f.id }, f.label), valBox(f, input)));
+    hh.append(planRow(f, f.label, valBox(f, input)));
   });
   colAs.append(hh);
 }
@@ -1870,7 +2047,7 @@ PLAN_ASSUMP.filter(f => !f.group).forEach(f => {
   const ag = h('div', { class: 'wd-group' }, h('div', { class: 'wd-h' }, 'Ages & Social Security', h('span', {}, 'feeds Income & expenses, How much to retire, and the RMD estimate')));
   PLAN_ASSUMP.filter(f => f.group === 'age').forEach(f => {
     const input = f.kind === 'money' ? moneyIn(f.id, plan[f.id], v => { plan[f.id] = v; planChanged(); }) : numIn(f);
-    ag.append(h('div', { class: 'prow' }, h('label', { for: f.id }, f.label), valBox(f, input)));
+    ag.append(planRow(f, f.label, valBox(f, input)));
   });
   ag.append(h('div', { class: 'wd-help', style: 'border-bottom:0' }, 'Enter the benefit at the claiming age from the client’s ssa.gov statement; the calculators do not adjust it for claiming earlier or later.'));
   colAs.append(ag);
@@ -1924,12 +2101,137 @@ colPr.append(h('div', { class: 'plan-actions' }, previewBtn, canPrint ? printBtn
 planEl.append(colInfo, colAs, colPr);
 document.getElementById('plan-host').append(planEl);
 
-MODULES.forEach(m => markCustom(m.id));
+
+/* ---------- Client plans: kept in this browser's storage or saved to a file. Nothing is sent anywhere. ---------- */
+const STORE_KEY = 'wcip-clients', WORK_KEY = 'wcip-work', FILE_FORMAT = 'wealthcare-compounding-illustrator';
+const readStore = () => { try { const o = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if (o && typeof o === 'object' && o.plans && typeof o.plans === 'object' && !Array.isArray(o.plans)) return o; } catch (e) {} return { v: 1, plans: {} }; };
+const writeStore = st => { try { localStorage.setItem(STORE_KEY, JSON.stringify(st)); return true; } catch (e) { return false; } };
+const statesOf = get => { const o = {}; MODULES.forEach(m => { const s = get(m); if (!s) return; o[m.id] = {}; m.fields.forEach(f => { o[m.id][f.id] = s[f.id]; }); }); return o; };
+const snapshot = () => ({ plan: cleanPlan(plan), calc: statesOf(m => built[m.id].state), scen: statesOf(m => scenA[m.id]) });
+const keyOf = s => JSON.stringify({ plan: cleanPlan(s.plan), calc: cleanStates(s.calc), scen: cleanStates(s.scen) });
+const fmtStamp = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); };
+let activeName = '', baseKey = '';
+const isDirty = () => keyOf(snapshot()) !== baseKey;
+const markBase = () => { baseKey = keyOf(snapshot()); };
+function refreshPlanUI() {
+  PLAN_INFO.forEach(f => { const el = document.getElementById(f.id); if (el) el.value = plan[f.id]; });
+  PLAN_ASSUMP.forEach(f => {
+    if (f.kind === 'seg') { f.options.forEach(o => { const bt = document.getElementById(f.id + '_' + o.v); if (bt) { const on = o.v === plan[f.id]; bt.classList.toggle('is-on', on); bt.setAttribute('aria-pressed', String(on)); } }); return; }
+    const el = document.getElementById(f.id); if (el) el.value = f.kind === 'money' ? Math.round(plan[f.id]).toLocaleString('en-US') : plan[f.id]; });
+  PARTS.concat([{ id: 'pl_highlight' }]).forEach(p => { const el = document.getElementById(p.id); if (el) el.checked = !!plan[p.id]; });
+  MODULES.forEach(m => { const c = document.getElementById('inc_' + m.id); if (c) c.checked = plan.pl_include.includes(m.id); });
+  ['current', 'plan'].forEach(v => { const r = document.getElementById('pl_source_' + v); if (r) r.checked = plan.pl_source === v; });
+  syncWd(); refreshWd();
+}
+/* Replace the whole working session (plan inputs, every calculator's inputs, held scenarios); calculators missing from the snapshot go back to defaults */
+function applySnapshot(snap) {
+  const p = cleanPlan(snap.plan), calc = cleanStates(snap.calc), sc = cleanStates(snap.scen);
+  Object.keys(plan).forEach(k => { delete plan[k]; }); Object.assign(plan, defaultPlan(), p);
+  refreshPlanUI(); savePlan();
+  Object.keys(scenA).forEach(k => { delete scenA[k]; });
+  MODULES.forEach(m => { if (sc[m.id]) scenA[m.id] = Object.assign(defaultsOf(m), sc[m.id]); });
+  MODULES.forEach(m => { const b = built[m.id]; b.setState(Object.assign(defaultsOf(m), calc[m.id] || {})); b.onChange(null); });
+}
+var workT = null;
+function persistWork() { try { localStorage.setItem(WORK_KEY, JSON.stringify({ calc: statesOf(m => built[m.id].state), scen: statesOf(m => scenA[m.id]), active: activeName, base: baseKey })); } catch (e) {} }
+function workChanged() { clearTimeout(workT); workT = setTimeout(() => { persistWork(); updateClientStatus(); }, 350); }
+// a second click within four seconds confirms
+function armed(btn, label, run) {
+  if (btn.dataset.armed) { clearTimeout(btn._t); btn.textContent = btn.dataset.label; delete btn.dataset.armed; btn.classList.remove('is-warn'); run(); return; }
+  btn.dataset.label = btn.textContent; btn.dataset.armed = '1'; btn.textContent = label; btn.classList.add('is-warn');
+  btn._t = setTimeout(() => { btn.textContent = btn.dataset.label; delete btn.dataset.armed; btn.classList.remove('is-warn'); }, 4000);
+}
+const clientsEl = h('div', { class: 'clients', id: 'clients' });
+const savedSel = h('select', { id: 'cl_saved', 'aria-label': 'Saved client plans' });
+const saveBtn = h('button', { type: 'button', class: 'btn btn-primary', id: 'cl_save', title: 'Save the plan inputs, every calculator’s inputs, and any held Scenario A under the client name' }, 'Save plan');
+const newBtn = h('button', { type: 'button', class: 'btn', id: 'cl_new', title: 'Clear the client and return every input to the standard assumptions; advisor details and print options are kept' }, 'New client');
+const openBtn = h('button', { type: 'button', class: 'btn', id: 'cl_open' }, 'Open');
+const delBtn = h('button', { type: 'button', class: 'btn', id: 'cl_delete' }, 'Delete');
+const exportBtn = h('button', { type: 'button', class: 'btn', id: 'cl_export', title: 'Download this plan as a file, for a backup or to open it on another computer' }, 'Save to file');
+const importBtn = h('button', { type: 'button', class: 'btn', id: 'cl_import', title: 'Open a plan file saved from this site' }, 'Open file');
+const fileIn = h('input', { type: 'file', id: 'cl_file', accept: '.json,application/json', hidden: '' });
+const clStatus = h('div', { class: 'cl-status', id: 'cl_status' }), clMsg = h('div', { class: 'cl-msg', id: 'cl_msg', 'aria-live': 'polite' });
+const note = t => { clMsg.textContent = t; clearTimeout(note.t); note.t = setTimeout(() => { clMsg.textContent = ''; }, 6000); };
+clientsEl.append(
+  h('div', { class: 'cl-head' }, h('h3', {}, 'Client plans'), h('span', {}, 'Saved in this browser on this computer. Nothing is sent anywhere; Save to file makes a copy you can back up or move.')),
+  h('div', { class: 'cl-row' },
+    h('div', { class: 'cl-grp' }, saveBtn, newBtn),
+    h('div', { class: 'cl-grp' }, h('div', { class: 'select-wrap' }, savedSel), openBtn, delBtn),
+    h('div', { class: 'cl-grp' }, exportBtn, importBtn, fileIn)),
+  clStatus, clMsg);
+function updateClientStatus(st) {
+  st = st || readStore(); const name = (plan.pl_client || '').trim(); const e = activeName && st.plans[activeName];
+  document.querySelectorAll('.client-chip').forEach(c => { c.hidden = !name; c.replaceChildren('Client: ', h('b', {}, name)); c.title = name; });
+  if (e) clStatus.replaceChildren('Open: ', h('b', {}, activeName), isDirty() ? h('span', { class: 'dirty' }, ' · changes not saved yet') : ' · saved ' + fmtStamp(e.saved));
+  else clStatus.replaceChildren(name ? h('span', {}, h('b', {}, name), h('span', { class: 'dirty' }, ' · not saved in this browser yet')) : 'No client plan open. Enter a name under Prepared for, then Save plan.');
+}
+function refreshClients() {
+  const st = readStore(); const names = Object.keys(st.plans).sort((a, b) => a.localeCompare(b)); const cur = savedSel.value;
+  savedSel.replaceChildren(h('option', { value: '' }, names.length ? 'Saved plans (' + names.length + ')' : 'No saved plans yet'), ...names.map(n => h('option', { value: n }, n + ' · ' + fmtStamp(st.plans[n].saved))));
+  savedSel.value = names.includes(activeName) ? activeName : names.includes(cur) ? cur : '';
+  openBtn.disabled = delBtn.disabled = !names.length;
+  updateClientStatus(st);
+}
+saveBtn.addEventListener('click', () => {
+  const name = (plan.pl_client || '').trim();
+  if (!name) { note('Enter the client’s name under Prepared for, then save.'); const el = document.getElementById('pl_client'); if (el) el.focus(); return; }
+  const go = () => { const st = readStore(); st.plans[name] = Object.assign({ saved: new Date().toISOString() }, snapshot());
+    if (!writeStore(st)) { note('This browser would not store the plan (storage is full or turned off). Use Save to file instead.'); return; }
+    activeName = name; markBase(); persistWork(); refreshClients(); note('Saved “' + name + '” in this browser.'); };
+  if (readStore().plans[name] && name !== activeName) armed(saveBtn, 'Replace saved plan?', go); else go();
+});
+openBtn.addEventListener('click', () => {
+  const name = savedSel.value; if (!name) { note('Choose a saved plan from the list first.'); savedSel.focus(); return; }
+  const go = () => { const e = readStore().plans[name]; if (!e) { note('That plan is no longer saved in this browser.'); refreshClients(); return; }
+    applySnapshot(e); activeName = name; markBase(); persistWork(); refreshClients(); note('Opened “' + name + '”.'); };
+  if (isDirty() && name !== activeName) armed(openBtn, 'Discard unsaved changes?', go); else if (isDirty()) armed(openBtn, 'Discard changes and reopen?', go); else go();
+});
+delBtn.addEventListener('click', () => {
+  const name = savedSel.value; if (!name) { note('Choose a saved plan from the list first.'); savedSel.focus(); return; }
+  armed(delBtn, 'Delete from this browser?', () => { const st = readStore(); delete st.plans[name]; writeStore(st); if (activeName === name) activeName = ''; persistWork(); refreshClients(); note('Deleted “' + name + '” from this browser. The inputs on screen are unchanged.'); });
+});
+newBtn.addEventListener('click', () => {
+  const go = () => { const keep = {}; ['pl_advisor', 'pl_email', 'pl_phone', 'pl_office', 'pl_include', 'pl_highlight', 'pl_source'].concat(PARTS.map(p => p.id)).forEach(k => { keep[k] = plan[k]; });
+    applySnapshot({ plan: Object.assign(defaultPlan(), keep), calc: {}, scen: {} }); activeName = ''; markBase(); persistWork(); refreshClients();
+    note('New client: every input is back to the standard assumptions.'); const el = document.getElementById('pl_client'); if (el) el.focus(); };
+  if (isDirty()) armed(newBtn, 'Discard unsaved changes?', go); else go();
+});
+exportBtn.addEventListener('click', () => {
+  const name = (plan.pl_client || '').trim() || 'Client';
+  const data = Object.assign({ format: FILE_FORMAT, version: 1, name, exported: new Date().toISOString() }, snapshot());
+  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
+  const a = h('a', { href: url, download: 'WealthCare plan - ' + (name.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '').trim().slice(0, 60) || 'Client') + ' - ' + todayISO() + '.json' });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+  note('Saved “' + name + '” to a file in your downloads folder.');
+});
+importBtn.addEventListener('click', () => { fileIn.value = ''; if (isDirty()) armed(importBtn, 'Discard unsaved changes?', () => fileIn.click()); else fileIn.click(); });
+fileIn.addEventListener('change', () => {
+  const file = fileIn.files && fileIn.files[0]; if (!file) return;
+  if (file.size > 2e6) { note('That file is too large to be a plan file from this site.'); return; }
+  file.text().then(t => { let d = null; try { d = JSON.parse(t); } catch (e) {}
+    if (!d || typeof d !== 'object' || d.format !== FILE_FORMAT) { note('That file is not a plan file from this site.'); return; }
+    applySnapshot(d); activeName = ''; markBase(); persistWork(); refreshClients();
+    note('Opened “' + ((plan.pl_client || '').trim() || 'plan') + '” from the file. Save plan to keep it in this browser.'); }, () => note('That file could not be read.'));
+});
+document.getElementById('plan-host').prepend(clientsEl);
+onPlanSaved = workChanged; planHooks.push(workChanged);
+// Restore the working session (each calculator's inputs and held scenarios) from the last visit
+{
+  let w = null; try { w = JSON.parse(localStorage.getItem(WORK_KEY) || 'null'); } catch (e) {}
+  if (w && typeof w === 'object') {
+    const calc = cleanStates(w.calc), sc = cleanStates(w.scen);
+    MODULES.forEach(m => { if (sc[m.id]) scenA[m.id] = Object.assign(defaultsOf(m), sc[m.id]);
+      if (calc[m.id]) { built[m.id].setState(Object.assign(defaultsOf(m), calc[m.id])); if (m.onChange) m.onChange(null, built[m.id].state, m.fields); } });
+    activeName = typeof w.active === 'string' ? w.active : ''; baseKey = typeof w.base === 'string' ? w.base : '';
+  }
+  if (!baseKey) markBase();
+  refreshClients();
+}
+MODULES.forEach(m => { markCustom(m.id); refreshBasis(m.id); });
 
 /* Report */
 const reportEl = h('div', { id: 'report' });
 document.body.insertBefore(reportEl, document.querySelector('main'));
-const fmtVal = (f, v, state) => { if (f.kind === 'seg') { const o = f.options.find(o => o.v === state[f.id]); return o ? o.label : String(v); } if (f.kind === 'money') return money(v); if (f.kind === 'pct') return (Math.round(v * 100) / 100) + '%'; if (/age$/i.test(f.label) || /^Current age/.test(f.label)) return 'age ' + v; return v + (v === 1 ? ' year' : ' years'); };
 const LOGO_SRC = document.querySelector('.brandmark img').getAttribute('src');
 let reportReturn = null, docTitle = document.title;
 /* only = a calculator id: a one-calculator printout (1–2 pages) from that calculator's page, using its current inputs */
@@ -1998,7 +2300,8 @@ function openReport(andPrint, only) {
     t.append(tb); return t;
   };
   mods.forEach(mod => {
-    const b = built[mod.id]; const state = mod.id === 'loan' && b.state.l_view !== 'y' ? Object.assign({}, b.state, { l_view: 'y' }) : b.state; const r = mod.compute(state);
+    const b = built[mod.id]; const state = forCompute(mod, b.state); const r = mod.compute(state);
+    const sA = scenA[mod.id], rA = sA ? mod.compute(forCompute(mod, sA)) : null;
     const blocks = [];
     const want = single ? { assump: true, stats: true, obs: true, charts: true, tables: false } : { assump: plan.pp_assump, stats: plan.pp_stats, obs: plan.pp_obs, charts: plan.pp_charts, tables: plan.pp_tables };
     if (single) blocks.push(h('div', { class: 'rsec rsingle' },
@@ -2019,10 +2322,13 @@ function openReport(andPrint, only) {
     if (want.stats) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Key statistics', h('span', {}, FEE_FREE.includes(mod.id) ? 'hypothetical' : 'hypothetical · gross of fees')),
       h('div', { class: 'rprimary' }, h('div', { class: 'l' }, r.hero.label), h('div', { class: 'v' + fitClass(r.hero.value) }, r.hero.value), h('div', { class: 's' }, r.hero.sub)),
       h('div', { class: 'rstats' }, ...r.tiles.map(t => h('div', { class: 'rstat' + (t.accent ? ' accent' : '') }, h('div', { class: 'l' }, t.label), h('div', { class: 'v' + fitClass(t.value) }, t.value), t.sub ? h('div', { class: 's' }, t.sub) : null)))));
+    if (rA) { const t = scenTables(mod, sA, b.state, rA, r, 'rtab'); // B is the inputs and results above; A is the alternative held for comparison
+      blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Scenario A vs. B', h('span', {}, 'Scenario B is the inputs and results above; Scenario A is held for comparison')), t.results));
+      if (t.inputs) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Inputs that differ'), t.inputs)); }
     if (want.obs) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Observation'), h('p', { class: 'robs', html: r.callout })));
     const chartBlocks = [];
-    if (want.charts) [[mod.chart, r.chart], [mod.chart2, r.chart2]].forEach(([cfg, data]) => { if (!cfg || !data) return;
-      const box = h('div', { class: 'rchart' }); const sec = h('div', { class: 'rsec' }, h('h3', {}, cfg.title), box); chartBlocks.push({ sec, box, cfg, data }); blocks.push(sec); if (want.tables) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, cfg.title, h('span', {}, 'data')), compactTable(data))); });
+    if (want.charts) [[mod.chart, r.chart, rA && rA.chart], [mod.chart2, r.chart2, rA && rA.chart2]].forEach(([cfg, data, dataA]) => { if (!cfg || !data) return;
+      const box = h('div', { class: 'rchart' }); const sec = h('div', { class: 'rsec' }, h('h3', {}, cfg.title), box); chartBlocks.push({ sec, box, cfg, data: withA(data, dataA) }); blocks.push(sec); if (want.tables) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, cfg.title, h('span', {}, 'data')), compactTable(data))); });
     if (want.tables && r.extra) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, r.extraTitle || 'Reference', r.extraSub ? h('span', {}, r.extraSub) : null), h('div', { class: 'rsched', html: r.extra.replace(/class="sched"/g, 'class="rsched"') })));
     // charts must be rendered at the real print width before measuring, so mount the blocks first
     const pre = h('section', { class: 'rpage' }, ...blocks); pages.append(pre);
