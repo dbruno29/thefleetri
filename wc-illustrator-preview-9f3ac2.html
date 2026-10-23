@@ -133,10 +133,6 @@ h2.disp { font-size: clamp(32px, 4.2vw, 48px); }
 .block .k { font: 600 12px/1 var(--ui); color: var(--muted); margin-top: 4px; }
 @media (max-width: 860px) { .blocks { grid-template-columns: repeat(2, 1fr); } .block:nth-child(3) { border-left: 0; } .block:nth-child(n+3) { border-top: 1px solid var(--line); } }
 @media (max-width: 480px) { .blocks { grid-template-columns: 1fr; } .block { border-left: 0; border-top: 1px solid var(--line); } .block:first-child { border-top: 0; } }
-.quote { background: var(--surface-2); border-top: 1px solid var(--line); }
-.quote .wrap { padding-block: 64px; display: grid; gap: 14px; justify-items: start; }
-.quote blockquote { margin: 0; font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: clamp(30px, 4.6vw, 56px); line-height: .98; color: var(--navy); max-width: 22ch; }
-.quote cite { font: 600 12px/1 var(--ui); letter-spacing: .18em; text-transform: uppercase; color: var(--ink-2); font-style: normal; }
 .band { background: var(--navy-band); color: #fff; }
 .band .wrap { padding-block: 72px; display: grid; gap: 20px; justify-items: start; }
 .band h2 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(40px, 6vw, 76px); line-height: .92; color: #fff; }
@@ -326,6 +322,7 @@ body.report-mode .subbar, body.report-mode main, body.report-mode footer { displ
 .rsec h3 { font-size: 14px; font-weight: 400; color: #222; margin: 0 0 6px; font-family: Arial, Helvetica, sans-serif; letter-spacing: 0; text-transform: none; }
 .rsec h3 span { font-size: 11px; color: #777; margin-left: 8px; }
 .rtab { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.rtab.wide1 td:first-child, .rtab.wide1 th:first-child { min-width: 200px; white-space: nowrap; }
 .rtab th { text-align: left; font-weight: 700; border-bottom: 1px solid #333; padding: 4px 6px; }
 .rtab td { padding: 4px 6px; border-bottom: 1px dashed #c8c8c8; vertical-align: top; }
 .rtab td.v, .rtab th.v { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -334,6 +331,20 @@ body.report-mode .subbar, body.report-mode main, body.report-mode footer { displ
 .tag { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border-radius: 2px; line-height: 1.4; }
 .tag.plan { color: #666; border: 1px solid #ccc; }
 .tag.custom { color: #2F6B12; border: 1px solid #92D050; background: #F1F8E6; }
+.tag.enter { color: #8A4B00; border: 1px solid #E3A94F; background: #FCF2E2; }
+.tag.done { color: #2F6B12; border: 1px solid #92D050; background: #F1F8E6; }
+button.tag { font-family: var(--ui); cursor: pointer; }
+button.tag:hover { filter: brightness(.96); }
+.legend { display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; align-items: center; font-size: 11.5px; color: var(--muted); margin: 2px 0 6px; }
+.legend .tag { justify-self: start; }
+.chk-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: start; padding: 3px 0; border-bottom: 1px solid var(--line-soft); }
+.chk-row:last-child { border-bottom: 0; }
+.chk-row .chk { padding-top: 1px; }
+.basis { display: grid; justify-items: end; gap: 2px; text-align: right; max-width: 190px; }
+.basis-sub { font-size: 11px; line-height: 1.35; color: var(--muted); }
+.namecell { display: grid; gap: 6px; justify-items: start; }
+.namecell .basis { justify-items: start; text-align: left; max-width: 220px; }
+@media (max-width: 640px) { .namecell .basis-sub { display: none; } }
 .rprimary { padding: 2px 0 10px; }
 .rprimary .l { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #777; }
 .rprimary .v { font-size: 26px; font-weight: 700; color: #000064; line-height: 1.2; font-family: Arial, Helvetica, sans-serif; }
@@ -1028,6 +1039,7 @@ const MODULES = [
   },
   {
     output: 'Payment, total interest, payoff with extra payments', desc: 'Computes the payment on a fixed-rate loan, splits each year\u2019s payments into principal and interest, and shows how an extra monthly payment shortens the term and reduces total interest.', id: 'loan', group: 'borrow', tab: 'Loan amortization', title: 'Paying down a loan', question: 'Where does each loan payment go, and what does an extra payment do?',
+    manual: ['l_amount', 'l_rate', 'l_years'],
     lede: 'A loan is compounding in reverse. Early payments are mostly interest; later ones are mostly principal. See the split, and what an extra payment does to it.',
     fields: [
       moneyField('l_amount', 'Loan amount', 1000, 2000000, 1000, DEFAULTS.loanAmount),
@@ -1115,6 +1127,7 @@ const MODULES = [
   },
   {
     id: 'mortgage', group: 'borrow', tab: 'Mortgage affordability', title: 'How much home a budget supports', question: 'What home price does an income support at a given rate?',
+    manual: ['m_down', 'm_rate', 'm_ti'],
     desc: 'Starts from gross income, other monthly debt payments, and a down payment, applies common lender ratios, and estimates the monthly housing payment, loan amount, and home price a budget supports at a given rate. A rough screen, not a lender decision.',
     lede: 'A rough screen using common lender ratios: housing costs within a share of gross income, and all debt payments within a larger share. Lenders’ rules vary.',
     fields: [
@@ -1152,37 +1165,40 @@ const MODULES = [
   },
   {
     id: 'insure', group: 'protect', tab: 'Life insurance need', title: 'How much life insurance a family would need', question: 'How much coverage would replace income and clear obligations?',
-    desc: 'Adds up what dependents would need: a lump sum to replace income for a chosen number of years, debts to pay off, education funding, and final expenses. Subtracts existing coverage and available assets to show the gap.',
-    lede: 'A needs-based estimate: income to replace, obligations to clear, and goals to fund, less what is already in place. It does not recommend any product or carrier.',
+    desc: 'Adds up what dependents would need: income to replace after Social Security survivor benefits, the mortgage and other debts to pay off, education funding, and final expenses. Subtracts existing coverage and available assets to show the gap.',
+    lede: 'A needs-based estimate: income to replace after survivor benefits, the mortgage and other obligations to clear, and goals to fund, less what is already in place. It does not recommend any product or carrier.',
+    manual: ['n_ss', 'n_years', 'n_debts', 'n_edu', 'n_final', 'n_assets'],
     fields: [
-      moneyField('n_income', 'Annual income to replace', 0, 1000000, 1000, 100000),
-      intField('n_years', 'Years of income to replace', 1, 40, 1, 20),
-      pctField('n_rate', 'Assumed return on proceeds', 0, 10, 0.1, 4),
+      moneyField('n_income', 'Household income to replace', 0, 1000000, 1000, 150000, 'Gross annual income the family would lose.'),
+      moneyField('n_ss', 'Survivor benefits per year', 0, 200000, 1000, 24000, 'Social Security survivor benefits, pension survivor income, or both. Reduces the income to replace.'),
+      intField('n_years', 'Years of income to replace', 1, 40, 1, 20, 'Often until the youngest child is independent or the survivor retires.'),
+      pctField('n_rate', 'Assumed return on proceeds', 0, 10, 0.1, DEFAULTS.retireRate),
       pctField('n_infl', 'Assumed inflation', 0, 10, 0.1, DEFAULTS.inflation),
-      moneyField('n_debts', 'Debts to pay off (incl. mortgage)', 0, 3000000, 5000, 300000),
+      moneyField('n_mortgage', 'Mortgage balance to pay off', 0, 3000000, 5000, 300000),
+      moneyField('n_debts', 'Other debts to pay off', 0, 1000000, 1000, 25000, 'Car loans, student loans, credit cards.'),
       moneyField('n_edu', 'Education funding', 0, 1000000, 5000, 100000),
       moneyField('n_final', 'Final expenses', 0, 100000, 1000, 15000),
-      moneyField('n_cover', 'Existing life insurance', 0, 5000000, 10000, 250000),
-      moneyField('n_assets', 'Assets available to dependents', 0, 5000000, 10000, 100000)
+      moneyField('n_cover', 'Existing life insurance', 0, 5000000, 10000, 250000, 'Individual and group coverage already in force.'),
+      moneyField('n_assets', 'Assets available to dependents', 0, 5000000, 10000, 100000, 'Savings and investments the family could draw on; not retirement accounts they intend to keep.')
     ],
     chart: { title: 'Components of the need, and what is already in place' },
     compute(s) {
-      const r = s.n_rate / 100, g = s.n_infl / 100, n = s.n_years, I = s.n_income;
+      const r = s.n_rate / 100, g = s.n_infl / 100, n = s.n_years, I = Math.max(0, s.n_income - s.n_ss);
       const pv = Math.abs(r - g) < 1e-9 ? n * I / (1 + r) : I / (1 + r) * (1 - Math.pow((1 + g) / (1 + r), n)) / (1 - (1 + g) / (1 + r));
-      const immediate = s.n_debts + s.n_edu + s.n_final; const total = pv + immediate; const have = s.n_cover + s.n_assets; const gap = total - have;
+      const debts = s.n_mortgage + s.n_debts; const immediate = debts + s.n_edu + s.n_final; const total = pv + immediate; const have = s.n_cover + s.n_assets; const gap = total - have;
       return {
         hero: gap > 0
           ? { label: 'Additional coverage indicated', value: money(gap), sub: `Total need of ${money(total)} less ${money(have)} already in place (existing coverage and assets).` }
           : { label: 'Coverage in place exceeds the estimated need by', value: money(-gap), sub: `Total need of ${money(total)} against ${money(have)} in existing coverage and assets.` },
         tiles: [
-          { label: 'Income replacement, as a lump sum', value: money(pv), sub: `${money(I)} a year for ${n} years, rising ${pct(s.n_infl)}, invested at ${pct(s.n_rate)}` },
-          { label: 'Debts, education, final expenses', value: money(immediate), sub: `${money(s.n_debts)} + ${money(s.n_edu)} + ${money(s.n_final)}` },
+          { label: 'Income replacement, as a lump sum', value: money(pv), sub: `${money(I)} a year (${money(s.n_income)} less ${money(s.n_ss)} survivor benefits) for ${n} years, rising ${pct(s.n_infl)}, invested at ${pct(s.n_rate)}` },
+          { label: 'Mortgage, debts, education, final expenses', value: money(immediate), sub: `${money(s.n_mortgage)} + ${money(s.n_debts)} + ${money(s.n_edu)} + ${money(s.n_final)}` },
           { label: 'Total need', value: money(total), sub: 'before existing coverage and assets' },
           { label: 'Already in place', value: money(have), accent: true, sub: `${money(s.n_cover)} coverage + ${money(s.n_assets)} assets` }
         ],
-        callout: `Income replacement is <b>${pct(total > 0 ? pv / total * 100 : 0, 0)}</b> of the total need. ${gap > 0 ? `The indicated gap is about <b>${(gap / Math.max(1, I)).toFixed(1)}×</b> annual income.` : 'Existing coverage and assets cover the estimated need under these assumptions.'} Needs change with each life event, so this estimate should be revisited regularly. Any insurance decision involves product features, costs, and underwriting that this estimate does not address.`,
-        chart: { kind: 'bars', x: [0, 1, 2, 3, 4], xLabels: ['Income', 'Debts', 'Education', 'Final', 'In place'], xName: 'Component', colors: ['var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c2)'], series: [{ name: 'Amount', color: 'var(--c1)', values: [pv, s.n_debts, s.n_edu, s.n_final, have] }], aria: 'Column chart of the components of the life insurance need and the amount already in place' },
-        copy: [`Replace ${money(I)}/yr for ${n} years (${pct(s.n_infl)} inflation, ${pct(s.n_rate)} return compounded annually); debts ${money(s.n_debts)}; education ${money(s.n_edu)}; final expenses ${money(s.n_final)}; existing coverage ${money(s.n_cover)}; assets ${money(s.n_assets)}.`, `Total need ${money(total)}; already in place ${money(have)}; ${gap > 0 ? 'additional coverage indicated ' + money(gap) : 'coverage exceeds need by ' + money(-gap)}.`]
+        callout: `Income replacement is <b>${pct(total > 0 ? pv / total * 100 : 0, 0)}</b> of the total need${s.n_ss > 0 ? `, after <b>${money(s.n_ss)}</b> a year in survivor benefits` : ''}; paying off the mortgage is <b>${pct(total > 0 ? s.n_mortgage / total * 100 : 0, 0)}</b>. ${gap > 0 ? `The indicated gap is about <b>${(gap / Math.max(1, s.n_income)).toFixed(1)}×</b> household income.` : 'Existing coverage and assets cover the estimated need under these assumptions.'} Needs change with each life event, so this estimate should be revisited regularly. Any insurance decision involves product features, costs, and underwriting that this estimate does not address.`,
+        chart: { kind: 'bars', x: [0, 1, 2, 3, 4, 5], xLabels: ['Income', 'Mortgage', 'Debts', 'Education', 'Final', 'In place'], xName: 'Component', colors: ['var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c2)'], series: [{ name: 'Amount', color: 'var(--c1)', values: [pv, s.n_mortgage, s.n_debts, s.n_edu, s.n_final, have] }], aria: 'Column chart of the components of the life insurance need and the amount already in place' },
+        copy: [`Replace ${money(I)}/yr (${money(s.n_income)} income less ${money(s.n_ss)} survivor benefits) for ${n} years (${pct(s.n_infl)} inflation, ${pct(s.n_rate)} return compounded annually); mortgage ${money(s.n_mortgage)}; other debts ${money(s.n_debts)}; education ${money(s.n_edu)}; final expenses ${money(s.n_final)}; existing coverage ${money(s.n_cover)}; assets ${money(s.n_assets)}.`, `Total need ${money(total)}; already in place ${money(have)}; ${gap > 0 ? 'additional coverage indicated ' + money(gap) : 'coverage exceeds need by ' + money(-gap)}.`]
       };
     }
   }
@@ -1228,7 +1244,7 @@ home.append(
     h('div', { class: 'stat' }, h('b', {}, 'PDF'), h('span', {}, 'Printable plan, your logo on it')))),
   h('section', { class: 'sec' }, h('div', { class: 'wrap' }, h('div', { class: 'two' },
     h('div', { class: 'text' }, h('span', { class: 'eyebrow' }, 'How it works'), h('h2', { class: 'disp' }, 'Enter your numbers once.'),
-      h('p', { class: 'lead' }, 'Client name, starting balance, contributions, return, inflation, and retirement withdrawals live in one place. Every calculator reads from them, flags anything you change for a single scenario, and the printout shows exactly which inputs were used.'),
+      h('p', { class: 'lead' }, 'Client name, starting balance, contributions, return, inflation, household income and debts, and retirement withdrawals live in one place. Every calculator reads from them, flags anything you change for a single scenario, and the printout shows exactly which inputs were used and which were entered by hand.'),
       h('div', {}, h('button', { type: 'button', class: 'arrow-link', onclick: () => show('plan', true) }, 'Set up a plan'))),
     h('div', { class: 'figure', html: growthFigure() + '<div class="cap">Illustrative: ' + money(DEFAULTS.principal) + ' to start, ' + money(DEFAULTS.monthly) + ' a month, ' + DEFAULTS.rate + '% assumed, 30 years. Hypothetical.</div>' })))),
   h('section', { class: 'sec' }, h('div', { class: 'wrap' },
@@ -1236,7 +1252,6 @@ home.append(
     h('div', { class: 'blocks' }, ...GROUPS.map(g => { const n = MODULES.filter(m => m.group === g.id).length;
       return h('button', { type: 'button', class: 'block', onclick: () => { show('list', true); const el = document.getElementById('cat_' + g.id); if (el) el.scrollIntoView({ block: 'start' }); } },
         h('span', { class: 'n' }, GROUP_META[g.id].n), h('span', { class: 't' }, g.name), h('span', { class: 'd' }, g.blurb), h('span', { class: 'k' }, n + ' calculator' + (n === 1 ? '' : 's') + ' →')); })))),
-  h('section', { class: 'quote' }, h('div', { class: 'wrap' }, h('blockquote', {}, 'You retire once. We retire people every day.'), h('cite', {}, 'WealthCare Investment Partners'))),
   h('section', { class: 'band' }, h('div', { class: 'wrap' }, h('h2', {}, 'Compounding won’t wait.'), h('p', {}, 'Set the assumptions, run the calculators that matter to you, and leave the meeting with a printed plan.'), h('button', { type: 'button', class: 'cta', onclick: () => show('plan', true) }, 'Set up a plan'))));
 mainEl.append(home);
 
@@ -1253,7 +1268,7 @@ const catlist = h('div', { class: 'catlist' });
 GROUPS.forEach(g => {
   const rows = h('div', { class: 'rows' });
   MODULES.filter(m => m.group === g.id).forEach(m => rows.append(h('div', { class: 'row-item' },
-    h('button', { type: 'button', class: 'name', id: 'idx_' + m.id, onclick: () => show(m.id, true) }, m.tab),
+    h('div', { class: 'namecell' }, h('button', { type: 'button', class: 'name', id: 'idx_' + m.id, onclick: () => show(m.id, true) }, m.tab), h('span', { class: 'basis-host list', id: 'bh_' + m.id })),
     h('div', { class: 'q' }, m.desc),
     h('button', { type: 'button', class: 'btn', onclick: () => show(m.id, true) }, 'Open'))));
   catlist.append(h('div', { class: 'cat', id: 'cat_' + g.id }, h('div', {}, h('span', { class: 'eyebrow' }, GROUP_META[g.id].n), h('div', { class: 't' }, g.name), h('div', { class: 'b' }, g.blurb)), rows));
@@ -1335,19 +1350,27 @@ const PLAN_INFO = [
 ];
 const PLAN_ASSUMP = [
   { id: 'pl_start', label: 'Starting amount', kind: 'money', value: DEFAULTS.principal, map: ['g_principal', 'c_principal', 'i_principal', 'o_principal', 'r_principal'] },
-  { id: 'pl_pmt', label: 'Monthly contribution', kind: 'money', value: DEFAULTS.monthly, map: ['g_pmt', 'c_pmt', 'i_pmt', 'w_pmt', 'o_pmt'] },
+  { id: 'pl_pmt', label: 'Monthly contribution', kind: 'money', value: DEFAULTS.monthly, map: ['g_pmt', 'c_pmt', 'i_pmt', 'w_pmt', 'o_pmt', 't_contrib*12'] },
   { id: 'pl_ret', label: 'Assumed annual return', kind: 'pct', value: DEFAULTS.rate, map: ['g_rate', 'c_inv', 'i_rate', 'r_rate', 'w_rate', 'o_rate', 't_rate'] },
+  { id: 'pl_save', label: 'Savings account rate', kind: 'pct', value: DEFAULTS.savingsApy, map: ['c_save'] },
   { id: 'pl_retret', label: 'Return in retirement', kind: 'pct', value: DEFAULTS.retireRate, map: ['p_rate', 'f_rate', 'n_rate'] },
   { id: 'pl_infl', label: 'Inflation', kind: 'pct', value: DEFAULTS.inflation, map: ['i_infl', 'p_infl', 'f_infl', 'n_infl'] },
   { id: 'pl_years', label: 'Years / horizon', kind: 'int', value: DEFAULTS.years, map: ['g_years', 'c_years', 'i_years', 'r_years', 'w_years', 'o_years', 't_years', 'f_years'] },
-  { id: 'pl_bal', label: 'Retirement balance', kind: 'money', value: DEFAULTS.retireBalance, map: ['p_bal', 'f_bal'] },
+  { id: 'pl_bal', label: 'Retirement balance / goal', kind: 'money', value: DEFAULTS.retireBalance, map: ['p_bal', 'f_bal', 'o_target'] },
   { id: 'pl_exp', label: 'Annual expenses (today)', kind: 'money', value: DEFAULTS.cfExpenses, map: ['f_exp'] },
   { id: 'pl_inc', label: 'Other annual income (today)', kind: 'money', value: DEFAULTS.cfIncome, map: ['f_inc'] },
   { id: 'pl_wdmode', label: 'Withdrawal set as', kind: 'seg', group: 'wd', value: 'amt', options: [{ v: 'amt', label: 'Monthly amount' }, { v: 'pct', label: '% of starting balance' }], map: ['p_mode'] },
   { id: 'pl_wd', label: 'Monthly withdrawal (first year)', kind: 'money', group: 'wd', value: DEFAULTS.retireMonthly, map: ['p_wd'], when: () => plan.pl_wdmode === 'amt' },
   { id: 'pl_wdpct', label: 'Withdrawal rate (% of starting balance)', kind: 'pct', group: 'wd', value: Math.round(DEFAULTS.retireMonthly * 12 / DEFAULTS.retireBalance * 1000) / 10, map: ['p_pct'], when: () => plan.pl_wdmode === 'pct' },
-  { id: 'pl_wdadj', label: 'Withdrawals rise with inflation', kind: 'seg', group: 'wd', value: 1, options: [{ v: 1, label: 'Yes' }, { v: 0, label: 'No' }], map: ['p_adj'] }
+  { id: 'pl_wdadj', label: 'Withdrawals rise with inflation', kind: 'seg', group: 'wd', value: 1, options: [{ v: 1, label: 'Yes' }, { v: 0, label: 'No' }], map: ['p_adj'] },
+  { id: 'pl_hhinc', label: 'Gross annual household income', kind: 'money', group: 'hh', value: 150000, map: ['m_income', 'n_income'] },
+  { id: 'pl_tax', label: 'Marginal tax rate today', kind: 'pct', group: 'hh', value: 24, map: ['t_now'] },
+  { id: 'pl_taxret', label: 'Tax rate in retirement', kind: 'pct', group: 'hh', value: 22, map: ['t_wd'] },
+  { id: 'pl_mort', label: 'Mortgage balance', kind: 'money', group: 'hh', value: 300000, map: ['n_mortgage'] },
+  { id: 'pl_debt', label: 'Other monthly debt payments', kind: 'money', group: 'hh', value: 500, map: ['m_debts'] },
+  { id: 'pl_cover', label: 'Existing life insurance', kind: 'money', group: 'hh', value: 250000, map: ['n_cover'] }
 ];
+const HH_USERS = 'tax-deferred, mortgage and life insurance';
 const PARTS = [
   { id: 'pp_assump', label: 'Assumptions used', value: true },
   { id: 'pp_stats', label: 'Key statistics', value: true },
@@ -1362,10 +1385,16 @@ if (!Array.isArray(plan.pl_include)) plan.pl_include = MODULES.map(m => m.id);
 const savePlan = () => { try { localStorage.setItem('wcip-plan', JSON.stringify(plan)); } catch (e) {} };
 
 const fieldById = {}; MODULES.forEach(m => m.fields.forEach(f => { fieldById[f.id] = { mod: m, f }; }));
-const planFor = fid => PLAN_ASSUMP.find(a => a.map.includes(fid));
+const planMap = {}; PLAN_ASSUMP.forEach(a => a.map.forEach(m => { const [fid, k] = m.split('*'); planMap[fid] = { a, k: k ? Number(k) : 1 }; }));
+const planFor = fid => planMap[fid] ? planMap[fid].a : undefined;
+const planVal = fid => { const m = planMap[fid]; return m.a.kind === 'seg' ? plan[m.a.id] : plan[m.a.id] * m.k; };
 const fieldVisible = fid => { const el = document.getElementById(fid); const fe = el && el.closest('.field'); return !!fe && !fe.hidden; };
 const mappable = fid => { if (fid === 'g_pmt' && built.grow.state.g_freq !== 12) return false; const a = planFor(fid); return !(a && a.when && !a.when()); };
-function differs(fid) { const a = planFor(fid); if (!a || !mappable(fid)) return false; const { mod } = fieldById[fid]; const v = built[mod.id].state[fid]; return a.kind === 'seg' ? v !== plan[a.id] : Math.abs(v - plan[a.id]) > 1e-9; }
+function differs(fid) { const a = planFor(fid); if (!a || !mappable(fid)) return false; const { mod } = fieldById[fid]; const v = built[mod.id].state[fid]; return a.kind === 'seg' ? v !== planVal(fid) : Math.abs(v - planVal(fid)) > 1e-9; }
+/* Inputs a calculator needs typed in by hand for a true result (not fed by the plan, not a scenario lever) */
+const manualFields = m => (m.manual || []).map(id => m.fields.find(f => f.id === id)).filter(f => f && fieldVisible(f.id));
+const atDefault = (m, f) => { const v = built[m.id].state[f.id]; return f.kind === 'seg' ? v === f.value : Math.abs(v - f.value) < 1e-9; };
+function basisOf(m) { const mf = manualFields(m); const todo = mf.filter(f => atDefault(m, f)); return { manual: mf, todo, standard: mf.length === 0 }; }
 function markCustom(modId) {
   const b = built[modId]; let n = 0;
   b.fields.forEach(f => { const el = document.getElementById(f.id); const fe = el && el.closest('.field'); if (!fe) return; const d = differs(f.id); fe.classList.toggle('is-custom', d); if (d && !fe.hidden) n++; });
@@ -1374,8 +1403,8 @@ function markCustom(modId) {
 function applyPlanTo(modId) {
   const b = built[modId]; let touched = false;
   b.fields.forEach(f => { const a = planFor(f.id); if (!a || !mappable(f.id)) return;
-    if (f.kind === 'seg') { if (b.state[f.id] !== plan[a.id]) { f._set(plan[a.id]); touched = true; } return; }
-    const v = Math.min(f.max, Math.max(f.min, plan[a.id])); if (Math.abs(b.state[f.id] - v) > 1e-9) { f._set(v); touched = true; } });
+    if (f.kind === 'seg') { if (b.state[f.id] !== planVal(f.id)) { f._set(planVal(f.id)); touched = true; } return; }
+    const v = Math.min(f.max, Math.max(f.min, planVal(f.id))); if (Math.abs(b.state[f.id] - v) > 1e-9) { f._set(v); touched = true; } });
   if (touched) b.onChange(null); else markCustom(modId);
   return touched;
 }
@@ -1430,6 +1459,14 @@ PLAN_ASSUMP.filter(f => !f.group).forEach(f => {
   wdUI = { amt, pct, amtRow, pctRow, help };
   syncWd(); refreshWd();
 }
+{
+  const hh = h('div', { class: 'wd-group' }, h('div', { class: 'wd-h' }, 'Household', h('span', {}, 'feeds the ' + HH_USERS + ' calculators')));
+  PLAN_ASSUMP.filter(f => f.group === 'hh').forEach(f => {
+    const input = f.kind === 'money' ? moneyIn(f.id, plan[f.id], v => { plan[f.id] = v; planChanged(); }) : numIn(f);
+    hh.append(h('div', { class: 'prow' }, h('label', { for: f.id }, f.label), valBox(f, input)));
+  });
+  colAs.append(hh);
+}
 const applyStatus = h('span', { class: 'status' });
 const applyBtn = h('button', { type: 'button', class: 'btn btn-primary', id: 'pl_apply' }, 'Apply to all calculators');
 applyBtn.addEventListener('click', () => { const n = applyPlanAll(); applyStatus.textContent = n ? 'Applied to ' + n + ' calculator' + (n === 1 ? '' : 's') : 'All calculators already match the plan'; setTimeout(() => { applyStatus.textContent = ''; }, 3000); });
@@ -1439,11 +1476,27 @@ const colPr = h('div', { class: 'plan-col' }, h('h3', {}, 'Printable plan'));
 const checks = h('div', { class: 'checks' });
 const setAll = on => { plan.pl_include = on ? MODULES.map(m => m.id) : []; checks.querySelectorAll('input').forEach(c => { c.checked = on; }); savePlan(); };
 colPr.append(h('div', { class: 'checks-head' }, h('b', {}, 'Calculators to include'), h('span', {}, h('button', { type: 'button', onclick: () => setAll(true) }, 'all'), '·', h('button', { type: 'button', onclick: () => setAll(false) }, 'none'))));
+colPr.append(h('div', { class: 'legend' }, h('span', { class: 'tag plan' }, 'Standard'), h('span', {}, 'runs on the standard assumptions'), h('span', { class: 'tag enter' }, 'Enter'), h('span', {}, 'needs client figures typed into the calculator before printing')));
+const basisEls = {};
+function basisTag(m, withList) {
+  const b = basisOf(m);
+  const tag = h('button', { type: 'button', class: 'tag ' + (b.standard ? 'plan' : b.todo.length ? 'enter' : 'done'), title: b.standard ? 'Every input comes from the plan or is a scenario setting' : 'Open ' + m.tab, onclick: () => show(m.id, true) },
+    b.standard ? 'Standard' : b.todo.length ? 'Enter' : 'Entered');
+  if (!withList || b.standard) return tag;
+  const sub = h('span', { class: 'basis-sub' }, b.manual.map(f => f.label).join(', ') + (b.todo.length ? ' — ' + (b.todo.length === b.manual.length ? 'all' : b.todo.length) + ' still at default values' : ' — entered'));
+  return h('span', { class: 'basis' }, tag, sub);
+}
+function refreshBasis(modId) { const m = MODULES.find(x => x.id === modId); if (!m) return; Object.values(basisEls).forEach(host => { if (host.mod === m) host.el.replaceChildren(basisTag(m, host.withList)); }); }
 GROUPS.forEach(g => { checks.append(h('div', { class: 'grp' }, g.name)); MODULES.filter(m => m.group === g.id).forEach(m => {
   const c = h('input', { type: 'checkbox', id: 'inc_' + m.id }); c.checked = plan.pl_include.includes(m.id);
   c.addEventListener('change', () => { plan.pl_include = MODULES.map(x => x.id).filter(id => id === m.id ? c.checked : plan.pl_include.includes(id)); savePlan(); });
-  checks.append(h('label', { class: 'chk', for: 'inc_' + m.id }, c, m.tab)); }); });
+  const host = h('span', { class: 'basis-host' }); basisEls['pr_' + m.id] = { mod: m, el: host, withList: true };
+  checks.append(h('div', { class: 'chk-row' }, h('label', { class: 'chk', for: 'inc_' + m.id }, c, m.tab), host)); }); });
 colPr.append(checks);
+/* same tag on the calculators list page */
+MODULES.forEach(m => { const host = document.getElementById('bh_' + m.id); if (host) basisEls['ls_' + m.id] = { mod: m, el: host, withList: true }; });
+MODULES.forEach(m => refreshBasis(m.id));
+planHooks.push(refreshBasis);
 colPr.append(h('div', { class: 'sub-h' }, 'Include in each calculator'));
 const parts = h('div', { class: 'checks' });
 PARTS.forEach(p => { const c = h('input', { type: 'checkbox', id: p.id }); c.checked = !!plan[p.id]; c.addEventListener('change', () => { plan[p.id] = c.checked; savePlan(); }); parts.append(h('label', { class: 'chk', for: p.id }, c, p.label)); });
@@ -1493,21 +1546,30 @@ function openReport(andPrint) {
     h('tr', {}, h('td', {}, 'Prepared by'), h('td', { class: 'v' }, plan.pl_advisor)),
     h('tr', {}, h('td', {}, 'Date'), h('td', { class: 'v' }, date)),
     h('tr', {}, h('td', {}, 'Basis'), h('td', { class: 'v' }, plan.pl_source === 'plan' ? 'Plan assumptions applied to every calculator' : 'Each calculator’s inputs as set, flagged where they differ from the plan'))));
-  const assump = h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Standard assumption'), h('th', { class: 'v' }, 'Value'), h('th', {}, 'Used by'))), h('tbody', {}, ...PLAN_ASSUMP.filter(a => !a.when || a.when()).map(a => {
-    const users = [...new Set(a.map.map(fid => fieldById[fid].mod).filter(m => mods.includes(m)).map(m => m.tab))];
+  const assump = h('table', { class: 'rtab wide1' }, h('thead', {}, h('tr', {}, h('th', {}, 'Standard assumption'), h('th', { class: 'v' }, 'Value'), h('th', {}, 'Used by'))), h('tbody', {}, ...PLAN_ASSUMP.filter(a => !a.when || a.when()).map(a => {
+    const users = [...new Set(a.map.map(fid => fieldById[fid.split('*')[0]].mod).filter(m => mods.includes(m)).map(m => m.tab))];
     return h('tr', {}, h('td', {}, a.label), h('td', { class: 'v' }, fmtVal({ kind: a.kind, id: a.id, options: a.options }, plan[a.id], plan)), h('td', {}, users.join(', ') || '—'));
   })));
-  const list = h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Calculator'), h('th', {}, 'What it shows'))), h('tbody', {}, ...mods.map(m => h('tr', {}, h('td', {}, m.tab), h('td', {}, m.question)))));
-  pages.append(h('section', { class: 'rpage' }, ...head('Plan assumptions'),
-    h('p', { class: 'rlede' }, 'The figures in this document are hypothetical illustrations built from the assumptions below. Rates of return and inflation are held constant in every period; actual results will vary.'),
-    h('div', { class: 'rsec' }, h('h3', {}, 'General information'), info),
-    h('div', { class: 'rsec' }, h('h3', {}, 'Standard assumptions', h('span', {}, 'shared across the calculators that use them')), assump),
-    h('div', { class: 'rsec' }, h('h3', {}, 'Calculators included'), list),
-    foot()));
-  // Calculator pages: build blocks, render charts, measure, then paginate explicitly so print matches the preview
+  const list = h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Calculator'), h('th', {}, 'What it shows'), h('th', {}, 'Basis'))), h('tbody', {}, ...mods.map(m => { const b = basisOf(m);
+    return h('tr', {}, h('td', {}, m.tab), h('td', {}, m.question), h('td', {}, b.standard ? 'Standard assumptions' : 'Entered in the calculator: ' + b.manual.map(f => f.label).join(', ') + (b.todo.length ? ' (' + (b.todo.length === b.manual.length ? 'default values' : b.todo.length + ' at default values') + ')' : ''))); })));
   reportEl.append(bar, pages);
   document.body.classList.add('report-mode'); reportEl.classList.add('is-on'); window.scrollTo({ top: 0 });
   const BUDGET = 928; // px of content per page, below the 10in printable height
+  const paginate = (title, lede, blocks) => { // measure in a temporary page, then split into real pages so print matches the preview
+    const temp = h('section', { class: 'rpage' }, ...head(title), h('p', { class: 'rlede' }, lede), ...blocks); pages.append(temp);
+    const headH = temp.children[0].offsetHeight + temp.children[1].offsetHeight + temp.children[2].offsetHeight + temp.children[3].offsetHeight + 16;
+    const groups = []; let cur = [], used = headH;
+    blocks.forEach(bl => { const hb = bl.offsetHeight + 14; if (used + hb > BUDGET && cur.length) { groups.push(cur); cur = []; used = headH; } cur.push(bl); used += hb; });
+    if (cur.length) groups.push(cur);
+    temp.remove();
+    groups.forEach((g, i) => pages.append(h('section', { class: 'rpage' }, ...head(title + (i ? ' (continued)' : '')), i ? null : h('p', { class: 'rlede' }, lede), ...g, foot())));
+    return temp;
+  };
+  paginate('Plan assumptions', 'The figures in this document are hypothetical illustrations built from the assumptions below. Rates of return and inflation are held constant in every period; actual results will vary.', [
+    h('div', { class: 'rsec' }, h('h3', {}, 'General information'), info),
+    h('div', { class: 'rsec' }, h('h3', {}, 'Standard assumptions', h('span', {}, 'shared across the calculators that use them')), assump),
+    h('div', { class: 'rsec' }, h('h3', {}, 'Calculators included'), list)]);
+  // Calculator pages
   const compactTable = data => {
     const xs = data.x, n = xs.length; let idxs = [];
     if (data.kind === 'bars') idxs = xs.map((_, i) => i);
@@ -1533,15 +1595,11 @@ function openReport(andPrint) {
     if (plan.pp_charts) [[mod.chart, r.chart], [mod.chart2, r.chart2]].forEach(([cfg, data]) => { if (!cfg || !data) return;
       const box = h('div', { class: 'rchart' }); const sec = h('div', { class: 'rsec' }, h('h3', {}, cfg.title), box); chartBlocks.push({ sec, box, cfg, data }); blocks.push(sec); if (plan.pp_tables) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, cfg.title, h('span', {}, 'data')), compactTable(data))); });
     if (plan.pp_tables && r.extra) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, r.extraTitle || 'Reference', r.extraSub ? h('span', {}, r.extraSub) : null), h('div', { class: 'rsched', html: r.extra.replace(/class="sched"/g, 'class="rsched"') })));
-    // measure in a temporary page, charts rendered at the real print width
-    const temp = h('section', { class: 'rpage' }, ...head(mod.title), h('p', { class: 'rlede' }, mod.lede), ...blocks); pages.append(temp);
+    // charts must be rendered at the real print width before measuring, so mount the blocks first
+    const pre = h('section', { class: 'rpage' }, ...blocks); pages.append(pre);
     chartBlocks.forEach(c => { makeChart(c.box, c.cfg).update(Object.assign({}, c.data, { ratio: 0.36 })); });
-    const headH = temp.children[0].offsetHeight + temp.children[1].offsetHeight + temp.children[2].offsetHeight + temp.children[3].offsetHeight + 16;
-    const groups = []; let cur = [], used = headH;
-    blocks.forEach(bl => { const hb = bl.offsetHeight + 14; if (used + hb > BUDGET && cur.length) { groups.push(cur); cur = []; used = headH; } cur.push(bl); used += hb; });
-    if (cur.length) groups.push(cur);
-    temp.remove();
-    groups.forEach((g, i) => pages.append(h('section', { class: 'rpage' }, ...head(mod.title + (i ? ' (continued)' : '')), i ? null : h('p', { class: 'rlede' }, mod.lede), ...g, foot())));
+    pre.remove();
+    paginate(mod.title, mod.lede, blocks);
   });
   // Disclosures
   pages.append(h('section', { class: 'rpage' }, h('div', { class: 'rhead' }, 'Prepared: ' + date), h('div', { class: 'rbar' }),
