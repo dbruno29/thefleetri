@@ -304,6 +304,16 @@ svg .cross { stroke: var(--line); stroke-width: 1; }
 .sub-h { font-size: 13px; font-weight: 700; margin-top: 8px; }
 .field.is-custom .field-head label::after { content: " \25CF"; color: var(--green); font-size: 9px; vertical-align: 2px; }
 .plan-status { font-size: 11.5px; color: var(--muted); flex-basis: 100%; }
+.assump-foot .btn-pdf { flex-basis: 100%; }
+/* One-calculator printout */
+.rsingle { display: flex; justify-content: space-between; align-items: center; gap: 16px; border: 1px solid #D5D9E0; padding: 6px 12px; }
+.rsingle img { width: 104px; height: auto; flex: none; }
+.rs-info { display: grid; gap: 1px; font-size: 10.5px; line-height: 1.35; color: #333; }
+.rcols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: start; }
+.rs-info span { display: inline-block; width: 78px; color: #777; }
+.rs-info b { color: #1C2030; }
+.rdisc-short h4 { font-size: 12px; margin: 0 0 6px; }
+.rdisc-short p { font-size: 9px; line-height: 1.4; color: #444; margin: 0 0 5px; }
 .feenote { font-size: 12px; color: var(--muted); margin: 12px 0 0; line-height: 1.5; }
 .feenote b { color: var(--ink-2); font-weight: 600; }
 .plan-fee { font-size: 11.5px; color: var(--muted); padding: 0 0 6px; line-height: 1.45; }
@@ -1617,8 +1627,10 @@ MODULES.forEach(mod => {
   const copyBtn = h('button', { type: 'button', class: 'btn', id: 'copy_' + mod.id }, 'Copy scenario');
   const resetBtn = h('button', { type: 'button', class: 'btn', id: 'reset_' + mod.id }, 'Reset');
   const usePlanBtn = h('button', { type: 'button', class: 'btn', id: 'useplan_' + mod.id, title: 'Set the shared inputs to the plan’s standard assumptions' }, 'Use plan');
+  const pdfBtn = h('button', { type: 'button', class: 'btn btn-primary btn-pdf', id: 'pdf_' + mod.id, title: 'A one- to two-page printout of this calculator with its current inputs' }, 'Print / PDF');
+  pdfBtn.addEventListener('click', () => openReport(true, mod.id));
   const planStatus = h('span', { class: 'plan-status' });
-  const assump = h('aside', { class: 'assump' }, h('h3', {}, 'Inputs'), fields, h('div', { class: 'assump-foot' }, copyBtn, resetBtn, usePlanBtn, planStatus));
+  const assump = h('aside', { class: 'assump' }, h('h3', {}, 'Inputs'), fields, h('div', { class: 'assump-foot' }, pdfBtn, copyBtn, resetBtn, usePlanBtn, planStatus));
   const primary = h('div', { class: 'primary' }), kstats = h('div', { class: 'kstats' }), obs = h('p', { class: 'obs' });
   const feeNote = FEE_FREE.includes(mod.id) ? null : h('p', { class: 'feenote' }, h('b', {}, 'Gross of fees. '), FEE_SHORT);
   const chartBody = h('div'), chartBody2 = mod.chart2 ? h('div') : null;
@@ -1919,22 +1931,29 @@ const reportEl = h('div', { id: 'report' });
 document.body.insertBefore(reportEl, document.querySelector('main'));
 const fmtVal = (f, v, state) => { if (f.kind === 'seg') { const o = f.options.find(o => o.v === state[f.id]); return o ? o.label : String(v); } if (f.kind === 'money') return money(v); if (f.kind === 'pct') return (Math.round(v * 100) / 100) + '%'; if (/age$/i.test(f.label) || /^Current age/.test(f.label)) return 'age ' + v; return v + (v === 1 ? ' year' : ' years'); };
 const LOGO_SRC = document.querySelector('.brandmark img').getAttribute('src');
-function openReport(andPrint) {
-  if (plan.pl_source === 'plan') applyPlanAll();
-  const mods = MODULES.filter(m => plan.pl_include.includes(m.id));
+let reportReturn = null, docTitle = document.title;
+/* only = a calculator id: a one-calculator printout (1–2 pages) from that calculator's page, using its current inputs */
+function openReport(andPrint, only) {
+  const single = only ? MODULES.find(m => m.id === only) : null;
+  if (plan.pl_source === 'plan' && !single) applyPlanAll();
+  const mods = single ? [single] : MODULES.filter(m => plan.pl_include.includes(m.id));
   reportEl.replaceChildren();
-  const backBtn = h('button', { type: 'button', class: 'btn' }, '← Back to calculators');
+  reportReturn = single ? single.id : null;
+  const clientName = (plan.pl_client || '').trim();
+  docTitle = document.title; document.title = 'WealthCare - ' + (single ? single.tab : 'Planning illustrations') + (clientName ? ' - ' + clientName : '');
+  const backBtn = h('button', { type: 'button', class: 'btn' }, single ? '← Back to calculator' : '← Back to calculators');
   backBtn.addEventListener('click', closeReport);
   const note = h('span', { class: 'note' });
   const bar = h('div', { class: 'rbar-top' }, h('div', { class: 'wrap' }, backBtn, note, canPrint ? (() => { const b = h('button', { type: 'button', class: 'btn btn-primary' }, 'Print / Save as PDF'); b.addEventListener('click', () => window.print()); return b; })() : h('span')));
   const pages = h('div', { class: 'rpages' });
   const date = fmtDate(plan.pl_date), client = (plan.pl_client || '').trim() || 'Client name';
-  // Cover
-  pages.append(h('section', { class: 'rpage cover' },
+  // Cover (full plan only)
+  if (!single) pages.append(h('section', { class: 'rpage cover' },
     h('div', { class: 'cover-photo' }, h('div', { class: 'cover-text' }, h('h1', {}, 'Planning', h('br'), 'Illustrations'), h('div', { class: 'pf' }, 'Prepared for'), h('div', { class: 'client' }, client), h('div', { class: 'date' }, date))),
     h('div', { class: 'cover-foot' }, h('div', { class: 'adv' }, plan.pl_advisor, h('br'), 'WealthCare Investment Partners', h('br'), OFFICES[plan.pl_office].split(', ')[0], h('br'), OFFICES[plan.pl_office].split(', ').slice(1).join(', '), h('br'), plan.pl_phone, h('br'), plan.pl_email), h('img', { src: LOGO_SRC, alt: 'WealthCare Investment Partners' }))));
   let pageNo = 0;
-  const foot = () => h('div', { class: 'rfoot' }, h('span', {}, 'Hypothetical and gross of fees. Please read the last page for important information about this illustration.'), h('span', {}, 'Page ' + (++pageNo)));
+  const footText = single ? ('Hypothetical illustration' + (FEE_FREE.includes(single.id) ? '' : ', gross of fees') + '. Please read the important information at the end of this document.') : 'Hypothetical and gross of fees. Please read the last page for important information about this illustration.';
+  const foot = () => h('div', { class: 'rfoot' }, h('span', {}, footText), h('span', {}, 'Page ' + (++pageNo)));
   const head = title => [h('div', { class: 'rhead' }, 'Prepared: ' + date), h('div', { class: 'rbar' }), h('h2', { class: 'rtitle' }, title)];
   // Plan page
   const info = h('table', { class: 'rtab' }, h('tbody', {},
@@ -1965,7 +1984,7 @@ function openReport(andPrint) {
     groups.forEach((g, i) => pages.append(h('section', { class: 'rpage' }, ...head(title + (i ? ' (continued)' : '')), i ? null : h('p', { class: 'rlede' }, lede), ...g, foot())));
     return temp;
   };
-  paginate('Plan assumptions', 'The figures in this document are hypothetical illustrations built from the assumptions below. Rates of return and inflation are held constant in every period; actual results will vary. All investment figures and rates of return are shown gross of advisory fees and other costs; results net of fees would be lower.', [
+  if (!single) paginate('Plan assumptions', 'The figures in this document are hypothetical illustrations built from the assumptions below. Rates of return and inflation are held constant in every period; actual results will vary. All investment figures and rates of return are shown gross of advisory fees and other costs; results net of fees would be lower.', [
     h('div', { class: 'rsec' }, h('h3', {}, 'General information'), info),
     ...assumpGroups.filter(g => g[2].length).map(g => h('div', { class: 'rsec' }, h('h3', {}, g[0], h('span', {}, g[1])), assumpTable(g[2]))),
     ...GROUPS.map(g => ({ g, ms: mods.filter(m => m.group === g.id) })).filter(x => x.ms.length).map((x, i) => h('div', { class: 'rsec' }, h('h3', {}, i ? g_name(x.g) : 'Calculators included', h('span', {}, i ? '' : g_name(x.g))), listTable(x.ms)))]);
@@ -1981,33 +2000,46 @@ function openReport(andPrint) {
   mods.forEach(mod => {
     const b = built[mod.id]; const state = mod.id === 'loan' && b.state.l_view !== 'y' ? Object.assign({}, b.state, { l_view: 'y' }) : b.state; const r = mod.compute(state);
     const blocks = [];
-    if (plan.pp_assump) {
+    const want = single ? { assump: true, stats: true, obs: true, charts: true, tables: false } : { assump: plan.pp_assump, stats: plan.pp_stats, obs: plan.pp_obs, charts: plan.pp_charts, tables: plan.pp_tables };
+    if (single) blocks.push(h('div', { class: 'rsec rsingle' },
+      h('div', { class: 'rs-info' },
+        h('div', {}, h('span', {}, 'Prepared for'), h('b', {}, clientName || 'Client name')),
+        h('div', {}, h('span', {}, 'Prepared by'), h('b', {}, plan.pl_advisor), ' · ' + plan.pl_phone + ' · ' + plan.pl_email),
+        h('div', {}, h('span', {}, 'Date'), h('b', {}, date))),
+      h('img', { src: LOGO_SRC, alt: 'WealthCare Investment Partners' })));
+    if (want.assump) {
       let nCustom = 0;
       const rows = mod.fields.filter(f => fieldVisible(f.id)).map(f => { const a = planFor(f.id); const d = differs(f.id); if (d) nCustom++;
         return h('tr', {}, h('td', {}, f.label), h('td', { class: 'v' }, fmtVal(f, b.state[f.id], b.state)), h('td', { class: 't' }, plan.pl_highlight && a && mappable(f.id) ? h('span', { class: 'tag ' + (d ? 'custom' : 'plan') }, d ? 'Custom' : 'Plan') : '')); });
-      blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Assumptions used', plan.pl_highlight ? h('span', {}, nCustom ? nCustom + ' input' + (nCustom === 1 ? '' : 's') + ' differ' + (nCustom === 1 ? 's' : '') + ' from the plan' : 'all shared inputs match the plan') : null), h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Input'), h('th', { class: 'v' }, 'Value'), h('th', {}, ''))), h('tbody', {}, ...rows))));
+      const tbl = rs => h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Input'), h('th', { class: 'v' }, 'Value'), h('th', {}, ''))), h('tbody', {}, ...rs));
+      const half = Math.ceil(rows.length / 2); // the one-calculator printout sets long input lists in two columns
+      const body = single && rows.length > 4 ? h('div', { class: 'rcols' }, tbl(rows.slice(0, half)), tbl(rows.slice(half))) : tbl(rows);
+      blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Assumptions used', plan.pl_highlight ? h('span', {}, nCustom ? nCustom + ' input' + (nCustom === 1 ? '' : 's') + ' differ' + (nCustom === 1 ? 's' : '') + ' from the plan' : 'all shared inputs match the plan') : null), body));
     }
-    if (plan.pp_stats) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Key statistics', h('span', {}, FEE_FREE.includes(mod.id) ? 'hypothetical' : 'hypothetical · gross of fees')),
+    if (want.stats) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Key statistics', h('span', {}, FEE_FREE.includes(mod.id) ? 'hypothetical' : 'hypothetical · gross of fees')),
       h('div', { class: 'rprimary' }, h('div', { class: 'l' }, r.hero.label), h('div', { class: 'v' + fitClass(r.hero.value) }, r.hero.value), h('div', { class: 's' }, r.hero.sub)),
       h('div', { class: 'rstats' }, ...r.tiles.map(t => h('div', { class: 'rstat' + (t.accent ? ' accent' : '') }, h('div', { class: 'l' }, t.label), h('div', { class: 'v' + fitClass(t.value) }, t.value), t.sub ? h('div', { class: 's' }, t.sub) : null)))));
-    if (plan.pp_obs) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Observation'), h('p', { class: 'robs', html: r.callout })));
+    if (want.obs) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Observation'), h('p', { class: 'robs', html: r.callout })));
     const chartBlocks = [];
-    if (plan.pp_charts) [[mod.chart, r.chart], [mod.chart2, r.chart2]].forEach(([cfg, data]) => { if (!cfg || !data) return;
-      const box = h('div', { class: 'rchart' }); const sec = h('div', { class: 'rsec' }, h('h3', {}, cfg.title), box); chartBlocks.push({ sec, box, cfg, data }); blocks.push(sec); if (plan.pp_tables) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, cfg.title, h('span', {}, 'data')), compactTable(data))); });
-    if (plan.pp_tables && r.extra) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, r.extraTitle || 'Reference', r.extraSub ? h('span', {}, r.extraSub) : null), h('div', { class: 'rsched', html: r.extra.replace(/class="sched"/g, 'class="rsched"') })));
+    if (want.charts) [[mod.chart, r.chart], [mod.chart2, r.chart2]].forEach(([cfg, data]) => { if (!cfg || !data) return;
+      const box = h('div', { class: 'rchart' }); const sec = h('div', { class: 'rsec' }, h('h3', {}, cfg.title), box); chartBlocks.push({ sec, box, cfg, data }); blocks.push(sec); if (want.tables) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, cfg.title, h('span', {}, 'data')), compactTable(data))); });
+    if (want.tables && r.extra) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, r.extraTitle || 'Reference', r.extraSub ? h('span', {}, r.extraSub) : null), h('div', { class: 'rsched', html: r.extra.replace(/class="sched"/g, 'class="rsched"') })));
     // charts must be rendered at the real print width before measuring, so mount the blocks first
     const pre = h('section', { class: 'rpage' }, ...blocks); pages.append(pre);
-    chartBlocks.forEach(c => { makeChart(c.box, c.cfg).update(Object.assign({}, c.data, { ratio: 0.36 })); });
+    chartBlocks.forEach(c => { makeChart(c.box, c.cfg).update(Object.assign({}, c.data, { ratio: single ? 0.3 : 0.36 })); });
     pre.remove();
+    if (single) blocks.push(
+      h('div', { class: 'rsec' }, h('h3', {}, 'How this is calculated'), h('p', { class: 'robs' }, METHODS[mod.id])),
+      h('div', { class: 'rsec rdisc rdisc-short' }, h('h4', {}, 'Important information'), ...singleDisclosures(mod.id).map(t => h('p', {}, t))));
     paginate(mod.title, mod.lede, blocks);
   });
   // Methodology appendix (optional)
-  if (plan.pp_methods) paginate('Methodology', 'How each calculator in this plan arrives at its figures, written from the calculator code.', [
+  if (plan.pp_methods && !single) paginate('Methodology', 'How each calculator in this plan arrives at its figures, written from the calculator code.', [
     h('div', { class: 'rsec' }, h('h3', {}, 'Conventions shared by every calculator'), ...CONVENTIONS.map(c => h('p', { class: 'robs' }, h('b', {}, c[0] + '. '), c[1]))),
     ...mods.map(m => h('div', { class: 'rsec' }, h('h3', {}, m.tab), h('p', { class: 'robs' }, METHODS[m.id]))),
     h('div', { class: 'rsec' }, h('h3', {}, 'What the calculators leave out'), ...LIMITS.map(t => h('p', { class: 'robs' }, '• ' + t)))]);
-  // Disclosures
-  pages.append(h('section', { class: 'rpage' }, h('div', { class: 'rhead' }, 'Prepared: ' + date), h('div', { class: 'rbar' }),
+  // Disclosures (full plan; a single-calculator printout carries its own condensed version)
+  if (!single) pages.append(h('section', { class: 'rpage' }, h('div', { class: 'rhead' }, 'Prepared: ' + date), h('div', { class: 'rbar' }),
     h('div', { class: 'rdisc' },
       h('h4', {}, 'Important disclosures'),
       h('p', {}, h('b', {}, 'Gross of fees. '), FEE_LONG),
@@ -2032,7 +2064,22 @@ function openReport(andPrint) {
   window.scrollTo({ top: 0 });
   if (andPrint && canPrint) setTimeout(() => window.print(), 250);
 }
-function closeReport() { reportEl.classList.remove('is-on'); document.body.classList.remove('report-mode'); reportEl.replaceChildren(); show('plan', true); }
+/* Condensed disclosures for a one-calculator printout: the general statements plus those that apply to this calculator */
+function singleDisclosures(id) {
+  const out = [];
+  if (!FEE_FREE.includes(id)) out.push('Gross of fees. ' + FEE_LONG);
+  out.push('This illustration is hypothetical, provided for educational purposes, and is not a guarantee, forecast, or projection of future performance or a recommendation to buy or sell any security. Rates of return and inflation are assumptions held constant for every period; actual returns vary and investments can lose value, including principal. The order in which returns occur can materially change outcomes when withdrawals are being taken. Figures do not reflect taxes unless stated.');
+  if (id === 'compare') out.push('Savings account comparisons hold one annual rate constant, compounded monthly; actual yields change over time. Bank deposits are typically FDIC-insured up to applicable limits; investments are not.');
+  if (['taxdef', 'roth', 'rmd'].includes(id)) out.push('Tax rates are simplified assumptions, not tax advice; brackets, state taxes, and penalties are not modeled.');
+  if (['cashflow', 'retire', 'rmd', 'insure'].includes(id)) out.push('Social Security and survivor benefits are estimates in today’s dollars, assumed to rise with inflation; actual benefits depend on the earnings record, claiming age, and future law, and the calculators do not adjust the benefit for claiming earlier or later than the age entered.');
+  if (id === 'rmd') out.push('RMD estimates use the IRS Uniform Lifetime Table and current starting ages (73, or 75 for those born in 1960 or later); they do not reflect inherited accounts, a spouse more than ten years younger, Roth accounts, or the April 1 first-year deferral.');
+  if (id === 'mortgage') out.push('Mortgage affordability is a rough screen using common lender ratios and does not represent a credit decision.');
+  if (id === 'insure') out.push('Life insurance figures are a needs-based estimate and do not recommend any product or carrier; any insurance decision involves product features, costs, and underwriting not addressed here.');
+  out.push('This document does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice. Securities offered by Registered Representatives through Private Client Services. Member FINRA/SIPC. Advisory products and services offered through WealthCare Investment Partners, a Registered Investment Advisor. Private Client Services & WealthCare Investment Partners are unaffiliated entities. WealthCare Investment Partners, LLC · 690 Douglas Pike, Smithfield, RI 02917 · 35 Dyer Street, Portsmouth, RI 02871 · (401) 735-4500.');
+  return out;
+}
+function closeReport() { document.title = docTitle; if (reportReturn) { const id = reportReturn; reportReturn = null; reportEl.classList.remove('is-on'); document.body.classList.remove('report-mode'); reportEl.replaceChildren(); show(id, true); return; }
+  reportEl.classList.remove('is-on'); document.body.classList.remove('report-mode'); reportEl.replaceChildren(); show('plan', true); }
 
 /* ---------- Router ---------- */
 const PAGES = { home, plan: planPage, list: listPage, methods: methodsPage };
