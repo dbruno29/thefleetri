@@ -85,6 +85,25 @@ h2.disp { font-size: clamp(32px, 4.2vw, 48px); }
 .select-wrap select { appearance: none; -webkit-appearance: none; border: 1px solid var(--line); border-radius: 2px; background: var(--bg); color: var(--ink); font: 600 13px/1.2 var(--ui); padding: 7px 30px 7px 10px; min-width: 250px; max-width: 100%; cursor: pointer; }
 .select-wrap select:hover { border-color: var(--ink-2); }
 .hyp { font: 500 11.5px/1 var(--ui); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.hyp-link { border: 0; background: none; font: inherit; color: var(--green-text); cursor: pointer; padding: 0; text-decoration: underline; text-underline-offset: 3px; }
+.hyp-link:hover { color: var(--navy); }
+/* Methodology page */
+.methods .m-conv, .methods .m-item, .methods .m-limits, .methods .m-verify { max-width: 860px; }
+.methods .m-h { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 26px; line-height: 1; color: var(--navy); margin: 34px 0 14px; }
+.methods .m-h:first-child { margin-top: 0; }
+.m-conv { display: grid; grid-template-columns: 140px 1fr; gap: 10px 18px; margin: 0; }
+.m-conv dt { font: 600 12px/1.5 var(--ui); letter-spacing: .1em; text-transform: uppercase; color: var(--green-text); padding-top: 2px; }
+.m-conv dd { margin: 0; font-size: 14.5px; line-height: 1.6; color: var(--ink-2); padding-bottom: 8px; border-bottom: 1px solid var(--line-soft); }
+@media (max-width: 560px) { .m-conv { grid-template-columns: 1fr; gap: 2px 0; } .m-conv dd { margin-bottom: 8px; } }
+.m-item { padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+.m-item h3 { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; margin: 0 0 6px; }
+.m-item h3 .name { border: 0; background: none; padding: 0; font: 700 16px/1.2 var(--ui); color: var(--navy); cursor: pointer; text-align: left; }
+.m-item h3 .name:hover { text-decoration: underline; text-underline-offset: 4px; }
+.m-item h3 span { font-size: 13px; color: var(--muted); }
+.m-item p { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--ink-2); }
+.m-limits { margin: 0; padding-left: 20px; }
+.m-limits li { font-size: 14.5px; line-height: 1.6; color: var(--ink-2); margin-bottom: 8px; }
+.m-verify { font-size: 14.5px; line-height: 1.65; color: var(--ink-2); }
 @media (max-width: 560px) { .select-wrap select { min-width: 0; width: 100%; } .picker { width: 100%; } .picker label { display: none; } .hyp { display: none; } }
 
 /* Landing */
@@ -313,7 +332,7 @@ body.report-mode .subbar, body.report-mode main, body.report-mode footer { displ
 .rbar { height: 8px; background: #C9CDD4; margin: 4px 0 14px; }
 .rtitle { font-size: 26px; font-weight: 400; color: #333; margin: 0 0 3px; line-height: 1.2; font-family: Arial, Helvetica, sans-serif; }
 .rlede { color: #555; margin: 0 0 14px; font-size: 12px; max-width: 95ch; }
-.rsec { margin: 0 0 16px; break-inside: avoid; }
+.rsec { margin: 0 0 16px; break-inside: avoid; display: flow-root; } /* flow-root: child paragraph margins stay inside, so the block measures its true height when paginating */
 .rsec h3 { font-size: 14px; font-weight: 400; color: #222; margin: 0 0 6px; font-family: Arial, Helvetica, sans-serif; letter-spacing: 0; text-transform: none; }
 .rsec h3 span { font-size: 11px; color: #777; margin-left: 8px; }
 .rtab { width: 100%; border-collapse: collapse; font-size: 11.5px; }
@@ -422,7 +441,7 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
       <label for="sim-select">Calculator</label>
       <div class="select-wrap"><select id="sim-select" aria-label="Choose a calculator"></select></div>
     </div>
-    <span class="hyp">Hypothetical illustration · gross of fees · for educational purposes only</span>
+    <span class="hyp">Hypothetical illustration · gross of fees · for educational purposes only · <button type="button" class="hyp-link" id="hyp-methods">Methodology</button></span>
   </div>
 </div>
 
@@ -446,7 +465,7 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
     </div>
     <div class="fine">
       <p><b>Gross of fees.</b> All investment balances, growth amounts, income figures drawn from investments, and rates of return in this illustration are shown gross of fees; that is, before the deduction of investment advisory fees and other costs, including fund operating expenses, transaction costs, and custodial or account fees. Assumed rates of return are gross figures. Fees and expenses are deducted from an account over time and reduce returns, and their effect compounds: results net of fees would be lower than those shown, and the difference grows with the size of the account and the length of the period. WealthCare Investment Partners&rsquo; advisory fees are described in its Form ADV Part 2A, available upon request.</p>
-      <p>All results are hypothetical illustrations for educational purposes only and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period; actual returns vary from year to year, and investments can lose value, including loss of principal. Figures do not reflect taxes unless explicitly stated. Social Security amounts are user estimates in today&rsquo;s dollars, assumed to rise with inflation; actual benefits depend on the earnings record, claiming age, and future law. RMD estimates use the IRS Uniform Lifetime Table and current starting ages and are not tax advice. Savings account comparisons assume a fixed annual percentage yield; bank deposits are typically FDIC-insured up to applicable limits, investments are not. This tool does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice; please consult your advisor, tax professional, or attorney about your individual situation. Links to third-party websites are provided for convenience only; WealthCare Investment Partners does not control, endorse, or guarantee their content, and their calculators use their own assumptions and methods.</p>
+      <p>All results are hypothetical illustrations for educational purposes only and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period; actual returns vary from year to year, and investments can lose value, including loss of principal. Figures do not reflect taxes unless explicitly stated. Social Security amounts are user estimates in today&rsquo;s dollars, assumed to rise with inflation; actual benefits depend on the earnings record, claiming age, and future law. RMD estimates use the IRS Uniform Lifetime Table and current starting ages and are not tax advice. Savings account comparisons hold one annual rate constant, compounded monthly; actual yields change over time. Bank deposits are typically FDIC-insured up to applicable limits, investments are not. This tool does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice; please consult your advisor, tax professional, or attorney about your individual situation. Links to third-party websites are provided for convenience only; WealthCare Investment Partners does not control, endorse, or guarantee their content, and their calculators use their own assumptions and methods.</p>
       <p class="disclosure">Securities offered by Registered Representatives through Private Client Services. Member FINRA/SIPC. Advisory products and services offered through WealthCare Investment Partners, a Registered Investment Advisor. Private Client Services &amp; WealthCare Investment Partners are unaffiliated entities.</p>
       <p>© <span id="foot-year"></span> WealthCare Investment Partners, LLC</p>
     </div>
@@ -469,7 +488,7 @@ const DEFAULTS = {
 };
 
 /* ---------- Formatting ---------- */
-const money = v => (v < 0 ? '-' : '') + '$' + Math.round(Math.abs(v)).toLocaleString('en-US');
+const money = v => !isFinite(v) ? '—' : (v < 0 ? '-' : '') + '$' + Math.round(Math.abs(v)).toLocaleString('en-US');
 const compact = v => { const a = Math.abs(v); const s = v < 0 ? '-' : '';
   if (a >= 1e12) return s + '$' + (a / 1e12).toFixed(a >= 1e13 ? 0 : 1).replace(/\.0$/, '') + 'T';
   if (a >= 1e9) return s + '$' + (a / 1e9).toFixed(a >= 1e10 ? 0 : 1).replace(/\.0$/, '') + 'B';
@@ -500,7 +519,7 @@ function simulatePayout({ B, w, r, infl, adjust, maxYears = 40 }) {
   const rows = [{ t: 0, bal: B, wd: 0 }];
   for (let mo = 1; mo <= maxYears * 12; mo++) {
     bal *= (1 + m); bal -= wd; total += wd;
-    if (bal <= 0) { total += bal; depletedAt = mo; rows.push({ t: mo / 12, bal: 0, wd }); bal = 0; break; }
+    if (bal <= 0.005) { total += bal; depletedAt = mo; rows.push({ t: mo / 12, bal: 0, wd }); bal = 0; break; } // under half a cent left counts as empty, as in Income & expenses
     if (mo % 12 === 0) { rows.push({ t: mo / 12, bal, wd }); if (adjust) wd *= (1 + infl); }
   }
   return { rows, depletedAt, total, lastWd: wd, endBal: bal };
@@ -738,7 +757,7 @@ function segField(id, label, options, value) { return { id, label, kind: 'seg', 
 
 // Sliders cover the usual range; a typed value may go beyond it, up to a safety ceiling by kind. Floors stay, since negative or zero-length inputs break the math.
 const HARD_MAX = { money: 1e11, pct: 100, int: 120 };
-const clampTyped = (f, v) => Math.min(HARD_MAX[f.kind] || Infinity, Math.max(f.min, v));
+const clampTyped = (f, v) => Math.min(f.hard || HARD_MAX[f.kind] || Infinity, Math.max(f.min, v));
 function buildFields(container, specs, state, onChange) {
   specs.forEach(f => {
     state[f.id] = f.value;
@@ -834,7 +853,7 @@ const MODULES = [
         tiles: [
           { label: `Savings at ${pct(s.c_save)}`, value: money(la.bal), sub: `${money(la.bal - dep)} of growth` },
           { label: `Investing at ${pct(s.c_inv)}`, value: money(lb.bal), accent: true, sub: `${money(lb.bal - dep)} of growth` },
-          { label: 'Growth multiple', value: la.bal - dep > 0 ? ((lb.bal - dep) / (la.bal - dep)).toFixed(1) + '×' : '—', sub: 'investment growth vs. savings growth' },
+          { label: 'Growth multiple', value: la.bal - dep > 0 ? ((lb.bal - dep) / (la.bal - dep)).toLocaleString('en-US', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) + '×' : '—', sub: 'investment growth vs. savings growth' },
           { label: 'Total deposited', value: money(dep), sub: 'identical on both paths' }
         ],
         callout: `A ${pct(s.c_inv - s.c_save)} difference in rate becomes a <b>${money(gap)}</b> difference in dollars. Small rate gaps compound into large dollar gaps over long periods.`,
@@ -1007,7 +1026,7 @@ const MODULES = [
       const sustain30 = sustainableWithdrawal(s.p_bal, s.p_rate / 100, infl, adjust, 30);
       const wdYear20 = adjust ? w * Math.pow(1 + infl, 19) : w;
       return {
-        hero: { label: 'How long the money lasts', value: lasts ? yrs(yearsLast) : '40+ years', sub: lasts ? `Withdrawing ${money(w)} a month${adjust ? ', rising with inflation,' : ''} at an assumed ${pct(s.p_rate)} return, the balance reaches zero in year ${Math.ceil(yearsLast)}.` : `After 40 years of withdrawals the balance is still ${money(res.endBal)}. The assumed return is covering the withdrawals.` },
+        hero: s.p_bal <= 0 ? { label: 'How long the money lasts', value: '—', sub: 'Enter a starting balance to see how long it lasts.' } : { label: 'How long the money lasts', value: lasts ? yrs(yearsLast) : '40+ years', sub: lasts ? `Withdrawing ${money(w)} a month${adjust ? ', rising with inflation,' : ''} at an assumed ${pct(s.p_rate)} return, the balance reaches zero in year ${Math.ceil(yearsLast)}.` : `After 40 years of withdrawals the balance is still ${money(res.endBal)}. The assumed return is covering the withdrawals.` },
         tiles: [
           { label: 'First-year withdrawals', value: money(w * 12), sub: s.p_bal > 0 ? `${money(w)} a month, ${pct(w * 12 / s.p_bal * 100)} of the starting balance` : 'enter a starting balance' },
           { label: adjust ? 'Monthly withdrawal in year 20' : 'Monthly withdrawal (level)', value: money(wdYear20), sub: adjust ? `inflated at ${pct(s.p_infl)} a year` : 'no inflation adjustment' },
@@ -1312,22 +1331,24 @@ const MODULES = [
     compute(s) {
       const year = new Date().getFullYear(), birth = year - s.d_age, startAge = rmdStartAge(birth); const infl = s.d_infl / 100;
       const rows = simulateRmd({ bal: s.d_bal, age: s.d_age, retAge: s.d_retage, pmt: s.d_pmt, r1: s.d_ret / 100, r2: s.d_retret / 100, startAge, toAge: Math.max(startAge, 95, s.d_age + 1) });
-      const first = rows.find(r => r.age === startAge) || rows.find(r => r.rmd > 0) || rows[0]; const yearsAway = Math.max(0, startAge - s.d_age);
+      const first = rows.find(r => r.age === startAge) || rows.find(r => r.rmd > 0) || rows[0]; const fa = first.age; const yearsAway = Math.max(0, fa - s.d_age);
+      const already = s.d_age > startAge; // already taking RMDs: the first row is this year's
+      const boundary = birth === 1960 ? ' Assumes a 1960 birth year; if born in 1959, RMDs begin at 73 instead.' : birth === 1959 ? ' Assumes a 1959 birth year; if born in 1960, RMDs begin at 75 instead.' : '';
       const ssAt = s.d_ss * Math.pow(1 + infl, yearsAway); const deflate = v => v / Math.pow(1 + infl, yearsAway);
       const at85 = rows.find(r => r.age === 85); const rmdRows = rows.filter(r => r.rmd > 0); const totalRmd = rmdRows.reduce((a, r) => a + r.rmd, 0);
       const tax1 = first.rmd * s.d_tax / 100;
       const sched = `<table><thead><tr><th>Age</th><th>Divisor</th><th>Balance (prior year end)</th><th>RMD</th><th>After tax</th><th>Balance after RMD</th></tr></thead><tbody>${rmdRows.map(r => `<tr><td>${r.age}</td><td>${r.div}</td><td>${money(r.before)}</td><td>${money(r.rmd)}</td><td>${money(r.rmd * (1 - s.d_tax / 100))}</td><td>${money(r.bal)}</td></tr>`).join('')}</tbody></table>`;
       return {
-        hero: { label: `Estimated first RMD at age ${startAge}${yearsAway ? ', in ' + plural(yearsAway, 'year') : ''}`, value: money(first.rmd), sub: `${money(first.before)} balance ÷ ${first.div} (IRS Uniform Lifetime Table) = ${pct(100 / first.div, 2)} of the account. Worth about ${money(deflate(first.rmd))} in today’s dollars.` },
+        hero: { label: already ? `Estimated RMD this year, at age ${fa}` : `Estimated first RMD at age ${fa}${yearsAway ? ', in ' + plural(yearsAway, 'year') : ''}`, value: money(first.rmd), sub: `${money(first.before)} balance ÷ ${first.div} (IRS Uniform Lifetime Table) = ${pct(100 / first.div, 2)} of the account.${yearsAway ? ` Worth about ${money(deflate(first.rmd))} in today’s dollars.` : ''}${boundary}` },
         tiles: [
-          { label: `Pre-tax balance at ${startAge}`, value: money(first.before), sub: s.d_age < s.d_retage ? `${money(s.d_bal)} today, contributions to ${s.d_retage}, then ${pct(s.d_retret)}` : `${money(s.d_bal)} today at ${pct(s.d_retret)}` },
-          { label: 'Tax on the first RMD', value: money(tax1), sub: `at ${pct(s.d_tax, 0)}; ${money(first.rmd - tax1)} after tax` },
-          { label: `RMD plus Social Security at ${startAge}`, value: money(first.rmd + ssAt), accent: true, sub: `${money(ssAt)} Social Security (${money(s.d_ss)} today, inflation-adjusted); about ${money(deflate(first.rmd + ssAt))} in today’s dollars` },
+          { label: already ? 'Pre-tax balance at the end of last year' : `Pre-tax balance at ${fa}`, value: money(first.before), sub: s.d_age < s.d_retage ? `${money(s.d_bal)} today, contributions to ${s.d_retage}, then ${pct(s.d_retret)}` : `${money(s.d_bal)} today at ${pct(s.d_retret)}` },
+          { label: already ? 'Tax on this year’s RMD' : 'Tax on the first RMD', value: money(tax1), sub: `at ${pct(s.d_tax, 0)}; ${money(first.rmd - tax1)} after tax` },
+          { label: `RMD plus Social Security at ${fa}`, value: money(first.rmd + ssAt), accent: true, sub: `${money(ssAt)} Social Security (${money(s.d_ss)} today, inflation-adjusted); about ${money(deflate(first.rmd + ssAt))} in today’s dollars` },
           { label: 'RMD at age 85', value: at85 ? money(at85.rmd) : '—', sub: at85 ? `${pct(100 / at85.div, 2)} of a ${money(at85.before)} balance` : '' }
         ],
-        callout: `Required distributions start at <b>${pct(100 / first.div, 2)}</b> of the account and rise every year: by 85 the required share is <b>${at85 ? pct(100 / at85.div, 2) : '—'}</b>, by 90 about <b>${pct(100 / RMD_TABLE[90], 2)}</b>. Over ages ${startAge}–95 the schedule above withdraws <b>${money(totalRmd)}</b>, all taxable as ordinary income. Together with Social Security, the RMD can push a retiree into a higher bracket, affect Medicare premiums, and make more of the Social Security benefit taxable; those are the reasons advisors look at Roth conversions and withdrawal timing before the required age.`,
+        callout: `Required distributions start at <b>${pct(100 / first.div, 2)}</b> of the account and rise every year: by 85 the required share is <b>${at85 ? pct(100 / at85.div, 2) : '—'}</b>, by 90 about <b>${pct(100 / RMD_TABLE[90], 2)}</b>. Over ages ${fa}–95 the schedule withdraws <b>${money(totalRmd)}</b>, all taxable as ordinary income. Together with Social Security, the RMD can push a retiree into a higher bracket, affect Medicare premiums, and make more of the Social Security benefit taxable; those are the reasons advisors look at Roth conversions and withdrawal timing before the required age.`,
         teach: `<b>The rules in brief.</b> The required age is 73 for people born 1951–1959 and 75 for those born in 1960 or later (born ${birth} here). The first RMD may be delayed to April 1 of the following year, but that doubles up two distributions in one tax year. Missing an RMD carries a 25% excise tax, reduced to 10% if corrected promptly. Roth IRAs and, since 2024, Roth 401(k)s have no lifetime RMDs. Inherited accounts follow different rules. This estimate uses the Uniform Lifetime Table, which assumes a spouse not more than ten years younger.`,
-        extraTitle: 'RMD schedule', extraSub: `ages ${startAge}–95, Uniform Lifetime Table`, extra: `<div class="sched">${sched}</div>`,
+        extraTitle: 'RMD schedule', extraSub: `ages ${fa}–95, Uniform Lifetime Table`, extra: `<div class="sched">${sched}</div>`,
         chart: { kind: 'line', x: rmdRows.map(r => r.age), xUnit: 'Age', series: [{ name: 'Required distribution', color: 'var(--c1)', values: rmdRows.map(r => r.rmd), area: true }], endLabels: false, aria: 'Area chart of the required minimum distribution by age' },
         chart2: { kind: 'line', x: rows.map(r => r.age), xUnit: 'Age', series: [{ name: 'Pre-tax balance', color: 'var(--c2)', values: rows.map(r => r.bal), area: true }], endLabels: false, marker: { x: startAge, y: first.before, label: 'RMDs begin at ' + startAge }, aria: 'Area chart of the pre-tax balance by age' },
         copy: [`Age ${s.d_age} (born ${birth}), pre-tax balance ${money(s.d_bal)}, ${money(s.d_pmt)}/mo to ${s.d_retage} at ${pct(s.d_ret)}, then ${pct(s.d_retret)}; RMDs from ${startAge}; tax ${pct(s.d_tax, 0)}; Social Security ${money(s.d_ss)}/yr today’s dollars; ${pct(s.d_infl)} inflation.`, `First RMD ${money(first.rmd)} (${pct(100 / first.div, 2)} of ${money(first.before)}), tax ${money(tax1)}; RMD + Social Security ${money(first.rmd + ssAt)}; RMD at 85 ${at85 ? money(at85.rmd) : '—'}.`]
@@ -1427,18 +1448,19 @@ const MODULES = [
       const rl = s.v_rate / 100, ri = s.v_ret / 100, X = s.v_extra;
       const base = amortize(s.v_bal, rl, s.v_term, 0), accel = X > 0 ? amortize(s.v_bal, rl, s.v_term, X) : base;
       const T = base.months, pay = base.pay;
+      const lastPaid = accel.monthly.length ? accel.monthly[accel.monthly.length - 1].pay : 0; const leftover = X > 0 ? Math.max(0, pay + X - lastPaid) : 0; // the final payment is smaller; the rest is invested that month
       const run = r => { const m = r / 12; let invA = 0, invB = 0; const a = [], b = [];
-        for (let mo = 1; mo <= T; mo++) { invA = invA * (1 + m) + X; invB = invB * (1 + m) + (mo > accel.months ? pay + X : 0);
+        for (let mo = 1; mo <= T; mo++) { invA = invA * (1 + m) + X; invB = invB * (1 + m) + (mo > accel.months ? pay + X : mo === accel.months ? leftover : 0);
           const balA = (base.monthly[mo - 1] || { bal: 0 }).bal, balB = mo > accel.months ? 0 : (accel.monthly[mo - 1] || { bal: 0 }).bal;
           if (mo % 12 === 0 || mo === T) { a.push(invA - balA); b.push(invB - balB); } }
         return { invA, invB, a, b }; };
       const res = run(ri); const diff = res.invA - res.invB; const saved = base.totI - accel.totI;
-      let lo = 0, hi = 0.5; for (let i = 0; i < 50; i++) { const mid = (lo + hi) / 2; const t = run(mid); if (t.invA - t.invB < 0) lo = mid; else hi = mid; } const breakeven = run(0.5).invA - run(0.5).invB < 0 ? null : (lo + hi) / 2 * 100;
+      let lo = 0, hi = 0.5; for (let i = 0; i < 50; i++) { const mid = (lo + hi) / 2; const t = run(mid); if (t.invA - t.invB < 0) lo = mid; else hi = mid; } const breakeven = X <= 0 || s.v_bal <= 0 || run(0.5).invA - run(0.5).invB < 0 || run(0).invA - run(0).invB > 0.5 ? null : (lo + hi) / 2 * 100;
       const xs = []; for (let mo = 12; mo < T; mo += 12) xs.push(mo / 12); xs.push(T / 12);
-      const who = X <= 0 ? 'none' : Math.abs(diff) < 1 ? 'tie' : diff > 0 ? 'invest' : 'pay';
+      const who = X <= 0 || s.v_bal <= 0 ? 'none' : Math.abs(diff) < 1 ? 'tie' : diff > 0 ? 'invest' : 'pay';
       const yrsF = mo => yrs(mo / 12);
       return {
-        hero: who === 'none' ? { label: 'Enter an extra monthly amount', value: '—', sub: 'The comparison needs an amount to direct to one path or the other.' }
+        hero: who === 'none' ? { label: s.v_bal <= 0 ? 'Enter a loan balance' : 'Enter an extra monthly amount', value: '—', sub: 'The comparison needs a loan and an extra monthly amount to direct to one path or the other.' }
           : { label: who === 'tie' ? 'The two paths tie at year ' + Math.round(T / 12) : (who === 'invest' ? 'Investing ends ahead by' : 'Paying down the loan ends ahead by'), value: who === 'tie' ? money(res.invA) : money(Math.abs(diff)), sub: `At the loan’s scheduled payoff in ${yrsF(T)}: investing ${money(X)} a month at ${pct(s.v_ret)} reaches ${money(res.invA)}; paying it to the loan clears it ${yrsF(T - accel.months)} early, then investing the freed ${money(pay + X)} a month reaches ${money(res.invB)}.` },
         tiles: [
           { label: 'Interest saved by paying down', value: money(saved), accent: who === 'pay', sub: `loan paid off in ${yrsF(accel.months)} instead of ${yrsF(T)}` },
@@ -1446,7 +1468,7 @@ const MODULES = [
           { label: 'Pay down, then invest the freed payment', value: money(res.invB), sub: `${money(pay + X)} a month for ${yrsF(T - accel.months)} after payoff` },
           { label: 'Break-even investment return', value: breakeven === null ? '—' : pct(breakeven, 1), sub: breakeven === null ? '' : `above this, investing wins; it is ${breakeven > s.v_rate ? 'above' : 'near'} the ${pct(s.v_rate, 2)} loan rate` }
         ],
-        callout: who === 'none' ? 'Add an extra monthly amount to compare the two paths.' : `Paying down the loan is a guaranteed <b>${pct(s.v_rate, 2)}</b> return; investing is an assumed <b>${pct(s.v_ret)}</b> that is not guaranteed and is shown gross of fees. ${who === 'invest' ? `Under these assumptions investing ends <b>${money(diff)}</b> ahead, but the margin depends entirely on earning the assumed return.` : who === 'pay' ? `Under these assumptions paying down the loan ends <b>${money(-diff)}</b> ahead, with no market risk.` : 'Under these assumptions they tie.'} Taxes on investment gains, any deductibility of loan interest, liquidity, and the value of being debt-free are not in these figures.`,
+        callout: who === 'none' ? 'Add a loan balance and an extra monthly amount to compare the two paths.' : `Paying down the loan is a guaranteed <b>${pct(s.v_rate, 2)}</b> return; investing is an assumed <b>${pct(s.v_ret)}</b> that is not guaranteed and is shown gross of fees. ${who === 'invest' ? `Under these assumptions investing ends <b>${money(diff)}</b> ahead, but the margin depends entirely on earning the assumed return.` : who === 'pay' ? `Under these assumptions paying down the loan ends <b>${money(-diff)}</b> ahead, with no market risk.` : 'Under these assumptions they tie.'} Taxes on investment gains, any deductibility of loan interest, liquidity, and the value of being debt-free are not in these figures.`,
         teach: '<b>What the numbers leave out.</b> Money sent to a loan cannot be withdrawn in an emergency; an investment can, though possibly at a loss. Higher-rate debt such as credit cards almost always beats an assumed investment return, and most employer 401(k) matches beat paying down a mortgage. The comparison here is for one loan and one extra amount; the order in which returns arrive would change the investing result in real life.',
         chart: { kind: 'line', x: xs, series: [{ name: 'Invest the extra', color: 'var(--c1)', values: res.a }, { name: 'Pay down the loan', color: 'var(--c2)', values: res.b }], endLabels: false, aria: 'Line chart of net position under each path by year' },
         copy: [`Extra ${money(X)}/mo; loan ${money(s.v_bal)} at ${pct(s.v_rate, 2)} with ${plural(s.v_term, 'year')} remaining; investment return ${pct(s.v_ret)} compounded monthly, gross of fees.`, `At scheduled payoff (${yrsF(T)}): investing ${money(res.invA)}; pay-down-then-invest ${money(res.invB)}; interest saved ${money(saved)}; ${who === 'invest' ? 'investing ahead by ' + money(diff) : who === 'pay' ? 'paying down ahead by ' + money(-diff) : 'tie'}; break-even return ${breakeven === null ? 'n/a' : pct(breakeven, 1)}.`]
@@ -1490,6 +1512,11 @@ const MODULES = [
   }
 ];
 
+// A 100% tax rate has no meaning here and divides by zero in the Roth comparison
+MODULES.forEach(m => m.fields.forEach(f => { if (f.kind === 'pct' && /tax rate/i.test(f.label)) f.hard = 99; }));
+// Loans: realistic ceilings. Past ~30% over 50+ years the month-by-month schedule loses floating-point precision.
+['l_rate', 'm_rate', 'x_rateA', 'x_rateB', 'v_rate'].forEach(id => MODULES.forEach(m => m.fields.forEach(f => { if (f.id === id) f.hard = 30; })));
+['l_years', 'm_years', 'x_yearsA', 'x_yearsB', 'v_term'].forEach(id => MODULES.forEach(m => m.fields.forEach(f => { if (f.id === id) f.hard = 50; })));
 /* Fee disclosure: every investment figure is gross of fees; loan and mortgage math involves no advisory fee */
 const FEE_FREE = ['loan', 'mortgage', 'mortcmp', 'networth'];
 // Long figures (billions and up) get a smaller size instead of wrapping mid-number
@@ -1575,7 +1602,7 @@ select.addEventListener('change', () => show(select.value, true));
 document.querySelectorAll('#navlinks [data-page]').forEach(b => b.addEventListener('click', () => show(b.dataset.page, true)));
 document.getElementById('nav-print').addEventListener('click', () => { show('plan', true); const el = document.getElementById('pl_preview'); if (el) el.scrollIntoView({ block: 'center' }); });
 const footCalcs = document.getElementById('foot-calcs'); MODULES.forEach(m => footCalcs.append(h('li', {}, h('button', { type: 'button', onclick: () => show(m.id, true) }, m.tab))));
-const footExplore = document.getElementById('foot-explore'); [['home', 'Overview'], ['plan', 'Plan inputs'], ['list', 'Calculators']].forEach(([id, t]) => footExplore.append(h('li', {}, h('button', { type: 'button', onclick: () => show(id, true) }, t))));
+const footExplore = document.getElementById('foot-explore'); [['home', 'Overview'], ['plan', 'Plan inputs'], ['list', 'Calculators'], ['methods', 'Methodology']].forEach(([id, t]) => footExplore.append(h('li', {}, h('button', { type: 'button', onclick: () => show(id, true) }, t))));
 footExplore.append(h('li', {}, h('a', { href: 'https://www.wcipllc.com/', target: '_blank', rel: 'noopener noreferrer', style: 'text-decoration:none' }, 'wcipllc.com ↗')));
 document.getElementById('foot-year').textContent = String(new Date().getFullYear());
 
@@ -1629,6 +1656,64 @@ MODULES.forEach(mod => {
   built[mod.id] = { section, update, state, fields: mod.fields, onChange, planStatus };
 });
 
+/* ---------- Methodology: written from the code, one entry per calculator ---------- */
+const METHODS_VERIFIED = 'October 23, 2026';
+const CONVENTIONS = [
+  ['Rates', 'Rates of return, inflation, and loan rates are entered as annual percentages and held constant for every period. Unless a calculator says otherwise, the monthly rate is the annual rate divided by 12.'],
+  ['Timing', 'Deposits and withdrawals happen at the end of each month, after that month’s growth. Calculators that work in annual steps (Tax-deferred vs. taxable, Roth vs. Traditional, Compound growth set to annual contributions) deposit at the end of each year.'],
+  ['Inflation', 'Inflation compounds once a year. A figure “in today’s dollars” is the nominal figure divided by (1 + inflation) raised to the number of years. An amount entered in today’s dollars, such as spending or Social Security, is multiplied by the same factor before it is used in a future year.'],
+  ['Social Security', 'The benefit is entered in today’s dollars at the chosen claiming age. It begins in the first year the current age reaches the claiming age, counted in whole years, and rises with inflation every year, including the years before it starts. The calculators do not adjust the benefit for claiming earlier or later than the age entered.'],
+  ['Fees and taxes', 'Every investment figure is gross of advisory fees and other costs. Taxes are applied only where a calculator says so.'],
+  ['Display', 'Dollar figures are rounded to the nearest dollar, percentages to one or two decimals, and durations to whole months. Year 0 is today; charts and tables show year-end values.']
+];
+const METHODS = {
+  grow: 'Monthly growth factor = (1 + rate ÷ k)^(k ÷ 12), where k is the compounding frequency chosen (1, 4, 12, or 365). Each month the balance is multiplied by that factor and then the contribution is added, monthly or at each year end. Total deposited = starting amount + contributions; growth = ending balance − total deposited. Effective annual yield = (1 + rate ÷ k)^k − 1. “Growth overtakes deposits” is the first year end at which growth exceeds the total deposited.',
+  compare: 'Both paths start with the same amount and add the same monthly deposit; one grows at the savings rate ÷ 12 and the other at the investment return ÷ 12, compounded monthly. Difference = investment balance − savings balance. Growth multiple = investment growth ÷ savings growth. The savings rate is treated as a nominal annual rate compounded monthly; a bank’s quoted APY is slightly higher than the same nominal rate, so entering an APY here slightly overstates the savings balance.',
+  inflation: 'The nominal balance follows Compound growth with monthly compounding. In today’s dollars = nominal ÷ (1 + inflation)^years. Real rate of return = (1 + return) ÷ (1 + inflation) − 1, the exact Fisher relation on the stated annual rates. The $100 basket = 100 × (1 + inflation)^years.',
+  rule72: 'Estimate = 72 ÷ rate. Exact doubling time = ln 2 ÷ ln(1 + rate). Doublings within the horizon = the whole number of exact doubling times that fit. Value at the horizon = starting amount × (1 + rate)^years, compounded annually with no further deposits.',
+  wait: 'Both savers deposit the same amount monthly at the return ÷ 12; the late starter deposits for (years − delay) years, both ending on the goal date. Cost of waiting = the difference between the two balances on that date. Catch-up contribution = the level monthly deposit over (years − delay) years whose future value equals the on-time saver’s balance.',
+  goal: 'Monthly contribution needed = (goal − starting amount × (1 + m)^n) × m ÷ ((1 + m)^n − 1), with m = return ÷ 12 and n = months, never below zero. Years needed = the first month at which the entered contribution reaches the goal, up to 100 years. Required return = the annual rate (monthly rate × 12) at which the entered contribution reaches the goal in the stated years, found by bisection.',
+  taxdef: 'The annual contribution is deposited at each year end and compounds annually. Tax-deferred: the full pre-tax contribution grows at the return; the ending balance is taxed once at the withdrawal rate. Taxable: the contribution after today’s tax grows at the return × (1 − tax on earnings), a simplification that taxes every year’s earnings at that one rate. Tax paid along the way = taxable growth × t ÷ (1 − t).',
+  roth: 'Annual year-end contributions, annual compounding. Traditional: the pre-tax contribution grows at the return and the ending balance is taxed at the retirement rate. Roth on the same take-home pay: the contribution × (1 − today’s rate) grows and is not taxed. Roth on the same contribution: the same dollars go in, and the extra take-home cost each year is contribution × t ÷ (1 − t). On the same-take-home basis the two tie exactly when the retirement rate equals today’s rate.',
+  networth: 'Total assets = cash and savings + retirement accounts + taxable investments + home value + other assets. Total liabilities = mortgage + other debts. Net worth = assets − liabilities. Home equity = home value − mortgage. Investable assets = cash + taxable investments + retirement accounts.',
+  payout: 'Each month the balance grows at the return ÷ 12, then the withdrawal is taken. If “rise with inflation” is on, the withdrawal increases by the inflation rate at each year end. The money is “depleted” in the month the balance falls to half a cent or less; the illustration runs up to 40 years. Withdrawal rate = first-year monthly withdrawal × 12 ÷ starting balance. “Sustainable for 30 years” = the first-year monthly withdrawal, with the same inflation setting, that brings the balance to zero at exactly 30 years, found by bisection.',
+  cashflow: 'Each year: expenses = today’s expenses × (1 + inflation)^year; Social Security as described under the conventions; other income from its start year, rising with inflation if selected, otherwise level. The gap = (expenses − Social Security − other income) ÷ 12 is withdrawn each month after growth at the return ÷ 12; a surplus is added to the balance. Coverage = the month the balance reaches zero. Spending capacity = the level change to today’s-dollar spending, positive or negative, that makes the balance land at zero at the end of the horizon, found by bisection.',
+  retire: 'Years to retirement = retirement age − current age; years in retirement = plan-through age − retirement age. Needed at retirement = the smallest balance that funds the gap (spending − Social Security − other income, each inflated from today) for the retirement years at the return in retirement, month by month as in Income & expenses, found by bisection. Projected savings = savings today plus monthly contributions at the pre-retirement return. Extra monthly saving = the contribution that would reach the need, less the current contribution. Social Security’s share = the year-one benefit ÷ year-one spending, both in retirement-year dollars; zero if the claiming age is after the retirement age.',
+  rmd: 'Birth year = calendar year − current age. RMDs begin at 73 for birth years 1951–1959 and at 75 for 1960 or later. The balance grows monthly with contributions until the retirement age at the pre-retirement return, then at the retirement return. From the starting age, each year’s RMD = the prior year-end balance ÷ the IRS Uniform Lifetime Table divisor for that age, withdrawn at year end. Tax = RMD × retirement tax rate. Social Security at the RMD age = today’s benefit × (1 + inflation)^years. Today’s-dollar figures divide by the same factor.',
+  loan: 'Payment = balance × m ÷ (1 − (1 + m)^−n), with m = rate ÷ 12 and n = months. Each month: interest = balance × m; principal = payment − interest + extra payment, limited to the balance remaining. Interest share in year 1 = year-one interest ÷ year-one payments. Payoff = the month the balance reaches zero; interest saved = scheduled total interest − total interest with the extra payment.',
+  mortgage: 'Monthly income = gross annual income ÷ 12. Maximum housing payment = the lower of (housing limit × monthly income) and (total-debt limit × monthly income − other monthly debt payments), never below zero. Principal and interest = housing payment − taxes and insurance. Loan = P&I × (1 − (1 + m)^−n) ÷ m. Home price = loan + down payment. Price change per 1% of rate = loan at (rate − 0.5%) − loan at (rate + 0.5%).',
+  mortcmp: 'Each option is amortized as in Loan amortization. Bi-weekly on Option B is modeled as one-twelfth of the monthly payment added to principal each month, the equivalent of 13 payments a year; its monthly equivalent is the payment × 13 ÷ 12. Interest saved = Option A total interest − Option B total interest.',
+  debtinv: 'The loan’s scheduled payment comes from Loan amortization. Path A invests the extra amount every month at the investment return ÷ 12 for the loan’s remaining term. Path B adds the extra amount to principal until the loan is paid off, then invests the full payment plus the extra for the remaining months, together with the unused part of the smaller final payment. Both paths are valued at the scheduled payoff date, when both have the loan paid off. Interest saved comes from the two schedules. Break-even = the investment return at which the paths tie, found by bisection; valued at one rate, that is the loan rate.',
+  insure: 'Income to replace = household income − survivor benefits, never below zero. It is paid at the end of each year for the stated years, rising with inflation from the second year, and discounted annually at the return on proceeds: present value = Σ income × (1 + inflation)^(t − 1) ÷ (1 + return)^t. Total need = that present value + mortgage + other debts + education + final expenses. Additional coverage = total need − existing coverage − assets available.'
+};
+const LIMITS = [
+  'Returns are constant. Real returns vary year to year, and the order of returns changes outcomes when money is being withdrawn (sequence risk). None of the calculators models that.',
+  'Ages are whole years, and a birth year is estimated from the current age; a client whose birthday falls later in the year may be treated as a year older for the RMD start age.',
+  'Social Security benefits are not adjusted for claiming before or after the age entered; enter the benefit shown for that age on the client’s ssa.gov statement.',
+  'Tax treatment is simplified: one marginal rate, no brackets, no state tax, no distinction between ordinary income and capital gains, no penalties, and no taxation of Social Security benefits.',
+  'The RMD estimate uses the Uniform Lifetime Table only; it does not cover inherited accounts, a spouse more than ten years younger, Roth accounts, or the April 1 first-year deferral.',
+  'Mortgage affordability is a ratio screen; it ignores credit, mortgage insurance, HOA dues, and lender-specific rules.',
+  'Retirement withdrawals in Retirement payout and Income & expenses are treated as spendable; income tax on withdrawals from pre-tax accounts is not deducted.',
+  'Inputs accept whole dollars, and every displayed figure is rounded; a figure reproduced elsewhere with the same inputs may differ by a dollar from rounding alone.'
+];
+
+/* Page */
+const methodsPage = h('section', { id: 'mod_methods', hidden: '' },
+  h('div', { class: 'pagehead' }, h('div', { class: 'wrap' }, h('span', { class: 'eyebrow' }, 'Methodology'), h('h1', {}, 'How the numbers are made.'),
+    h('p', { class: 'lead' }, 'The formula behind every calculator, the conventions they share, and what they leave out. Written from the code and checked against it; this page is the reference for the disclosures on the site and in the printed plan.'))),
+  h('div', { class: 'wrap pad methods' },
+    h('h2', { class: 'm-h' }, 'Conventions shared by every calculator'),
+    h('dl', { class: 'm-conv' }, ...CONVENTIONS.flatMap(([k, v]) => [h('dt', {}, k), h('dd', {}, v)])),
+    ...GROUPS.map(g => h('div', { class: 'm-group' }, h('h2', { class: 'm-h' }, g.name),
+      ...MODULES.filter(m => m.group === g.id).map(m => h('div', { class: 'm-item', id: 'method_' + m.id },
+        h('h3', {}, h('button', { type: 'button', class: 'name', onclick: () => show(m.id, true) }, m.tab), h('span', {}, m.question)),
+        h('p', {}, METHODS[m.id]))))),
+    h('h2', { class: 'm-h' }, 'What the calculators leave out'),
+    h('ul', { class: 'm-limits' }, ...LIMITS.map(t => h('li', {}, t))),
+    h('h2', { class: 'm-h' }, 'Verification'),
+    h('p', { class: 'm-verify' }, `Last verified ${METHODS_VERIFIED}. Every calculator was compared with an independent implementation of its formulas across thousands of input sets, including values typed past the slider ranges; checked for the relationships that must always hold, such as deposits plus growth equaling the balance; run at its extremes; compared with published worked examples from Microsoft Excel’s function documentation, IRS Publication 590-B, and others; and rebuilt in an Excel workbook with native functions (FV, PMT, PV, NPER, RATE, CUMIPMT, NPV). The workbook and the test results are available from the firm on request.`)));
+mainEl.append(methodsPage);
+
 /* ---------- Plan: general information, standard assumptions, printable plan ---------- */
 const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const fmtDate = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return iso || ''; return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
@@ -1675,7 +1760,8 @@ const PARTS = [
   { id: 'pp_stats', label: 'Key statistics', value: true },
   { id: 'pp_charts', label: 'Charts', value: true },
   { id: 'pp_obs', label: 'Observation', value: true },
-  { id: 'pp_tables', label: 'Data tables and schedules', value: false }
+  { id: 'pp_tables', label: 'Data tables and schedules', value: false },
+  { id: 'pp_methods', label: 'Methodology appendix', value: false }
 ];
 const plan = {}; PLAN_INFO.forEach(f => plan[f.id] = f.value); PLAN_ASSUMP.forEach(f => plan[f.id] = f.value); PARTS.forEach(f => plan[f.id] = f.value);
 plan.pl_include = MODULES.map(m => m.id); plan.pl_highlight = true; plan.pl_source = 'current';
@@ -1865,12 +1951,13 @@ function openReport(andPrint) {
     return h('tr', {}, h('td', {}, m.tab), h('td', {}, m.question), h('td', {}, b.standard ? 'Standard assumptions' : 'Entered in the calculator: ' + b.manual.map(f => f.label).join(', ') + (b.todo.length ? ' (' + (b.todo.length === b.manual.length ? 'default values' : b.todo.length + ' at default values') + ')' : ''))); })));
   reportEl.append(bar, pages);
   document.body.classList.add('report-mode'); reportEl.classList.add('is-on'); window.scrollTo({ top: 0 });
-  const BUDGET = 928; // px of content per page, below the 10in printable height
+  const BUDGET = 930; // px available for header + blocks on a letter page: 11in (1056px) less page padding (91px) and the footer (27px), with a small margin
+  const outerH = el => { const cs = getComputedStyle(el); return el.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom); };
   const paginate = (title, lede, blocks) => { // measure in a temporary page, then split into real pages so print matches the preview
     const temp = h('section', { class: 'rpage' }, ...head(title), h('p', { class: 'rlede' }, lede), ...blocks); pages.append(temp);
-    const headH = temp.children[0].offsetHeight + temp.children[1].offsetHeight + temp.children[2].offsetHeight + temp.children[3].offsetHeight + 16;
+    const headH = outerH(temp.children[0]) + outerH(temp.children[1]) + outerH(temp.children[2]) + outerH(temp.children[3]);
     const groups = []; let cur = [], used = headH;
-    blocks.forEach(bl => { const hb = bl.offsetHeight + 14; if (used + hb > BUDGET && cur.length) { groups.push(cur); cur = []; used = headH; } cur.push(bl); used += hb; });
+    blocks.forEach(bl => { const hb = outerH(bl); if (used + hb > BUDGET && cur.length) { groups.push(cur); cur = []; used = headH; } cur.push(bl); used += hb; });
     if (cur.length) groups.push(cur);
     temp.remove();
     groups.forEach((g, i) => pages.append(h('section', { class: 'rpage' }, ...head(title + (i ? ' (continued)' : '')), i ? null : h('p', { class: 'rlede' }, lede), ...g, foot())));
@@ -1912,6 +1999,11 @@ function openReport(andPrint) {
     pre.remove();
     paginate(mod.title, mod.lede, blocks);
   });
+  // Methodology appendix (optional)
+  if (plan.pp_methods) paginate('Methodology', 'How each calculator in this plan arrives at its figures, written from the calculator code.', [
+    h('div', { class: 'rsec' }, h('h3', {}, 'Conventions shared by every calculator'), ...CONVENTIONS.map(c => h('p', { class: 'robs' }, h('b', {}, c[0] + '. '), c[1]))),
+    ...mods.map(m => h('div', { class: 'rsec' }, h('h3', {}, m.tab), h('p', { class: 'robs' }, METHODS[m.id]))),
+    h('div', { class: 'rsec' }, h('h3', {}, 'What the calculators leave out'), ...LIMITS.map(t => h('p', { class: 'robs' }, '• ' + t)))]);
   // Disclosures
   pages.append(h('section', { class: 'rpage' }, h('div', { class: 'rhead' }, 'Prepared: ' + date), h('div', { class: 'rbar' }),
     h('div', { class: 'rdisc' },
@@ -1919,12 +2011,12 @@ function openReport(andPrint) {
       h('p', {}, h('b', {}, 'Gross of fees. '), FEE_LONG),
       h('p', {}, 'This document is being provided by your financial professional as an educational illustration and is not intended to be used as, or in lieu of, an account statement, a financial plan, or a recommendation to buy or sell any security.'),
       h('p', {}, 'All results are hypothetical illustrations and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period. Actual returns vary from year to year, and investments can lose value, including loss of principal. The order in which returns occur can materially change outcomes, particularly when withdrawals are being taken.'),
-      h('p', {}, 'Figures do not reflect taxes unless explicitly stated; taxes would reduce the results shown. Where tax rates are used, they are simplified assumptions, not tax advice; qualified dividends and long-term gains are often taxed at lower rates than illustrated, and penalties and required distributions are not modeled.'),
-      h('p', {}, 'Savings account comparisons assume a fixed annual percentage yield; actual yields change over time. Bank deposits are typically FDIC-insured up to applicable limits; investments are not. Mortgage affordability figures are a rough screen using common lender ratios and do not represent a credit decision. Life insurance figures are a needs-based estimate and do not recommend any product or carrier; any insurance decision involves product features, costs, and underwriting not addressed here.'),
+      h('p', {}, 'Figures do not reflect taxes unless explicitly stated; taxes would reduce the results shown. Where tax rates are used, they are simplified assumptions, not tax advice; qualified dividends and long-term gains are often taxed at lower rates than illustrated, and the tax-deferred and Roth comparisons do not model penalties or required distributions.'),
+      h('p', {}, 'Savings account comparisons hold one annual rate constant, compounded monthly; actual yields change over time. Bank deposits are typically FDIC-insured up to applicable limits; investments are not. Mortgage affordability figures are a rough screen using common lender ratios and do not represent a credit decision. Life insurance figures are a needs-based estimate and do not recommend any product or carrier; any insurance decision involves product features, costs, and underwriting not addressed here.'),
       h('p', {}, 'Social Security figures are estimates entered by the client or advisor in today’s dollars and are assumed to rise with inflation once they begin. Actual benefits depend on the earnings record, the claiming age, and future law; the calculators do not adjust the entered benefit for claiming earlier or later than the stated age. Required minimum distribution estimates use the IRS Uniform Lifetime Table and the starting age under current law (73, or 75 for those born in 1960 or later); they are simplified, do not reflect inherited accounts, Roth accounts, or the April 1 first-year deferral, and are not tax advice.'),
       h('p', {}, 'This document does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice. Please consult your advisor, tax professional, or attorney about your individual situation.'),
       h('h4', {}, 'Methods'),
-      h('p', {}, 'Growth and withdrawal calculators compound monthly at the stated annual rate, with contributions or withdrawals applied at the end of each month, unless a calculator states a different compounding frequency. Inflation-adjusted (“today’s dollars”) figures divide nominal values by cumulative inflation. The Rule of 72, the tax-deferred comparison, and the Roth comparison compound annually. Loan figures use a level monthly payment with interest accrued monthly on the remaining balance; bi-weekly payments are modeled as one-twelfth of a payment added to principal each month. The retirement-need calculation finds, by search, the smallest balance at retirement that funds the spending gap through the planning age. RMDs are taken at the end of each year from the prior year-end balance.'),
+      h('p', {}, 'Growth and withdrawal calculators compound monthly at the stated annual rate, with contributions or withdrawals applied at the end of each month, unless a calculator states a different compounding frequency. Inflation-adjusted (“today’s dollars”) figures divide nominal values by cumulative inflation. The Rule of 72, the tax-deferred comparison, and the Roth comparison compound annually. Loan figures use a level monthly payment with interest accrued monthly on the remaining balance; bi-weekly payments are modeled as one-twelfth of a payment added to principal each month. The retirement-need calculation finds, by search, the smallest balance at retirement that funds the spending gap through the planning age. RMDs are taken at the end of each year from the prior year-end balance. A description of each calculator’s method is on the Methodology page of the calculator site and can be included in this plan as an appendix.'),
       h('h4', {}, 'Definitions'),
       h('div', { class: 'def' }, h('dt', {}, 'Compounding: '), h('dd', {}, 'earning a return on both the original amount and on previously earned returns.')),
       h('div', { class: 'def' }, h('dt', {}, 'Nominal vs. real: '), h('dd', {}, 'a nominal figure is the dollar amount on a statement; a real figure is the same amount expressed in today’s purchasing power after inflation.')),
@@ -1941,7 +2033,8 @@ function openReport(andPrint) {
 function closeReport() { reportEl.classList.remove('is-on'); document.body.classList.remove('report-mode'); reportEl.replaceChildren(); show('plan', true); }
 
 /* ---------- Router ---------- */
-const PAGES = { home, plan: planPage, list: listPage };
+const PAGES = { home, plan: planPage, list: listPage, methods: methodsPage };
+document.getElementById('hyp-methods').addEventListener('click', () => show('methods', true));
 function show(id, user) {
   if (!PAGES[id] && !built[id]) id = 'home';
   Object.keys(PAGES).forEach(k => { PAGES[k].hidden = k !== id; });
