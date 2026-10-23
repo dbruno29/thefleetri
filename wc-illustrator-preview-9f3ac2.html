@@ -281,6 +281,9 @@ svg .cross { stroke: var(--line); stroke-width: 1; }
 .sub-h { font-size: 13px; font-weight: 700; margin-top: 8px; }
 .field.is-custom .field-head label::after { content: " \25CF"; color: var(--green); font-size: 9px; vertical-align: 2px; }
 .plan-status { font-size: 11.5px; color: var(--muted); flex-basis: 100%; }
+.feenote { font-size: 12px; color: var(--muted); margin: 12px 0 0; line-height: 1.5; }
+.feenote b { color: var(--ink-2); font-weight: 600; }
+.plan-fee { font-size: 11.5px; color: var(--muted); padding: 0 0 6px; line-height: 1.45; }
 
 /* Report preview */
 #report { display: none; background: #D9DCE2; padding: 0 0 40px; color: #1C2030; color-scheme: light;
@@ -412,7 +415,7 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
       <label for="sim-select">Calculator</label>
       <div class="select-wrap"><select id="sim-select" aria-label="Choose a calculator"></select></div>
     </div>
-    <span class="hyp">Hypothetical illustration · for educational purposes only</span>
+    <span class="hyp">Hypothetical illustration · gross of fees · for educational purposes only</span>
   </div>
 </div>
 
@@ -435,7 +438,8 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
       </ul></div>
     </div>
     <div class="fine">
-      <p>All results are hypothetical illustrations for educational purposes only and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period; actual returns vary from year to year, and investments can lose value, including loss of principal. Figures do not reflect advisory fees, fund expenses, trading costs, or taxes unless explicitly stated. Savings account comparisons assume a fixed annual percentage yield; bank deposits are typically FDIC-insured up to applicable limits, investments are not. This tool does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice; please consult your advisor, tax professional, or attorney about your individual situation. Links to third-party websites are provided for convenience only; WealthCare Investment Partners does not control, endorse, or guarantee their content, and their calculators use their own assumptions and methods.</p>
+      <p><b>Gross of fees.</b> All investment balances, growth amounts, income figures drawn from investments, and rates of return in this illustration are shown gross of fees; that is, before the deduction of investment advisory fees and other costs, including fund operating expenses, transaction costs, and custodial or account fees. Assumed rates of return are gross figures. Fees and expenses are deducted from an account over time and reduce returns, and their effect compounds: results net of fees would be lower than those shown, and the difference grows with the size of the account and the length of the period. WealthCare Investment Partners&rsquo; advisory fees are described in its Form ADV Part 2A, available upon request.</p>
+      <p>All results are hypothetical illustrations for educational purposes only and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period; actual returns vary from year to year, and investments can lose value, including loss of principal. Figures do not reflect taxes unless explicitly stated. Savings account comparisons assume a fixed annual percentage yield; bank deposits are typically FDIC-insured up to applicable limits, investments are not. This tool does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice; please consult your advisor, tax professional, or attorney about your individual situation. Links to third-party websites are provided for convenience only; WealthCare Investment Partners does not control, endorse, or guarantee their content, and their calculators use their own assumptions and methods.</p>
       <p class="disclosure">Securities offered by Registered Representatives through Private Client Services. Member FINRA/SIPC. Advisory products and services offered through WealthCare Investment Partners, a Registered Investment Advisor. Private Client Services &amp; WealthCare Investment Partners are unaffiliated entities.</p>
       <p>© <span id="foot-year"></span> WealthCare Investment Partners, LLC</p>
     </div>
@@ -738,7 +742,7 @@ const MODULES = [
       moneyField('g_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
       segField('g_freq', 'Contribution frequency', [{ v: 12, label: 'Monthly' }, { v: 1, label: 'Annual' }], 12),
       moneyField('g_pmt', 'Contribution', 0, 10000, 50, DEFAULTS.monthly, 'Added at the end of each period.'),
-      pctField('g_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Hypothetical, held constant every year.'),
+      pctField('g_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Hypothetical, gross of fees, held constant every year.'),
       intField('g_years', 'Years', 1, 50, 1, DEFAULTS.years),
       segField('g_comp', 'Compounding', [{ v: 1, label: 'Yearly' }, { v: 4, label: 'Quarterly' }, { v: 12, label: 'Monthly' }, { v: 365, label: 'Daily' }], 12)
     ],
@@ -775,7 +779,7 @@ const MODULES = [
       moneyField('c_pmt', 'Monthly contribution', 0, 10000, 50, DEFAULTS.monthly),
       intField('c_years', 'Years', 1, 50, 1, DEFAULTS.years),
       pctField('c_save', 'Savings account rate (compounded monthly)', 0, 10, 0.1, DEFAULTS.savingsApy, 'Yields change over time; this holds one rate constant.'),
-      pctField('c_inv', 'Assumed investment return', 0, 15, 0.1, DEFAULTS.rate, 'Hypothetical, compounded monthly. Investments can lose value, including principal.')
+      pctField('c_inv', 'Assumed investment return', 0, 15, 0.1, DEFAULTS.rate, 'Hypothetical, gross of fees, compounded monthly. Investments can lose value, including principal.')
     ],
     chart: { title: 'Two balances, same deposits', subtitle: 'Monthly compounding for both' },
     compute(s) {
@@ -807,7 +811,7 @@ const MODULES = [
     fields: [
       moneyField('i_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
       moneyField('i_pmt', 'Monthly contribution', 0, 10000, 50, DEFAULTS.monthly),
-      pctField('i_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Compounded monthly.'),
+      pctField('i_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.'),
       pctField('i_infl', 'Assumed inflation', 0, 10, 0.1, DEFAULTS.inflation, 'Long-run U.S. inflation has averaged roughly 3% a year.'),
       intField('i_years', 'Years', 1, 50, 1, DEFAULTS.years)
     ],
@@ -870,7 +874,7 @@ const MODULES = [
     lede: 'Two savers put away the same amount each month. One starts today; the other starts a few years from now. The gap is bigger than the missed deposits.',
     fields: [
       moneyField('w_pmt', 'Monthly contribution', 0, 10000, 50, DEFAULTS.monthly),
-      pctField('w_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Compounded monthly.'),
+      pctField('w_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.'),
       intField('w_years', 'Years until the goal date', 5, 50, 1, DEFAULTS.years),
       intField('w_delay', 'Years of delay', 1, 20, 1, DEFAULTS.waitYears)
     ],
@@ -908,7 +912,7 @@ const MODULES = [
       moneyField('o_target', 'Goal amount', 10000, 10000000, 10000, DEFAULTS.goalTarget),
       moneyField('o_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
       moneyField('o_pmt', 'Monthly contribution you can make', 0, 10000, 50, DEFAULTS.monthly),
-      pctField('o_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Compounded monthly.'),
+      pctField('o_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.'),
       intField('o_years', 'Years to the goal', 1, 50, 1, DEFAULTS.years)
     ],
     chart: { title: 'Path to the goal at your current contribution', subtitle: 'Dashed line marks the goal' },
@@ -940,7 +944,7 @@ const MODULES = [
       segField('p_mode', 'Withdrawal set as', [{ v: 'amt', label: 'Monthly amount' }, { v: 'pct', label: '% of starting balance' }], 'amt'),
       moneyField('p_wd', 'Monthly withdrawal (first year)', 0, 50000, 100, DEFAULTS.retireMonthly),
       pctField('p_pct', 'Withdrawal rate (% of starting balance)', 0, 15, 0.1, DEFAULTS.retirePct, 'Of the starting balance, in year one.'),
-      pctField('p_rate', 'Assumed return in retirement', 0, 12, 0.1, DEFAULTS.retireRate, 'Often lower than during working years.'),
+      pctField('p_rate', 'Assumed return in retirement', 0, 12, 0.1, DEFAULTS.retireRate, 'Gross of fees. Often lower than during working years.'),
       segField('p_adj', 'Raise withdrawals with inflation', [{ v: 1, label: 'Yes' }, { v: 0, label: 'No' }], 1),
       pctField('p_infl', 'Assumed inflation', 0, 10, 0.1, DEFAULTS.inflation)
     ],
@@ -1081,7 +1085,7 @@ const MODULES = [
     fields: [
       moneyField('t_contrib', 'Annual contribution (pre-tax dollars)', 0, 100000, 500, 10000),
       intField('t_years', 'Years', 1, 50, 1, DEFAULTS.years),
-      pctField('t_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate),
+      pctField('t_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees.'),
       pctField('t_now', 'Current marginal tax rate', 0, 50, 1, 24),
       pctField('t_wd', 'Tax rate at withdrawal', 0, 50, 1, 22),
       pctField('t_gain', 'Tax rate on annual earnings (taxable account)', 0, 50, 1, 20)
@@ -1192,6 +1196,10 @@ const MODULES = [
   }
 ];
 
+/* Fee disclosure: every investment figure is gross of fees; loan and mortgage math involves no advisory fee */
+const FEE_FREE = ['loan', 'mortgage'];
+const FEE_SHORT = 'Balances, growth, and rates of return are shown before advisory fees and other costs, such as fund expenses and transaction costs. Results net of fees would be lower.';
+const FEE_LONG = 'All investment balances, growth amounts, income figures drawn from investments, and rates of return in this illustration are shown gross of fees; that is, before the deduction of investment advisory fees and other costs, including fund operating expenses, transaction costs, and custodial or account fees. Assumed rates of return are gross figures. Fees and expenses are deducted from an account over time and reduce returns, and their effect compounds: results net of fees would be lower than those shown, and the difference grows with the size of the account and the length of the period. WealthCare Investment Partners’ advisory fees are described in its Form ADV Part 2A, available upon request.';
 /* ---------- Build the page ---------- */
 const mainEl = document.getElementById('main'), select = document.getElementById('sim-select'), subbar = document.getElementById('subbar');
 const built = {}; const planHooks = [];
@@ -1234,7 +1242,7 @@ home.append(
     h('div', { class: 'text' }, h('span', { class: 'eyebrow' }, 'How it works'), h('h2', { class: 'disp' }, 'Enter your numbers once.'),
       h('p', { class: 'lead' }, 'Client name, starting balance, contributions, return, inflation, household income and debts, and retirement withdrawals live in one place. Every calculator reads from them, flags anything you change for a single scenario, and the printout shows exactly which inputs were used and which were entered by hand.'),
       h('div', {}, h('button', { type: 'button', class: 'arrow-link', onclick: () => show('plan', true) }, 'Set up a plan'))),
-    h('div', { class: 'figure', html: growthFigure() + '<div class="cap">Illustrative: ' + money(DEFAULTS.principal) + ' to start, ' + money(DEFAULTS.monthly) + ' a month, ' + DEFAULTS.rate + '% assumed, 30 years. Hypothetical.</div>' })))),
+    h('div', { class: 'figure', html: growthFigure() + '<div class="cap">Illustrative: ' + money(DEFAULTS.principal) + ' to start, ' + money(DEFAULTS.monthly) + ' a month, ' + DEFAULTS.rate + '% assumed, 30 years. Hypothetical, gross of fees.</div>' })))),
   h('section', { class: 'sec' }, h('div', { class: 'wrap' },
     h('span', { class: 'eyebrow' }, 'What we illustrate'), h('h2', { class: 'disp' }, 'Pick your question.'),
     h('div', { class: 'blocks' }, ...GROUPS.map(g => { const n = MODULES.filter(m => m.group === g.id).length;
@@ -1287,10 +1295,11 @@ MODULES.forEach(mod => {
   const planStatus = h('span', { class: 'plan-status' });
   const assump = h('aside', { class: 'assump' }, h('h3', {}, 'Inputs'), fields, h('div', { class: 'assump-foot' }, copyBtn, resetBtn, usePlanBtn, planStatus));
   const primary = h('div', { class: 'primary' }), kstats = h('div', { class: 'kstats' }), obs = h('p', { class: 'obs' });
+  const feeNote = FEE_FREE.includes(mod.id) ? null : h('p', { class: 'feenote' }, h('b', {}, 'Gross of fees. '), FEE_SHORT);
   const chartBody = h('div'), chartBody2 = mod.chart2 ? h('div') : null;
   const extra = h('div', { class: 'extra' });
   const results = h('div', { class: 'results' },
-    h('div', { class: 'msec', style: 'border-top:0;padding-top:0' }, primary, kstats),
+    h('div', { class: 'msec', style: 'border-top:0;padding-top:0' }, primary, kstats, feeNote),
     sec(null, obs),
     sec(mod.chart.title, chartBody),
     chartBody2 ? sec(mod.chart2.title, chartBody2) : null,
@@ -1315,7 +1324,7 @@ MODULES.forEach(mod => {
   resetBtn.addEventListener('click', () => { mod.fields.forEach(f => { if (f.kind === 'seg') { state[f.id] = f.value; fields.querySelectorAll('#' + f.id + ' button').forEach(b => { const on = b.id === f.id + '_' + f.value; b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', String(on)); }); } else f._set(f.value); }); onChange(null); });
   copyBtn.addEventListener('click', () => {
     if (!lastResult) return;
-    const text = `WealthCare Investment Partners — Compounding Illustrator\n${mod.title} (hypothetical illustration)\n\nAssumptions: ${lastResult.copy[0]}\nResults: ${lastResult.copy.slice(1).join(' ')}\n\nFor educational purposes only. Not a guarantee or projection of future performance; assumed rates held constant; excludes fees and taxes unless stated; not investment, tax, or legal advice.`;
+    const text = `WealthCare Investment Partners — Compounding Illustrator\n${mod.title} (hypothetical illustration)\n\nAssumptions: ${lastResult.copy[0]}\nResults: ${lastResult.copy.slice(1).join(' ')}\n\nFor educational purposes only. Not a guarantee or projection of future performance; assumed rates held constant; ${FEE_FREE.includes(mod.id) ? '' : 'figures are gross of advisory fees and other costs, which would reduce results; '}excludes taxes unless stated; not investment, tax, or legal advice.`;
     const done = () => { copyBtn.textContent = 'Copied'; copyBtn.classList.add('is-done'); setTimeout(() => { copyBtn.textContent = 'Copy scenario'; copyBtn.classList.remove('is-done'); }, 1800); };
     const fallback = () => { const ta = h('textarea', { style: 'position:fixed;opacity:0', readonly: '' }, text); document.body.append(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { copyBtn.textContent = 'Copy not available'; } ta.remove(); };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
@@ -1411,7 +1420,7 @@ PLAN_INFO.forEach(f => {
   colInfo.append(h('div', { class: 'prow' }, h('label', { for: f.id }, f.label), h('div', { class: 'field-val' }, input)));
 });
 // Standard assumptions
-const colAs = h('div', { class: 'plan-col' }, h('h3', {}, 'Standard assumptions', h('span', {}, 'shared by every calculator')));
+const colAs = h('div', { class: 'plan-col' }, h('h3', {}, 'Standard assumptions', h('span', {}, 'shared by every calculator')), h('div', { class: 'plan-fee' }, 'Rates of return are gross of advisory fees and other costs; results net of fees would be lower.'));
 let wdUI = null;
 const syncWd = () => { const bal = plan.pl_bal; if (plan.pl_wdmode === 'amt') plan.pl_wdpct = bal > 0 ? Math.round(plan.pl_wd * 12 / bal * 1000) / 10 : 0; else plan.pl_wd = Math.round(bal * plan.pl_wdpct / 100 / 12); };
 function refreshWd() {
@@ -1526,7 +1535,7 @@ function openReport(andPrint) {
     h('div', { class: 'cover-photo' }, h('div', { class: 'cover-text' }, h('h1', {}, 'Planning', h('br'), 'Illustrations'), h('div', { class: 'pf' }, 'Prepared for'), h('div', { class: 'client' }, client), h('div', { class: 'date' }, date))),
     h('div', { class: 'cover-foot' }, h('div', { class: 'adv' }, plan.pl_advisor, h('br'), 'WealthCare Investment Partners', h('br'), OFFICES[plan.pl_office].split(', ')[0], h('br'), OFFICES[plan.pl_office].split(', ').slice(1).join(', '), h('br'), plan.pl_phone, h('br'), plan.pl_email), h('img', { src: LOGO_SRC, alt: 'WealthCare Investment Partners' }))));
   let pageNo = 0;
-  const foot = () => h('div', { class: 'rfoot' }, h('span', {}, 'Please read the last page for important information about this illustration'), h('span', {}, 'Page ' + (++pageNo)));
+  const foot = () => h('div', { class: 'rfoot' }, h('span', {}, 'Hypothetical and gross of fees. Please read the last page for important information about this illustration.'), h('span', {}, 'Page ' + (++pageNo)));
   const head = title => [h('div', { class: 'rhead' }, 'Prepared: ' + date), h('div', { class: 'rbar' }), h('h2', { class: 'rtitle' }, title)];
   // Plan page
   const info = h('table', { class: 'rtab' }, h('tbody', {},
@@ -1553,7 +1562,7 @@ function openReport(andPrint) {
     groups.forEach((g, i) => pages.append(h('section', { class: 'rpage' }, ...head(title + (i ? ' (continued)' : '')), i ? null : h('p', { class: 'rlede' }, lede), ...g, foot())));
     return temp;
   };
-  paginate('Plan assumptions', 'The figures in this document are hypothetical illustrations built from the assumptions below. Rates of return and inflation are held constant in every period; actual results will vary.', [
+  paginate('Plan assumptions', 'The figures in this document are hypothetical illustrations built from the assumptions below. Rates of return and inflation are held constant in every period; actual results will vary. All investment figures and rates of return are shown gross of advisory fees and other costs; results net of fees would be lower.', [
     h('div', { class: 'rsec' }, h('h3', {}, 'General information'), info),
     h('div', { class: 'rsec' }, h('h3', {}, 'Standard assumptions', h('span', {}, 'shared across the calculators that use them')), assump),
     h('div', { class: 'rsec' }, h('h3', {}, 'Calculators included'), list)]);
@@ -1575,7 +1584,7 @@ function openReport(andPrint) {
         return h('tr', {}, h('td', {}, f.label), h('td', { class: 'v' }, fmtVal(f, b.state[f.id], b.state)), h('td', { class: 't' }, plan.pl_highlight && a && mappable(f.id) ? h('span', { class: 'tag ' + (d ? 'custom' : 'plan') }, d ? 'Custom' : 'Plan') : '')); });
       blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Assumptions used', plan.pl_highlight ? h('span', {}, nCustom ? nCustom + ' input' + (nCustom === 1 ? '' : 's') + ' differ' + (nCustom === 1 ? 's' : '') + ' from the plan' : 'all shared inputs match the plan') : null), h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Input'), h('th', { class: 'v' }, 'Value'), h('th', {}, ''))), h('tbody', {}, ...rows))));
     }
-    if (plan.pp_stats) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Key statistics', h('span', {}, 'hypothetical')),
+    if (plan.pp_stats) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Key statistics', h('span', {}, FEE_FREE.includes(mod.id) ? 'hypothetical' : 'hypothetical · gross of fees')),
       h('div', { class: 'rprimary' }, h('div', { class: 'l' }, r.hero.label), h('div', { class: 'v' }, r.hero.value), h('div', { class: 's' }, r.hero.sub)),
       h('div', { class: 'rstats' }, ...r.tiles.map(t => h('div', { class: 'rstat' + (t.accent ? ' accent' : '') }, h('div', { class: 'l' }, t.label), h('div', { class: 'v' }, t.value), t.sub ? h('div', { class: 's' }, t.sub) : null)))));
     if (plan.pp_obs) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, 'Observation'), h('p', { class: 'robs', html: r.callout })));
@@ -1593,9 +1602,10 @@ function openReport(andPrint) {
   pages.append(h('section', { class: 'rpage' }, h('div', { class: 'rhead' }, 'Prepared: ' + date), h('div', { class: 'rbar' }),
     h('div', { class: 'rdisc' },
       h('h4', {}, 'Important disclosures'),
+      h('p', {}, h('b', {}, 'Gross of fees. '), FEE_LONG),
       h('p', {}, 'This document is being provided by your financial professional as an educational illustration and is not intended to be used as, or in lieu of, an account statement, a financial plan, or a recommendation to buy or sell any security.'),
       h('p', {}, 'All results are hypothetical illustrations and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period. Actual returns vary from year to year, and investments can lose value, including loss of principal. The order in which returns occur can materially change outcomes, particularly when withdrawals are being taken.'),
-      h('p', {}, 'Figures do not reflect advisory fees, fund expenses, trading costs, or taxes unless explicitly stated. Fees and taxes would reduce the results shown. Where tax rates are used, they are simplified assumptions, not tax advice; qualified dividends and long-term gains are often taxed at lower rates than illustrated, and penalties and required distributions are not modeled.'),
+      h('p', {}, 'Figures do not reflect taxes unless explicitly stated; taxes would reduce the results shown. Where tax rates are used, they are simplified assumptions, not tax advice; qualified dividends and long-term gains are often taxed at lower rates than illustrated, and penalties and required distributions are not modeled.'),
       h('p', {}, 'Savings account comparisons assume a fixed annual percentage yield; actual yields change over time. Bank deposits are typically FDIC-insured up to applicable limits; investments are not. Mortgage affordability figures are a rough screen using common lender ratios and do not represent a credit decision. Life insurance figures are a needs-based estimate and do not recommend any product or carrier; any insurance decision involves product features, costs, and underwriting not addressed here.'),
       h('p', {}, 'This document does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice. Please consult your advisor, tax professional, or attorney about your individual situation.'),
       h('h4', {}, 'Methods'),
