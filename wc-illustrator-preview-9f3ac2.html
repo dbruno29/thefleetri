@@ -464,6 +464,7 @@ const DEFAULTS = {
 /* ---------- Formatting ---------- */
 const money = v => (v < 0 ? '-' : '') + '$' + Math.round(Math.abs(v)).toLocaleString('en-US');
 const compact = v => { const a = Math.abs(v); const s = v < 0 ? '-' : '';
+  if (a >= 1e9) return s + '$' + (a / 1e9).toFixed(a >= 1e10 ? 0 : 1).replace(/\.0$/, '') + 'B';
   if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
   if (a >= 1e3) return s + '$' + Math.round(a / 1e3) + 'K';
   return s + '$' + Math.round(a); };
@@ -727,6 +728,9 @@ function pctField(id, label, min, max, step, value, help) { return { id, label, 
 function intField(id, label, min, max, step, value, help) { return { id, label, kind: 'int', min, max, step, value, help }; }
 function segField(id, label, options, value) { return { id, label, kind: 'seg', options, value }; }
 
+// Sliders cover the usual range; a typed value may go beyond it, up to a safety ceiling by kind. Floors stay, since negative or zero-length inputs break the math.
+const HARD_MAX = { money: 1e9, pct: 100, int: 120 };
+const clampTyped = (f, v) => Math.min(HARD_MAX[f.kind] || Infinity, Math.max(f.min, v));
 function buildFields(container, specs, state, onChange) {
   specs.forEach(f => {
     state[f.id] = f.value;
@@ -742,16 +746,17 @@ function buildFields(container, specs, state, onChange) {
     const fmtIn = v => isMoney ? Math.round(Number(v)).toLocaleString('en-US') : String(v);
     const num = isMoney
       ? h('input', { type: 'text', id: f.id, value: fmtIn(f.value), inputmode: 'numeric', autocomplete: 'off', class: 'money' })
-      : h('input', { type: 'number', id: f.id, min: f.min, max: f.max, step: f.step, value: f.value, inputmode: 'decimal' });
+      : h('input', { type: 'number', id: f.id, min: f.min, step: f.step, value: f.value, inputmode: 'decimal' });
     const range = h('input', { type: 'range', id: f.id + '_r', min: f.min, max: f.max, step: f.step, value: f.value, 'aria-label': f.label + ' slider' });
     const val = h('div', { class: 'field-val' }, isMoney ? h('span', { class: 'aff' }, '$') : null, num, f.kind === 'pct' ? h('span', { class: 'aff' }, '%') : f.kind === 'int' ? h('span', { class: 'aff' }, 'yrs') : null);
     const field = h('div', { class: 'field' }, h('div', { class: 'field-head' }, h('label', { for: f.id }, f.label), val), range, f.help ? h('div', { class: 'field-help' }, f.help) : null);
     container.append(field);
-    const commit = v => { v = Number(v); if (!isFinite(v)) return; v = Math.min(f.max, Math.max(f.min, v)); state[f.id] = v; onChange(f.id); };
+    const stretch = v => { range.max = Math.max(f.max, v); }; // the slider grows to hold a typed value beyond its usual range
+    const commit = v => { v = Number(v); if (!isFinite(v)) return; v = clampTyped(f, v); state[f.id] = v; stretch(v); range.value = v; onChange(f.id); };
     range.addEventListener('input', () => { num.value = fmtIn(range.value); commit(range.value); });
-    num.addEventListener('input', () => { const raw = isMoney ? num.value.replace(/[^0-9.]/g, '') : num.value; if (raw === '') return; range.value = raw; commit(raw); });
+    num.addEventListener('input', () => { const raw = isMoney ? num.value.replace(/[^0-9.]/g, '') : num.value; if (raw === '') return; commit(raw); });
     num.addEventListener('blur', () => { num.value = fmtIn(state[f.id]); range.value = state[f.id]; });
-    f._set = v => { state[f.id] = v; num.value = fmtIn(v); range.value = v; };
+    f._set = v => { state[f.id] = v; num.value = fmtIn(v); stretch(v); range.value = v; };
   });
 }
 
@@ -777,7 +782,7 @@ const MODULES = [
       segField('g_comp', 'Compounding', [{ v: 1, label: 'Yearly' }, { v: 4, label: 'Quarterly' }, { v: 12, label: 'Monthly' }, { v: 365, label: 'Daily' }], 12)
     ],
     chart: { title: 'Where the ending balance comes from', subtitle: 'Stacked: starting amount, your contributions, and growth' },
-    onChange(id, s, specs) { if (id === 'g_freq') { const f = specs.find(x => x.id === 'g_pmt'); const to = s.g_freq === 12 ? Math.round(s.g_pmt / 12 / 50) * 50 : s.g_pmt * 12; f._set(Math.min(f.max, Math.max(f.min, to))); } },
+    onChange(id, s, specs) { if (id === 'g_freq') { const f = specs.find(x => x.id === 'g_pmt'); const to = s.g_freq === 12 ? Math.round(s.g_pmt / 12 / 50) * 50 : s.g_pmt * 12; f._set(Math.max(f.min, to)); } },
     compute(s) {
       const rows = simulate({ P: s.g_principal, pmt: s.g_pmt, pmtPerYear: s.g_freq, r: s.g_rate / 100, k: s.g_comp, years: s.g_years });
       const last = rows[rows.length - 1]; const deposited = last.principal + last.contrib; const growth = last.bal - deposited; const share = last.bal > 0 ? growth / last.bal * 100 : 0;
@@ -1688,7 +1693,7 @@ function applyPlanTo(modId) {
   const b = built[modId]; let touched = false;
   b.fields.forEach(f => { const a = planFor(f.id); if (!a || !mappable(f.id)) return;
     if (f.kind === 'seg') { if (b.state[f.id] !== planVal(f.id)) { f._set(planVal(f.id)); touched = true; } return; }
-    const v = Math.min(f.max, Math.max(f.min, planVal(f.id))); if (Math.abs(b.state[f.id] - v) > 1e-9) { f._set(v); touched = true; } });
+    const v = clampTyped(f, planVal(f.id)); if (Math.abs(b.state[f.id] - v) > 1e-9) { f._set(v); touched = true; } });
   if (touched) b.onChange(null); else markCustom(modId);
   return touched;
 }
