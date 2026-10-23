@@ -50,8 +50,8 @@ a { color: inherit; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 .eyebrow { font: 600 12px/1 var(--ui); letter-spacing: .2em; text-transform: uppercase; color: var(--green-text); }
-.disp { font-family: var(--display); font-weight: 800; text-transform: uppercase; letter-spacing: .01em; line-height: .96; color: var(--navy); }
-h2.disp { font-size: clamp(32px, 4.2vw, 48px); }
+.disp { font-family: var(--display); font-weight: 700; letter-spacing: 0; line-height: 1.1; color: var(--navy); }
+h2.disp { font-size: clamp(24px, 2.6vw, 32px); }
 .lead { font-size: 17px; color: var(--ink-2); max-width: 62ch; }
 .cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 2px solid var(--green); background: var(--green); color: var(--navy-deep); font: 700 13px/1 var(--ui); letter-spacing: .12em; text-transform: uppercase; padding: 14px 22px; border-radius: 2px; cursor: pointer; text-decoration: none; }
 .cta:hover { background: #A5DB6A; border-color: #A5DB6A; }
@@ -89,7 +89,7 @@ h2.disp { font-size: clamp(32px, 4.2vw, 48px); }
 .hyp-link:hover { color: var(--navy); }
 /* Methodology page */
 .methods .m-conv, .methods .m-item, .methods .m-limits, .methods .m-verify { max-width: 860px; }
-.methods .m-h { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 26px; line-height: 1; color: var(--navy); margin: 34px 0 14px; }
+.methods .m-h { font-family: var(--display); font-weight: 700; font-size: 24px; line-height: 1.1; color: var(--navy); margin: 34px 0 14px; }
 .methods .m-h:first-child { margin-top: 0; }
 .m-conv { display: grid; grid-template-columns: 140px 1fr; gap: 10px 18px; margin: 0; }
 .m-conv dt { font: 600 12px/1.5 var(--ui); letter-spacing: .1em; text-transform: uppercase; color: var(--green-text); padding-top: 2px; }
@@ -111,14 +111,14 @@ h2.disp { font-size: clamp(32px, 4.2vw, 48px); }
 .hero::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0,0,50,.86) 0%, rgba(0,0,50,.66) 45%, rgba(0,0,50,.25) 100%); z-index: -1; }
 .hero .wrap { padding-block: 84px 64px; display: grid; gap: 22px; max-width: 1240px; }
 .hero .eyebrow { color: var(--green); }
-.hero h1 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(52px, 8.4vw, 108px); line-height: .9; letter-spacing: .005em; color: #fff; max-width: 11ch; text-wrap: balance; }
+.hero h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 4.4vw, 52px); line-height: 1.05; letter-spacing: 0; color: #fff; max-width: 20ch; text-wrap: balance; }
 .hero p { font-size: 18px; line-height: 1.5; color: rgba(255,255,255,.9); max-width: 58ch; }
 .hero .ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
 .stats { background: var(--navy-band); color: #fff; border-top: 1px solid rgba(255,255,255,.12); }
 .stats .wrap { display: grid; grid-template-columns: repeat(4, 1fr); }
 .stat { padding: 22px 20px 22px 0; border-left: 1px solid rgba(255,255,255,.14); padding-left: 20px; }
 .stat:first-child { border-left: 0; padding-left: 0; }
-.stat b { display: block; font-family: var(--display); font-weight: 800; font-size: 44px; line-height: 1; color: var(--green); }
+.stat b { display: block; font-family: var(--display); font-weight: 700; font-size: 34px; line-height: 1; color: var(--green); }
 .stat span { display: block; font: 600 11.5px/1.3 var(--ui); letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.78); margin-top: 6px; }
 @media (max-width: 760px) { .hero .wrap { padding-block: 56px 44px; } .stats .wrap { grid-template-columns: repeat(2, 1fr); } .stat { padding: 16px 12px 16px 0; } .stat:nth-child(3) { border-left: 0; padding-left: 0; } .stat:nth-child(n+3) { border-top: 1px solid rgba(255,255,255,.14); } .stat:nth-child(2n) { padding-left: 14px; } .stat b { font-size: 36px; } }
 .sec { padding-block: 72px; }
@@ -135,20 +135,20 @@ h2.disp { font-size: clamp(32px, 4.2vw, 48px); }
 .block:first-child { border-left: 0; }
 .block:hover { background: var(--surface-2); }
 .block .n { font: 600 11px/1 var(--ui); letter-spacing: .16em; text-transform: uppercase; color: var(--green-text); }
-.block .t { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 26px; line-height: 1; color: var(--navy); }
+.block .t { font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.1; color: var(--navy); }
 .block .d { font-size: 14px; color: var(--ink-2); line-height: 1.5; }
 .block .k { font: 600 12px/1 var(--ui); color: var(--muted); margin-top: 4px; }
 @media (max-width: 860px) { .blocks { grid-template-columns: repeat(2, 1fr); } .block:nth-child(3) { border-left: 0; } .block:nth-child(n+3) { border-top: 1px solid var(--line); } }
 @media (max-width: 480px) { .blocks { grid-template-columns: 1fr; } .block { border-left: 0; border-top: 1px solid var(--line); } .block:first-child { border-top: 0; } }
 .band { background: var(--navy-band); color: #fff; }
 .band .wrap { padding-block: 72px; display: grid; gap: 20px; justify-items: start; }
-.band h2 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(40px, 6vw, 76px); line-height: .92; color: #fff; }
+.band h2 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 3vw, 36px); line-height: 1.1; color: #fff; }
 .band p { color: rgba(255,255,255,.82); max-width: 56ch; font-size: 16px; }
 
 /* Page headers (plan inputs, calculators) */
 .pagehead { border-bottom: 1px solid var(--line); }
 .pagehead .wrap { padding-block: 44px 30px; display: grid; gap: 10px; }
-.pagehead h1 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(40px, 6vw, 72px); line-height: .92; color: var(--navy); }
+.pagehead h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 3.4vw, 40px); line-height: 1.1; color: var(--navy); }
 .pagehead .lead { font-size: 16px; }
 .pagehead .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
 main .wrap.pad { padding-block: 28px 56px; }
@@ -157,7 +157,7 @@ main .wrap.pad { padding-block: 28px 56px; }
 .catlist { display: grid; gap: 34px; }
 .cat { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; }
 @media (max-width: 860px) { .cat { grid-template-columns: 1fr; gap: 10px; } }
-.cat .t { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 30px; line-height: 1; color: var(--navy); }
+.cat .t { font-family: var(--display); font-weight: 700; font-size: 24px; line-height: 1.1; color: var(--navy); }
 .cat .b { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; }
 .rows { border-top: 1px solid var(--line); }
 .row-item { display: grid; grid-template-columns: 220px 1fr auto; gap: 18px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
@@ -170,7 +170,7 @@ main .wrap.pad { padding-block: 28px 56px; }
 .module { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 0 40px; align-items: start; }
 @media (max-width: 880px) { .module { grid-template-columns: minmax(0, 1fr); } }
 .module-head { grid-column: 1 / -1; display: grid; gap: 8px; padding: 34px 0 22px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
-.module-head h2 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(34px, 4.6vw, 56px); line-height: .94; color: var(--navy); }
+.module-head h2 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 2.8vw, 34px); line-height: 1.1; color: var(--navy); }
 .module-head .lede { font-size: 14.5px; color: var(--ink-2); max-width: 90ch; }
 .module-head .crumbs { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
 .results { display: grid; gap: 0; min-width: 0; }
@@ -789,16 +789,16 @@ function buildFields(container, specs, state, onChange) {
 
 /* ---------- Simulator groups (used by the overview and the dropdown) ---------- */
 const GROUPS = [
-  { id: 'grow', name: 'Growing money', blurb: 'How savings build over time, and what helps or hurts.' },
-  { id: 'live', name: 'Living on it', blurb: 'Turning what you have into income that lasts.' },
-  { id: 'borrow', name: 'Borrowing', blurb: 'The same math working against you.' },
-  { id: 'protect', name: 'Protecting', blurb: 'Covering the people who depend on you.' }
+  { id: 'grow', name: 'Growing money', blurb: 'Savings growth, inflation, goals, and tax treatment of contributions.' },
+  { id: 'live', name: 'Living on it', blurb: 'Retirement income, withdrawals, required distributions, and net worth.' },
+  { id: 'borrow', name: 'Borrowing', blurb: 'Loan payments, mortgages, and paying down debt.' },
+  { id: 'protect', name: 'Protecting', blurb: 'Life insurance needs.' }
 ];
 
 /* ---------- Module definitions ---------- */
 const MODULES = [
   {
-    output: 'Ending balance; share from growth', desc: 'Projects a balance from a starting amount, regular contributions, an assumed return, and a time horizon. Shows how much of the ending balance came from your deposits and how much came from growth.', id: 'grow', group: 'grow', tab: 'Compound growth', title: 'The power of compounding', question: 'How does a balance grow when growth earns growth?',
+    output: 'Ending balance; share from growth', desc: 'Projects a balance from a starting amount, regular contributions, an assumed return, and a time horizon. Shows how much of the ending balance came from your deposits and how much came from growth.', id: 'grow', group: 'grow', tab: 'Compound growth', title: 'Compound growth of savings', question: 'How does a balance grow when growth earns growth?',
     lede: 'Growth earns growth. Early on, most of your balance is money you put in. Later, most of it is money your money made.',
     fields: [
       moneyField('g_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
@@ -834,7 +834,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Dollar gap between two rates', desc: 'Runs the same deposits at two different rates side by side, such as a savings account yield and an assumed investment return, and shows the dollar difference that builds over time.', id: 'compare', group: 'grow', tab: 'Investing vs. savings', title: 'Investing vs. a savings account', question: 'What does a few percent more in return do over decades?',
+    output: 'Dollar gap between two rates', desc: 'Runs the same deposits at two different rates side by side, such as a savings account yield and an assumed investment return, and shows the dollar difference that builds over time.', id: 'compare', group: 'grow', tab: 'Investing vs. savings', title: 'Investing compared with a savings account', question: 'What does a few percent more in return do over decades?',
     lede: 'Same deposits, two different rates. The gap between the lines is nothing but compounding at work.',
     fields: [
       moneyField('c_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
@@ -868,7 +868,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Balance in today\u2019s dollars', desc: 'Converts a future balance into today\u2019s purchasing power at an assumed inflation rate, and shows the real (after-inflation) rate of return.', id: 'inflation', group: 'grow', tab: 'Inflation', title: 'What inflation does to the number', question: 'What will a future balance actually buy?',
+    output: 'Balance in today\u2019s dollars', desc: 'Converts a future balance into today\u2019s purchasing power at an assumed inflation rate, and shows the real (after-inflation) rate of return.', id: 'inflation', group: 'grow', tab: 'Inflation', title: 'Effect of inflation on a future balance', question: 'What will a future balance actually buy?',
     lede: 'A balance in 30 years buys less than the same balance today. The green line shows your balance in today’s dollars.',
     fields: [
       moneyField('i_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
@@ -901,7 +901,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Years to double', desc: 'Estimates how many years it takes money to double at a given rate, compares the shortcut with the exact answer, and shows each doubling milestone over a horizon.', id: 'rule72', group: 'grow', tab: 'Rule of 72', title: 'The Rule of 72', question: 'How long does it take money to double?',
+    output: 'Years to double', desc: 'Estimates how many years it takes money to double at a given rate, compares the shortcut with the exact answer, and shows each doubling milestone over a horizon.', id: 'rule72', group: 'grow', tab: 'Rule of 72', title: 'Rule of 72: years for money to double', question: 'How long does it take money to double?',
     lede: 'Divide 72 by the annual rate and you get the years it takes money to double. It is mental math, and it is close enough to be useful.',
     fields: [
       pctField('r_rate', 'Annual rate', 0.5, 15, 0.1, DEFAULTS.rate),
@@ -932,7 +932,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Cost of delay; catch-up contribution', desc: 'Compares a saver who starts contributing today with one who starts a few years later. Shows the gap at the goal date and the larger contribution the late starter would need to catch up.', id: 'wait', group: 'grow', tab: 'Cost of waiting', title: 'The cost of waiting', question: 'What does starting a few years late really cost?',
+    output: 'Cost of delay; catch-up contribution', desc: 'Compares a saver who starts contributing today with one who starts a few years later. Shows the gap at the goal date and the larger contribution the late starter would need to catch up.', id: 'wait', group: 'grow', tab: 'Cost of waiting', title: 'Cost of delaying contributions', question: 'What does starting a few years late really cost?',
     lede: 'Two savers put away the same amount each month. One starts today; the other starts a few years from now. The gap is bigger than the missed deposits.',
     fields: [
       moneyField('w_pmt', 'Monthly contribution', 0, 10000, 50, DEFAULTS.monthly),
@@ -968,7 +968,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Required contribution, years, or return', desc: 'Starts from a target amount and works backward: the monthly contribution, the number of years, or the rate of return needed to reach it.', id: 'goal', group: 'grow', tab: 'Reach a goal', title: 'Working backward from a goal', question: 'What would it take to reach a specific number?',
+    output: 'Required contribution, years, or return', desc: 'Starts from a target amount and works backward: the monthly contribution, the number of years, or the rate of return needed to reach it.', id: 'goal', group: 'grow', tab: 'Reach a goal', title: 'Contributions needed to reach a goal', question: 'What would it take to reach a specific number?',
     lede: 'Pick the number you want to reach. Three levers can get you there: how much you save, how long you save, and the return you earn.',
     fields: [
       moneyField('o_target', 'Goal amount', 10000, 10000000, 10000, DEFAULTS.goalTarget),
@@ -999,7 +999,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Years the balance lasts; sustainable withdrawal', desc: 'Draws a balance down with monthly withdrawals, optionally rising with inflation. Shows how long the money lasts and what withdrawal it could sustain for 30 years.', id: 'payout', group: 'live', tab: 'Retirement payout', title: 'Turning a balance into income', question: 'How long will a balance last at a given withdrawal?',
+    output: 'Years the balance lasts; sustainable withdrawal', desc: 'Draws a balance down with monthly withdrawals, optionally rising with inflation. Shows how long the money lasts and what withdrawal it could sustain for 30 years.', id: 'payout', group: 'live', tab: 'Retirement payout', title: 'Retirement withdrawals: how long a balance lasts', question: 'How long will a balance last at a given withdrawal?',
     lede: 'Compounding keeps working in retirement, now against your withdrawals. This shows how long a balance lasts and what it could sustainably pay.',
     fields: [
       moneyField('p_bal', 'Starting balance at retirement', 0, 5000000, 10000, DEFAULTS.retireBalance),
@@ -1041,7 +1041,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Coverage period; spending capacity', desc: 'Combines living expenses, Social Security, pension and other retirement income, and an investment balance. Shows whether the portfolio covers the gap, for how long, and how much extra spending it could support.', id: 'cashflow', group: 'live', tab: 'Income & expenses', title: 'Will your investments support your life?', question: 'With your income, Social Security, and expenses, how far do your investments go?',
+    output: 'Coverage period; spending capacity', desc: 'Combines living expenses, Social Security, pension and other retirement income, and an investment balance. Shows whether the portfolio covers the gap, for how long, and how much extra spending it could support.', id: 'cashflow', group: 'live', tab: 'Income & expenses', title: 'Retirement income and expenses', question: 'With your income, Social Security, and expenses, how far do your investments go?',
     lede: 'Enter what you spend and what comes in from Social Security and other sources. The portfolio covers the gap. This shows whether it can, for how long, and what else it could do for you.',
     fields: [
       moneyField('f_bal', 'Investment balance', 0, 10000000, 10000, DEFAULTS.cfBalance),
@@ -1099,7 +1099,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Payment, total interest, payoff with extra payments', desc: 'Computes the payment on a fixed-rate loan, splits each year\u2019s payments into principal and interest, and shows how an extra monthly payment shortens the term and reduces total interest.', id: 'loan', group: 'borrow', tab: 'Loan amortization', title: 'Paying down a loan', question: 'Where does each loan payment go, and what does an extra payment do?',
+    output: 'Payment, total interest, payoff with extra payments', desc: 'Computes the payment on a fixed-rate loan, splits each year\u2019s payments into principal and interest, and shows how an extra monthly payment shortens the term and reduces total interest.', id: 'loan', group: 'borrow', tab: 'Loan amortization', title: 'Loan amortization', question: 'Where does each loan payment go, and what does an extra payment do?',
     manual: ['l_amount', 'l_rate', 'l_years'],
     lede: 'A loan is compounding in reverse. Early payments are mostly interest; later ones are mostly principal. See the split, and what an extra payment does to it.',
     fields: [
@@ -1187,7 +1187,7 @@ const MODULES = [
     }
   },
   {
-    id: 'mortgage', group: 'borrow', tab: 'Mortgage affordability', title: 'How much home a budget supports', question: 'What home price does an income support at a given rate?',
+    id: 'mortgage', group: 'borrow', tab: 'Mortgage affordability', title: 'Mortgage affordability', question: 'What home price does an income support at a given rate?',
     manual: ['m_down', 'm_rate', 'm_ti'],
     desc: 'Starts from gross income, other monthly debt payments, and a down payment, applies common lender ratios, and estimates the monthly housing payment, loan amount, and home price a budget supports at a given rate. A rough screen, not a lender decision.',
     lede: 'A rough screen using common lender ratios: housing costs within a share of gross income, and all debt payments within a larger share. Lenders’ rules vary.',
@@ -1225,7 +1225,7 @@ const MODULES = [
     }
   },
   {
-    id: 'insure', group: 'protect', tab: 'Life insurance need', title: 'How much life insurance a family would need', question: 'How much coverage would replace income and clear obligations?',
+    id: 'insure', group: 'protect', tab: 'Life insurance need', title: 'Life insurance needs estimate', question: 'How much coverage would replace income and clear obligations?',
     desc: 'Adds up what dependents would need: income to replace after Social Security survivor benefits, the mortgage and other debts to pay off, education funding, and final expenses. Subtracts existing coverage and available assets to show the gap.',
     lede: 'A needs-based estimate: income to replace after survivor benefits, the mortgage and other obligations to clear, and goals to fund, less what is already in place. It does not recommend any product or carrier.',
     manual: ['n_ss', 'n_years', 'n_debts', 'n_edu', 'n_final', 'n_assets'],
@@ -1264,7 +1264,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Amount needed at retirement; on-track check', desc: 'Starts from retirement spending, subtracts Social Security and pension & other income, and finds the balance needed at retirement to fund the gap through a chosen age. Compares it with where current savings and contributions are headed.', id: 'retire', group: 'live', tab: 'How much to retire', title: 'How much do I need to retire?', question: 'What balance funds retirement spending after Social Security, and are you on track?',
+    output: 'Amount needed at retirement; on-track check', desc: 'Starts from retirement spending, subtracts Social Security and pension & other income, and finds the balance needed at retirement to fund the gap through a chosen age. Compares it with where current savings and contributions are headed.', id: 'retire', group: 'live', tab: 'How much to retire', title: 'Savings needed at retirement', question: 'What balance funds retirement spending after Social Security, and are you on track?',
     lede: 'Spending less Social Security and pension & other income is the gap a portfolio has to fill. This finds the balance that fills it from retirement age through the age you plan for, and compares it with where today’s savings are headed.',
     fields: [
       intField('r2_age', 'Current age', 18, 80, 1, DEFAULTS.age),
@@ -1435,7 +1435,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Which path ends ahead, and by how much', desc: 'Puts the same extra monthly amount toward either paying down a loan or investing, and compares net position at the loan’s original payoff date. Includes the interest saved, the break-even return, and the value of investing the freed payment after an early payoff.', id: 'debtinv', group: 'borrow', tab: 'Debt vs. investment', title: 'Pay down the loan, or invest?', question: 'For the same extra dollars each month, which path ends further ahead?',
+    output: 'Which path ends ahead, and by how much', desc: 'Puts the same extra monthly amount toward either paying down a loan or investing, and compares net position at the loan’s original payoff date. Includes the interest saved, the break-even return, and the value of investing the freed payment after an early payoff.', id: 'debtinv', group: 'borrow', tab: 'Debt vs. investment', title: 'Paying down a loan compared with investing', question: 'For the same extra dollars each month, which path ends further ahead?',
     lede: 'Extra principal earns a guaranteed return equal to the loan rate. Investing offers a higher but uncertain return. This compares the two over the remaining life of the loan, with the freed payment invested once the loan is gone.',
     manual: ['v_rate', 'v_term'],
     fields: [
@@ -1478,7 +1478,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Net worth; assets, liabilities, equity', desc: 'Adds up what you own, subtracts what you owe, and shows net worth, home equity, and investable assets. A snapshot to repeat each year.', id: 'networth', group: 'live', tab: 'Net worth', title: 'What is my net worth?', question: 'What do you own, what do you owe, and what is the difference?',
+    output: 'Net worth; assets, liabilities, equity', desc: 'Adds up what you own, subtracts what you owe, and shows net worth, home equity, and investable assets. A snapshot to repeat each year.', id: 'networth', group: 'live', tab: 'Net worth', title: 'Net worth statement', question: 'What do you own, what do you owe, and what is the difference?',
     lede: 'Net worth is the scoreboard the other calculators move. Assets less liabilities, with a look at how much of it is liquid and how much is tied up in the house.',
     manual: ['w_cash', 'w_tax', 'w_home', 'w_other', 'w_debt'],
     fields: [
@@ -1555,36 +1555,36 @@ const growthFigure = () => {
 home.append(
   h('section', { class: 'hero' }, h('div', { class: 'wrap' },
     h('span', { class: 'eyebrow' }, 'WealthCare Investment Partners · Client education'),
-    h('h1', {}, 'Where do you want to go?'),
-    h('p', {}, 'Twelve hypothetical illustrations of the math behind saving, spending, borrowing, and protecting a family. Set your assumptions once, run any calculator, and print a plan in minutes.'),
-    h('div', { class: 'ctas' }, h('button', { type: 'button', class: 'cta', onclick: () => show('plan', true) }, 'Set up a plan'), h('button', { type: 'button', class: 'cta ghost', onclick: () => show('list', true) }, 'Browse calculators')))),
+    h('h1', {}, 'Planning calculators'),
+    h('p', {}, MODULES.length + ' hypothetical illustrations covering saving, retirement income, borrowing, and insurance. Enter the plan information once, use any calculator, and print the results.'),
+    h('div', { class: 'ctas' }, h('button', { type: 'button', class: 'cta', onclick: () => show('plan', true) }, 'Enter plan information'), h('button', { type: 'button', class: 'cta ghost', onclick: () => show('list', true) }, 'View calculators')))),
   h('section', { class: 'stats' }, h('div', { class: 'wrap' },
     h('div', { class: 'stat' }, h('b', {}, String(MODULES.length)), h('span', {}, 'Calculators')),
     h('div', { class: 'stat' }, h('b', {}, String(GROUPS.length)), h('span', {}, 'Categories')),
     h('div', { class: 'stat' }, h('b', {}, '1'), h('span', {}, 'Set of assumptions, shared by all')),
-    h('div', { class: 'stat' }, h('b', {}, 'PDF'), h('span', {}, 'Printable plan, your logo on it')))),
+    h('div', { class: 'stat' }, h('b', {}, 'PDF'), h('span', {}, 'Printable plan')))),
   h('section', { class: 'sec' }, h('div', { class: 'wrap' }, h('div', { class: 'two' },
-    h('div', { class: 'text' }, h('span', { class: 'eyebrow' }, 'How it works'), h('h2', { class: 'disp' }, 'Enter your numbers once.'),
+    h('div', { class: 'text' }, h('span', { class: 'eyebrow' }, 'How it works'), h('h2', { class: 'disp' }, 'Shared plan information'),
       h('p', { class: 'lead' }, 'Client name, ages, Social Security, starting balance, contributions, return, inflation, household income and debts, and retirement withdrawals live in one place. Every calculator reads from them, flags anything you change for a single scenario, and the printout shows exactly which inputs were used and which were entered by hand.'),
-      h('div', {}, h('button', { type: 'button', class: 'arrow-link', onclick: () => show('plan', true) }, 'Set up a plan'))),
+      h('div', {}, h('button', { type: 'button', class: 'arrow-link', onclick: () => show('plan', true) }, 'Go to plan inputs'))),
     h('div', { class: 'figure', html: growthFigure() + '<div class="cap">Illustrative: ' + money(DEFAULTS.principal) + ' to start, ' + money(DEFAULTS.monthly) + ' a month, ' + DEFAULTS.rate + '% assumed, 30 years. Hypothetical, gross of fees.</div>' })))),
   h('section', { class: 'sec' }, h('div', { class: 'wrap' },
-    h('span', { class: 'eyebrow' }, 'What we illustrate'), h('h2', { class: 'disp' }, 'Pick your question.'),
+    h('span', { class: 'eyebrow' }, 'Calculators'), h('h2', { class: 'disp' }, 'Calculators by category'),
     h('div', { class: 'blocks' }, ...GROUPS.map(g => { const n = MODULES.filter(m => m.group === g.id).length;
       return h('button', { type: 'button', class: 'block', onclick: () => { show('list', true); const el = document.getElementById('cat_' + g.id); if (el) el.scrollIntoView({ block: 'start' }); } },
         h('span', { class: 'n' }, GROUP_META[g.id].n), h('span', { class: 't' }, g.name), h('span', { class: 'd' }, g.blurb), h('span', { class: 'k' }, n + ' calculator' + (n === 1 ? '' : 's') + ' →')); })))),
-  h('section', { class: 'band' }, h('div', { class: 'wrap' }, h('h2', {}, 'Compounding won’t wait.'), h('p', {}, 'Set the assumptions, run the calculators that matter to you, and leave the meeting with a printed plan.'), h('button', { type: 'button', class: 'cta', onclick: () => show('plan', true) }, 'Set up a plan'))));
+  h('section', { class: 'band' }, h('div', { class: 'wrap' }, h('h2', {}, 'Printing a plan'), h('p', {}, 'Enter the plan information, choose the calculators to include, and print or save the plan as a PDF.'), h('button', { type: 'button', class: 'cta', onclick: () => show('plan', true) }, 'Go to plan inputs'))));
 mainEl.append(home);
 
 /* Plan inputs page */
 const planPage = h('section', { id: 'mod_plan', hidden: '' },
-  h('div', { class: 'pagehead' }, h('div', { class: 'wrap' }, h('span', { class: 'eyebrow' }, 'Plan inputs'), h('h1', {}, 'Your numbers, once.'), h('p', { class: 'lead' }, 'General information goes on the printed cover. Standard assumptions feed every calculator that uses them; apply them to all, or override any input on a calculator and it is flagged. Choose what the printed plan includes below.'))),
+  h('div', { class: 'pagehead' }, h('div', { class: 'wrap' }, h('span', { class: 'eyebrow' }, 'Plan inputs'), h('h1', {}, 'Enter plan information'), h('p', { class: 'lead' }, 'Please fill in the client’s information and assumptions below. General information appears on the printed cover. Standard assumptions apply to every calculator that uses them; an input changed on a single calculator is flagged. Choose what the printed plan includes in the right-hand column.'))),
   h('div', { class: 'wrap pad', id: 'plan-host' }));
 mainEl.append(planPage);
 
 /* Calculators list page */
 const listPage = h('section', { id: 'mod_list', hidden: '' },
-  h('div', { class: 'pagehead' }, h('div', { class: 'wrap' }, h('span', { class: 'eyebrow' }, 'Calculators'), h('h1', {}, 'Pick your question.'), h('p', { class: 'lead' }, MODULES.length + ' hypothetical illustrations in ' + GROUPS.length + ' categories. Each opens with your plan assumptions; every input stays adjustable.'))));
+  h('div', { class: 'pagehead' }, h('div', { class: 'wrap' }, h('span', { class: 'eyebrow' }, 'Calculators'), h('h1', {}, 'All calculators'), h('p', { class: 'lead' }, MODULES.length + ' hypothetical illustrations in ' + GROUPS.length + ' categories. Each opens with your plan assumptions; every input stays adjustable.'))));
 const catlist = h('div', { class: 'catlist' });
 GROUPS.forEach(g => {
   const rows = h('div', { class: 'rows' });
@@ -1701,7 +1701,7 @@ const LIMITS = [
 
 /* Page */
 const methodsPage = h('section', { id: 'mod_methods', hidden: '' },
-  h('div', { class: 'pagehead' }, h('div', { class: 'wrap' }, h('span', { class: 'eyebrow' }, 'Methodology'), h('h1', {}, 'How the numbers are made.'),
+  h('div', { class: 'pagehead' }, h('div', { class: 'wrap' }, h('span', { class: 'eyebrow' }, 'Reference'), h('h1', {}, 'Methodology'),
     h('p', { class: 'lead' }, 'The formula behind every calculator, the conventions they share, and what they leave out. Written from the code and checked against it; this page is the reference for the disclosures on the site and in the printed plan.'))),
   h('div', { class: 'wrap pad methods' },
     h('h2', { class: 'm-h' }, 'Conventions shared by every calculator'),
