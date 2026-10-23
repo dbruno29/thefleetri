@@ -306,7 +306,7 @@ svg .cross { stroke: var(--line); stroke-width: 1; }
 .plan-status { font-size: 11.5px; color: var(--muted); flex-basis: 100%; }
 .assump-foot .btn-pdf { flex-basis: 100%; }
 /* One-calculator printout */
-.rsingle { display: flex; justify-content: space-between; align-items: center; gap: 16px; border: 1px solid #D5D9E0; padding: 6px 12px; }
+.rsec.rsingle { display: flex; justify-content: space-between; align-items: center; gap: 16px; border: 1px solid #D5D9E0; padding: 6px 12px; }
 .rsingle img { width: 104px; height: auto; flex: none; }
 .rs-info { display: grid; gap: 1px; font-size: 10.5px; line-height: 1.35; color: #333; }
 .rcols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: start; }
@@ -425,11 +425,11 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
   .rpages { padding: 0; overflow: visible; }
   .rpage { width: auto; min-height: 9.85in; margin: 0; padding: 0; box-shadow: none; break-after: page; page-break-after: always; }
   .rpage:last-child { break-after: auto; page-break-after: auto; }
-  .rpage.cover { height: 11in; min-height: 0; }
+  .rpage.cover { height: 11in; min-height: 0; page: cover; } /* only the cover prints edge to edge */
   .cover-photo { min-height: 0; }
   .rsec, .rstats, .rchart, .rprimary { break-inside: avoid; }
   @page { size: letter; margin: .55in .6in .45in; }
-  @page :first { margin: 0; }
+  @page cover { margin: 0; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>
