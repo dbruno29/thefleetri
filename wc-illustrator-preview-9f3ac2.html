@@ -2149,8 +2149,7 @@ function openReport(andPrint, only) {
   };
   if (!single) paginate('Assumptions', 'The figures in this document are hypothetical illustrations built from the assumptions below. Rates of return and inflation are held constant in every period; actual results will vary. All investment figures and rates of return are shown gross of advisory fees and other costs; results net of fees would be lower.', [
     h('div', { class: 'rsec' }, h('h3', {}, 'General information'), info),
-    ...assumpGroups.filter(g => g[2].length).map(g => h('div', { class: 'rsec' }, h('h3', {}, g[0], h('span', {}, g[1])), assumpTable(g[2]))),
-    ...GROUPS.map(g => ({ g, ms: mods.filter(m => m.group === g.id) })).filter(x => x.ms.length).map((x, i) => h('div', { class: 'rsec' }, h('h3', {}, i ? g_name(x.g) : 'Calculators included', h('span', {}, i ? '' : g_name(x.g))), listTable(x.ms)))]);
+    ...assumpGroups.filter(g => g[2].length).map(g => h('div', { class: 'rsec' }, h('h3', {}, g[0], h('span', {}, g[1])), assumpTable(g[2])))]);
   // Calculator pages
   const compactTable = data => {
     const xs = data.x, n = xs.length; let idxs = [];
@@ -2201,6 +2200,9 @@ function openReport(andPrint, only) {
       h('div', { class: 'rsec rdisc rdisc-short' }, h('h4', {}, 'Important information'), ...singleDisclosures(mod.id).map(t => h('p', {}, t))));
     paginate(mod.title, mod.lede, blocks, single ? null : qrBlock(mod, 'rqr-corner'));
   });
+  // Calculators included: after the calculator pages, before the methodology appendix and disclosures
+  if (!single) paginate('Calculators included', 'Each calculator in this illustration, what it shows, and whether it runs on the standard assumptions or on figures entered in the calculator.',
+    GROUPS.map(g => ({ g, ms: mods.filter(m => m.group === g.id) })).filter(x => x.ms.length).map(x => h('div', { class: 'rsec' }, h('h3', {}, g_name(x.g)), listTable(x.ms))));
   // Methodology appendix (optional)
   if (plan.pp_methods && !single) paginate('Methodology', 'How each calculator in this illustration arrives at its figures, written from the calculator code.', [
     h('div', { class: 'rsec' }, h('h3', {}, 'Conventions shared by every calculator'), ...CONVENTIONS.map(c => h('p', { class: 'robs' }, h('b', {}, c[0] + '. '), c[1]))),
