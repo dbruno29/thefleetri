@@ -167,7 +167,13 @@ h2.disp { font-size: clamp(24px, 2.6vw, 32px); }
 main .wrap.pad { padding-block: 28px 56px; }
 
 /* Calculators list */
-.catlist { display: grid; gap: 34px; }
+.catlist { display: grid; gap: 30px; }
+.catlist .cat + .cat { border-top: 3px solid var(--navy); padding-top: 30px; }   /* a bold rule where one category ends and the next begins */
+.row-item .go { border: 0; background: none; padding: 6px 4px; color: var(--green); cursor: pointer; display: inline-flex; align-items: center; transition: transform .15s; }
+.row-item .go svg { width: 30px; height: 17px; display: block; }
+.row-item .go:hover { transform: translateX(4px); color: var(--green-text); }
+.row-item .go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 640px) { .row-item .go { grid-column: 2; grid-row: 1; align-self: start; } }
 .cat { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; }
 @media (max-width: 860px) { .cat { grid-template-columns: 1fr; gap: 10px; } }
 .cat .t { font-family: var(--display); font-weight: 700; font-size: 24px; line-height: 1.1; color: var(--navy); }
@@ -1687,7 +1693,7 @@ GROUPS.forEach(g => {
   MODULES.filter(m => m.group === g.id).forEach(m => rows.append(h('div', { class: 'row-item' },
     h('div', { class: 'namecell' }, h('button', { type: 'button', class: 'name', id: 'idx_' + m.id, onclick: () => show(m.id, true) }, m.tab), h('span', { class: 'basis-host list', id: 'bh_' + m.id })),
     h('div', { class: 'q' }, m.desc),
-    h('button', { type: 'button', class: 'btn', onclick: () => show(m.id, true) }, 'Open'))));
+    h('button', { type: 'button', class: 'go', 'aria-label': 'Open ' + m.tab, title: 'Open ' + m.tab, onclick: () => show(m.id, true), html: '<svg viewBox="0 0 28 16" aria-hidden="true"><path d="M1 8h24M18 1l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' }))));
   catlist.append(h('div', { class: 'cat', id: 'cat_' + g.id }, h('div', {}, h('span', { class: 'eyebrow' }, GROUP_META[g.id].n), h('div', { class: 't' }, g.name), h('div', { class: 'b' }, g.blurb)), rows));
 });
 listPage.append(h('div', { class: 'wrap pad' }, catlist));
