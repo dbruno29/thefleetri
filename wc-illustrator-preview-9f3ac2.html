@@ -359,6 +359,8 @@ details.adv > .field:first-of-type { border-top: 1px solid var(--line-soft); }
 .scen-none { font-size: 13px; color: var(--muted); }
 @media (max-width: 560px) { .scen-tab { font-size: 12px; } .scen-tab th, .scen-tab td { padding-right: 8px; } }
 .legend i.ov { height: 0; width: 14px; border-top: 2.5px dotted; border-radius: 0; }
+.legend i.ov-bar { background: transparent; border: 1.5px dashed; }
+svg .end-label.a-label { fill: var(--muted); font-weight: 600; }
 /* Plan inputs: hover shows which calculators use each input */
 .prow label.feeds { text-decoration: underline dotted var(--line); text-underline-offset: 4px; cursor: help; }
 .client-chip { margin-left: auto; font: 600 12px/1.2 var(--ui); color: var(--ink-2); border: 1px solid var(--line); border-radius: 2px; padding: 4px 9px; max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -564,7 +566,7 @@ const compact = v => { const a = Math.abs(v); const s = v < 0 ? '-' : '';
   if (a >= 1e6) return s + '$' + (a / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
   if (a >= 1e3) return s + '$' + Math.round(a / 1e3) + 'K';
   return s + '$' + Math.round(a); };
-const pct = (v, d = 1) => v.toFixed(d) + '%';
+const pct = (v, d = 1) => (Math.abs(v) >= 1000 ? v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : v.toFixed(d)) + '%';   // large shares (typed extremes) keep separators instead of exponent notation
 const yrs = v => { const y = Math.floor(v), m = Math.round((v - y) * 12); if (m === 12) return (y + 1) + ' years'; return y + (y === 1 ? ' year' : ' years') + (m ? ' ' + m + ' mo' : ''); };
 const plural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
 
@@ -728,12 +730,14 @@ function makeChart(card, cfg) {
     const W = Math.max(280, wrap.clientWidth || 600), H = Math.min(380, Math.max(220, Math.round(W * (data.ratio || 0.5))));
     const series = data.series.filter(s => !s.overlay), over = data.series.filter(s => s.overlay), xs = data.x, n = xs.length; mainS = series; // overlay = Scenario A, drawn dotted on its own x values
     const bars = data.kind === 'bars', stacked = data.kind === 'stack';
-    legend.replaceChildren(...(series.length + over.length > 1 ? series.map(s => h('span', {}, h('i', { class: stacked ? 'sw' : '', style: 'background:' + s.color }), s.name)).concat(over.map(s => h('span', {}, h('i', { class: 'ov', style: 'border-top-color:' + s.color }), s.name))) : []));
+    const aBars = bars && data.barsA ? [h('span', {}, h('i', { class: 'sw ov-bar', style: 'border-color:' + series[0].color }), 'Scenario A')] : [];
+    legend.replaceChildren(...aBars, ...(series.length + over.length > 1 ? series.map(s => h('span', {}, h('i', { class: stacked ? 'sw' : '', style: 'background:' + s.color }), s.name)).concat(over.map(s => h('span', {}, h('i', { class: 'ov', style: 'border-top-color:' + s.color }), s.name))) : []));
     let maxV = 0, stackTops = null;
     if (stacked) { stackTops = series.map(() => []); for (let i = 0; i < n; i++) { let acc = 0; series.forEach((s, j) => { acc += s.values[i]; stackTops[j][i] = acc; }); maxV = Math.max(maxV, acc); } }
     else series.forEach(s => s.values.forEach(v => { if (v > maxV) maxV = v; }));
     over.forEach(s => s.values.forEach(v => { if (v > maxV) maxV = v; }));
     if (data.goal) maxV = Math.max(maxV, data.goal.value);
+    if (bars && data.barsA) data.barsA.forEach(v => { if (v > maxV) maxV = v; });
     const ticks = niceTicks(maxV * (bars ? 1.18 : 1.05), H > 300 ? 5 : 4); const yMax = ticks[ticks.length - 1];
     const ml = 8 + Math.max(...ticks.map(t => compact(t).length)) * 7, mr = data.endLabels === false ? 30 : 62, mt = 16, mb = 30;
     const pw = W - ml - mr, ph = H - mt - mb;
@@ -755,10 +759,14 @@ function makeChart(card, cfg) {
     }
     out += `<line class="axis" x1="${ml}" x2="${W - mr}" y1="${sy(0)}" y2="${sy(0)}"/>`;
     if (bars) {
-      const slot = pw / n, bw = Math.min(24, slot * 0.6);
-      xs.forEach((x, i) => { const v = series[0].values[i]; const cx = ml + (i + 0.5) * slot, y = sy(v), hgt = sy(0) - y;
-        out += `<path d="M${cx - bw / 2},${sy(0)} v${-Math.max(0, hgt - 4)} a4,4 0 0 1 4,-4 h${bw - 8} a4,4 0 0 1 4,4 v${Math.max(0, hgt - 4)} z" fill="${(data.colors && data.colors[i]) || series[0].color}"/>`;
-        out += `<text class="end-label" x="${cx}" y="${y - 8}" text-anchor="middle">${compact(v)}</text>`; });
+      const slot = pw / n, A = data.barsA, bw = Math.min(24, slot * (A ? 0.34 : 0.6)), gapA = A ? bw * 0.6 : 0;
+      const bar = (cx, v, fill, extra) => { const y = sy(v), hgt = sy(0) - y; return `<path d="M${cx - bw / 2},${sy(0)} v${-Math.max(0, hgt - 4)} a4,4 0 0 1 4,-4 h${bw - 8} a4,4 0 0 1 4,4 v${Math.max(0, hgt - 4)} z" fill="${fill}"${extra || ''}/>`; };
+      xs.forEach((x, i) => { const v = series[0].values[i]; const c = (data.colors && data.colors[i]) || series[0].color; const cx = ml + (i + 0.5) * slot;
+        if (A && A[i] !== undefined) { const ax = cx - bw / 2 - gapA / 2, bx = cx + bw / 2 + gapA / 2;
+          out += bar(ax, A[i], c, ` fill-opacity=".28" stroke="${c}" stroke-width="1.5" stroke-dasharray="3 2"`) + bar(bx, v, c);
+          out += `<text class="end-label" x="${bx}" y="${sy(v) - 8}" text-anchor="middle">${compact(v)}</text>`;
+          if (slot >= 84) out += `<text class="end-label a-label" x="${ax}" y="${sy(A[i]) - 8}" text-anchor="middle">${compact(A[i])}</text>`; }
+        else { out += bar(cx, v, c); out += `<text class="end-label" x="${cx}" y="${sy(v) - 8}" text-anchor="middle">${compact(v)}</text>`; } });
     } else {
       const path = (vals, base) => { let d = ''; for (let i = 0; i < n; i++) d += (i ? 'L' : 'M') + sx(xs[i]).toFixed(1) + ',' + sy(vals[i]).toFixed(1); if (base) { for (let i = n - 1; i >= 0; i--) d += 'L' + sx(xs[i]).toFixed(1) + ',' + sy(base[i]).toFixed(1); d += 'z'; } return d; };
       if (stacked) {
@@ -780,6 +788,9 @@ function makeChart(card, cfg) {
       const labelSet = stacked ? [topLive] : ends.slice().sort((a, b) => a.y - b.y).filter((e, i, arr) => !(i && Math.abs(e.y - arr[i - 1].y) < 15));
       visible.forEach(e => { const x = sx(xs[n - 1]); out += `<circle cx="${x}" cy="${e.y}" r="4.5" fill="${e.s.color}" stroke="var(--surface)" stroke-width="2"/>`; });
       if (data.endLabels !== false) labelSet.forEach(e => { out += `<text class="end-label" x="${sx(xs[n - 1]) + 9}" y="${e.y + 4}">${compact(e.v)}</text>`; });
+      if (data.endLabels !== false) { const placed = labelSet.map(e => ({ x: sx(xs[n - 1]), y: e.y }));
+        over.forEach(s => { const lx = sx(s.x[s.x.length - 1]), ly = sy(s.values[s.values.length - 1]); if (placed.some(p => Math.abs(p.x - lx) < 40 && Math.abs(p.y - ly) < 15)) return;
+          placed.push({ x: lx, y: ly }); out += `<text class="end-label a-label" x="${lx + 9}" y="${ly + 4}">${compact(s.values[s.values.length - 1])} (A)</text>`; }); }
       out += `<g class="hover" style="display:none"><line class="cross" y1="${mt}" y2="${H - mb}"/>${visible.map(e => `<circle r="5" fill="${e.s.color}" stroke="var(--surface)" stroke-width="2"/>`).join('')}</g>`;
     }
     out += '</svg>';
@@ -788,9 +799,9 @@ function makeChart(card, cfg) {
     svg = wrap.querySelector('svg');
     if (!bars) { svg.addEventListener('pointermove', onMove); svg.addEventListener('pointerleave', hide); svg.addEventListener('keydown', onKey); svg.addEventListener('blur', hide); }
     else { svg.addEventListener('pointermove', onBarMove); svg.addEventListener('pointerleave', hide); }
-    const hdr = bars ? [data.xName || 'Milestone', series[0].name] : [data.xUnit || 'Year', ...series.map(s => s.name)];
+    const hdr = bars ? [data.xName || 'Milestone', series[0].name].concat(data.barsA ? ['Scenario A'] : []) : [data.xUnit || 'Year', ...series.map(s => s.name), ...over.map(s => s.name)];
     let t = '<table><thead><tr>' + hdr.map(c => `<th>${esc(c)}</th>`).join('') + '</tr></thead><tbody>';
-    for (let i = 0; i < n; i++) t += '<tr><td>' + (bars ? esc(data.xLabels[i]) : (xs[i] === 0 && !data.xUnit ? 'Now' : Math.round(xs[i] * 10) / 10)) + '</td>' + series.map(s => `<td>${money(s.values[i])}</td>`).join('') + '</tr>';
+    for (let i = 0; i < n; i++) t += '<tr><td>' + (bars ? esc(data.xLabels[i]) : (xs[i] === 0 && !data.xUnit ? 'Now' : Math.round(xs[i] * 10) / 10)) + '</td>' + series.map(s => `<td>${money(s.values[i])}</td>`).join('') + (bars ? (data.barsA ? `<td>${data.barsA[i] !== undefined ? money(data.barsA[i]) : ''}</td>` : '') : over.map(s => { const k = s.x.indexOf(xs[i]); return `<td>${k < 0 ? '' : money(s.values[k])}</td>`; }).join('')) + '</tr>';
     table.innerHTML = t + '</tbody></table>';
   }
   function showAt(i) {
@@ -812,7 +823,7 @@ function makeChart(card, cfg) {
   }
   function onMove(ev) { const r = svg.getBoundingClientRect(); const x = (ev.clientX - r.left) / r.width * geo.W; let best = 0, bd = 1e9; data.x.forEach((xv, i) => { const d = Math.abs(geo.sx(xv) - x); if (d < bd) { bd = d; best = i; } }); showAt(best); }
   function onBarMove(ev) { const r = svg.getBoundingClientRect(); const x = (ev.clientX - r.left) / r.width * geo.W; const i = Math.max(0, Math.min(data.x.length - 1, Math.floor((x - geo.ml) / (geo.pw / data.x.length))));
-    tip.innerHTML = `<b>${esc(data.xLabels[i])}</b><div><span>${esc(data.series[0].name)}</span><span>${money(data.series[0].values[i])}</span></div>`; tip.hidden = false; tip.style.top = '8px';
+    tip.innerHTML = `<b>${esc(data.xLabels[i])}</b><div><span>${esc(data.series[0].name)}</span><span>${money(data.series[0].values[i])}</span></div>` + (data.barsA && data.barsA[i] !== undefined ? `<div><span>Scenario A${data.labelsA && data.labelsA[i] !== data.xLabels[i] ? ' (' + esc(data.labelsA[i]) + ')' : ''}</span><span>${money(data.barsA[i])}</span></div>` : ''); tip.hidden = false; tip.style.top = '8px';
     const rr = wrap.getBoundingClientRect(), px = (geo.ml + (i + 0.5) * (geo.pw / data.x.length)) / geo.W * rr.width;
     if (px > rr.width * 0.55) { tip.style.left = ''; tip.style.right = (rr.width - px + 16) + 'px'; } else { tip.style.right = ''; tip.style.left = (px + 16) + 'px'; } }
   function onKey(ev) { if (ev.key === 'ArrowRight') { ev.preventDefault(); showAt(idx < 0 ? 0 : idx + 1); } else if (ev.key === 'ArrowLeft') { ev.preventDefault(); showAt(idx < 0 ? data.x.length - 1 : idx - 1); } else if (ev.key === 'Escape') hide(); }
@@ -892,10 +903,9 @@ const MODULES = [
           { label: 'Total you deposited', value: money(deposited), sub: `${money(s.g_principal)} to start + ${money(last.contrib)} in contributions` },
           { label: 'Growth (money you never deposited)', value: money(growth), accent: true, sub: `${pct(share, 0)} of the ending balance` },
           { label: 'Effective annual yield', value: pct((Math.pow(1 + s.g_rate / 100 / s.g_comp, s.g_comp) - 1) * 100, 2), sub: `${pct(s.g_rate)} compounded ${s.g_comp === 1 ? 'yearly' : s.g_comp === 4 ? 'quarterly' : s.g_comp === 12 ? 'monthly' : 'daily'}` },
-          { label: 'Growth overtakes deposits', value: half ? 'Year ' + half.t : 'Not in this span', sub: half ? 'From here on, growth is the bigger slice' : 'Extend the years or the rate to see it' }
+          { label: 'Growth overtakes deposits', value: half ? 'Year ' + half.t : 'After year ' + s.g_years, sub: half ? 'From here on, growth is the bigger slice' : `growth stays below deposits through year ${s.g_years}` }
         ],
         callout: `<b>${pct(share, 0)}</b> of the ending balance is money you never deposited. That slice is what compounding adds, and it grows fastest in the final years.`,
-        teach: '<b>Why compounding frequency matters less than you might think:</b> moving from yearly to daily compounding at the same stated rate nudges the result up only slightly. Time and the rate itself do the heavy lifting.',
         chart: { kind: 'stack', x: rows.map(r => r.t), series: [
           { name: 'Starting amount', color: 'var(--c3)', values: rows.map(r => r.principal) },
           { name: 'Your contributions', color: 'var(--c2)', values: rows.map(r => r.contrib) },
@@ -929,7 +939,6 @@ const MODULES = [
           { label: 'Total deposited', value: money(dep), sub: 'identical on both paths' }
         ],
         callout: `A ${pct(s.c_inv - s.c_save)} difference in rate becomes a <b>${money(gap)}</b> difference in dollars. Small rate gaps compound into large dollar gaps over long periods.`,
-        teach: '<b>Both sides of the trade-off:</b> a higher assumed return comes with the risk of loss and year-to-year swings; a savings account is typically FDIC-insured up to applicable limits but may not keep pace with inflation. Neither line is a prediction.',
         chart: { kind: 'line', x: a.map(r => r.t), series: [
           { name: `Investing (${pct(s.c_inv)})`, color: 'var(--c1)', values: b.map(r => r.bal), area: true },
           { name: `Savings (${pct(s.c_save)})`, color: 'var(--c2)', values: a.map(r => r.bal) },
@@ -962,8 +971,7 @@ const MODULES = [
           { label: 'Real rate of return', value: pct(realRate, 2), sub: `(1 + ${pct(s.i_rate)}) ÷ (1 + ${pct(s.i_infl)}) − 1, on the stated annual return` },
           { label: `$100 of groceries in ${s.i_years} years`, value: money(basket), sub: `at ${pct(s.i_infl)} a year` }
         ],
-        callout: last.bal > 0 ? `Inflation quietly takes <b>${pct((1 - lastReal / last.bal) * 100, 0)}</b> of the nominal balance’s buying power over ${s.i_years} years. Planning in today’s dollars keeps the goal honest.` : 'Enter a starting amount or contribution to see the effect of inflation.',
-        teach: '<b>Rule of thumb:</b> real return ≈ nominal return − inflation. A 7% return in a 3% inflation world grows your purchasing power by roughly 4% a year, and that 4% is what funds a future lifestyle.',
+        callout: last.bal > 0 ? `Inflation quietly takes <b>${pct((1 - lastReal / last.bal) * 100, 0)}</b> of the nominal balance’s buying power over ${s.i_years} years.` : 'Enter a starting amount or contribution to see the effect of inflation.',
         chart: { kind: 'line', x: rows.map(r => r.t), series: [
           { name: 'In today’s dollars', color: 'var(--c1)', values: real, area: true },
           { name: 'Nominal balance', color: 'var(--c2)', values: rows.map(r => r.bal) }
@@ -995,7 +1003,6 @@ const MODULES = [
           { label: `Exact value at year ${s.r_years}`, value: money(end), accent: true, sub: 'compounded annually, no additional deposits' }
         ],
         callout: `The first doubling adds <b>${money(s.r_principal)}</b>. The ${count >= 3 ? 'third' : 'second'} adds <b>${money(s.r_principal * Math.pow(2, Math.max(2, Math.min(count, 3)) - 1))}</b>. Same percentage each time, a much bigger dollar step.`,
-        teach: '<b>Why it works:</b> the rule is a shortcut for the exact formula, and it is most accurate between about 6% and 10%. It also runs in reverse: at 3% inflation, prices double about every 24 years.',
         extraTitle: 'Reference', extraSub: 'doubling time by rate',
         extra: `<table class="ref-table"><thead><tr><th>Rate</th><th>Rule of 72</th><th>Exact</th></tr></thead><tbody>${ref}</tbody></table>`,
         chart: { kind: 'bars', x: labels.map((_, i) => i), xLabels: labels, series: [{ name: 'Balance', color: 'var(--c1)', values: vals }], aria: 'Column chart of balance at each doubling milestone' },
@@ -1004,7 +1011,7 @@ const MODULES = [
     }
   },
   {
-    output: 'Cost of delay; catch-up contribution', desc: 'Compares a saver who starts contributing today with one who starts a few years later. Shows the gap at the goal date and the larger contribution the late starter would need to catch up.', id: 'wait', group: 'grow', tab: 'Cost of waiting', title: 'Cost of delaying contributions', question: 'What does starting a few years late really cost?',
+    output: 'Cost of delay', desc: 'Compares a saver who starts contributing today with one who starts a few years later. Shows the gap at the goal date and how much of it comes from skipped deposits and from an uninvested starting amount.', id: 'wait', group: 'grow', tab: 'Cost of waiting', title: 'Cost of delaying contributions', question: 'What does starting a few years late really cost?',
     lede: 'Compares two savers with the same starting amount and monthly contribution, saving toward the same date, one starting now and one after a delay.',
     fields: [
       moneyField('w_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal, 'Already saved today. The saver who starts today invests it now; the late starter leaves it uninvested until starting.'),
@@ -1023,7 +1030,7 @@ const MODULES = [
       const endNow = now[now.length - 1].bal, endLate = late[late.length - 1]; const gap = endNow - endLate; const skipped = s.w_pmt * 12 * delay;
       const endOf = (p, pmt, y) => { const rows = simulate({ P: p, pmt, r, years: y }); return rows[rows.length - 1].bal; };
       const gapDeposits = endOf(0, s.w_pmt, s.w_years) - endOf(0, s.w_pmt, s.w_years - delay), gapStart = gap - gapDeposits;
-      const catchUp = requiredPmt(endNow, P, r, s.w_years - delay);
+      const share = endNow > 0 ? endLate / endNow * 100 : 0;
       const startTxt = P > 0 ? `${money(P)} now plus ` : '';
       return {
         hero: { label: `Waiting ${plural(delay, 'year')} costs`, value: money(gap), sub: P > 0 ? `The late starter skips ${money(skipped)} of deposits and leaves the ${money(P)} starting amount uninvested for ${plural(delay, 'year')}, ending ${money(gap)} behind. The difference is lost compounding time.` : `The late starter skips ${money(skipped)} of deposits but ends ${money(gap)} behind. The difference is lost compounding time.` },
@@ -1031,48 +1038,46 @@ const MODULES = [
           { label: 'Start today', value: money(endNow), accent: true, sub: `${startTxt}${money(s.w_pmt)} a month for ${s.w_years} years` },
           { label: `Start in ${plural(delay, 'year')}`, value: money(endLate), sub: `${startTxt.replace(' now', '')}${money(s.w_pmt)} a month for ${s.w_years - delay} years` },
           { label: 'Deposits skipped', value: money(skipped), sub: `vs. a gap of ${money(gap)}` },
-          { label: 'To catch up, the late starter needs', value: money(catchUp) + '/mo', sub: `${money(catchUp - s.w_pmt)} more a month, every month` }
+          { label: 'Late start as a share of on time', value: pct(share), sub: `${money(endLate)} of ${money(endNow)}` }
         ],
         callout: P > 0 && skipped > 0 ? `Of the <b>${money(gap)}</b> gap, <b>${money(gapDeposits)}</b> comes from the skipped deposits and <b>${money(gapStart)}</b> from leaving the starting amount uninvested. Every dollar of deposits skipped in the delay years costs <b>$${(gapDeposits / skipped).toFixed(2)}</b> at the goal date.`
           : P > 0 ? `The whole <b>${money(gap)}</b> gap comes from leaving the ${money(P)} starting amount uninvested for ${plural(delay, 'year')}.`
           : `Every dollar skipped in the delay years costs <b>$${(gap / Math.max(1, skipped)).toFixed(2)}</b> at the goal date. The earliest deposits are the ones with the most time to compound.`,
-        teach: '<b>The lesson is about time, not timing.</b> Starting with a smaller amount today usually beats waiting to start with a larger one. The late starter cannot buy back the years; they can only contribute more.',
         chart: { kind: 'line', x: now.map(r => r.t), series: [
           { name: 'Start today', color: 'var(--c1)', values: now.map(r => r.bal), area: true },
           { name: `Start in ${plural(delay, 'year')}`, color: 'var(--c2)', values: late }
         ], aria: 'Line chart comparing a saver who starts now with one who starts after a delay' },
-        copy: [`${P > 0 ? money(P) + ' starting amount (held uninvested by the late starter during the delay); ' : ''}${money(s.w_pmt)}/month at ${pct(s.w_rate)} compounded monthly; goal in ${s.w_years} years; delay ${delay} years.`, `Start today ${money(endNow)}; start later ${money(endLate)}; cost of waiting ${money(gap)}; catch-up contribution ${money(catchUp)}/month.`]
+        copy: [`${P > 0 ? money(P) + ' starting amount (held uninvested by the late starter during the delay); ' : ''}${money(s.w_pmt)}/month at ${pct(s.w_rate)} compounded monthly; goal in ${s.w_years} years; delay ${delay} years.`, `Start today ${money(endNow)}; start later ${money(endLate)}; cost of waiting ${money(gap)}.`]
       };
     }
   },
   {
-    output: 'Required contribution, years, or return', desc: 'Starts from a target amount and works backward: the monthly contribution, the number of years, or the rate of return needed to reach it.', id: 'goal', group: 'grow', tab: 'Reach a goal', title: 'Contributions needed to reach a goal', question: 'What would it take to reach a specific number?',
-    lede: 'Shows the monthly contribution, the time, or the return needed to reach a goal amount from a starting balance.',
+    output: 'Projected balance against a goal', desc: 'Projects a starting amount and monthly contributions at an assumed return and compares the result with a goal amount: the projected balance, the difference from the goal, and when the goal is reached at these inputs.', id: 'goal', group: 'grow', tab: 'Goal projection', title: 'Projected balance compared with a goal', question: 'How does a projected balance compare with a goal amount?',
+    lede: 'Projects a starting amount and monthly contributions at an assumed return and compares the result with a goal amount.',
     fields: [
       moneyField('o_target', 'Goal amount', 10000, 10000000, 10000, DEFAULTS.goalTarget),
       moneyField('o_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal),
-      moneyField('o_pmt', 'Monthly contribution you can make', 0, 10000, 50, DEFAULTS.monthly),
+      moneyField('o_pmt', 'Monthly contribution', 0, 10000, 50, DEFAULTS.monthly),
       pctField('o_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.'),
       intField('o_years', 'Years to the goal', 1, 50, 1, DEFAULTS.years)
     ],
-    chart: { title: 'Path to the goal at your current contribution', subtitle: 'Dashed line marks the goal' },
+    chart: { title: 'Projected balance and the goal', subtitle: 'Dashed line marks the goal' },
     compute(s) {
-      const r = s.o_rate / 100; const needPmt = requiredPmt(s.o_target, s.o_principal, r, s.o_years);
-      const needRate = requiredRate(s.o_target, s.o_principal, s.o_pmt, s.o_years); const needYears = requiredYears(s.o_target, s.o_principal, s.o_pmt, r);
-      const rows = simulate({ P: s.o_principal, pmt: s.o_pmt, r, years: s.o_years }); const end = rows[rows.length - 1].bal; const short = s.o_target - end;
-      const reached = end >= s.o_target;
+      const r = s.o_rate / 100; const needYears = requiredYears(s.o_target, s.o_principal, s.o_pmt, r);
+      const rows = simulate({ P: s.o_principal, pmt: s.o_pmt, r, years: s.o_years }); const end = rows[rows.length - 1].bal; const diff = end - s.o_target;
+      const share = s.o_target > 0 ? end / s.o_target * 100 : 0;
+      const when = needYears === null ? 'Over 100 years' : needYears === 0 ? 'Already reached' : yrs(needYears);
       return {
-        hero: { label: reached ? 'On track' : 'Monthly contribution needed', value: reached ? money(end) : money(needPmt) + '/mo', sub: reached ? (needYears === 0 ? `Your starting amount of ${money(s.o_principal)} already exceeds the goal of ${money(s.o_target)}. At ${money(s.o_pmt)} a month and ${pct(s.o_rate)} it ends at ${money(end)}.` : `At ${money(s.o_pmt)} a month and ${pct(s.o_rate)}, you pass ${money(s.o_target)} in about ${needYears !== null ? yrs(needYears) : s.o_years + ' years'}, ending at ${money(end)}.`) : `To reach ${money(s.o_target)} in ${s.o_years} years at ${pct(s.o_rate)}, starting from ${money(s.o_principal)}. That is ${money(needPmt - s.o_pmt)} more than you entered.` },
+        hero: { label: `Projected balance after ${plural(s.o_years, 'year')}`, value: money(end), sub: `${money(s.o_principal)} to start plus ${money(s.o_pmt)} a month at an assumed ${pct(s.o_rate)}, compared with a goal of ${money(s.o_target)}.` },
         tiles: [
-          { label: 'Lever 1: save more', value: money(needPmt) + '/mo', accent: true, sub: `at ${pct(s.o_rate)} for ${s.o_years} years` },
-          { label: 'Lever 2: save longer', value: needYears === null ? 'Over 100 yrs' : yrs(needYears), sub: `at ${money(s.o_pmt)} a month and ${pct(s.o_rate)}` },
-          { label: 'Lever 3: earn more', value: needRate === null ? 'Over 60%' : pct(needRate * 100), sub: `required return at ${money(s.o_pmt)} a month for ${s.o_years} years` },
-          { label: 'Where you land as entered', value: money(end), sub: reached ? `${money(end - s.o_target)} past the goal` : `${money(short)} short of the goal` }
+          { label: 'Goal amount', value: money(s.o_target), sub: `in ${plural(s.o_years, 'year')}` },
+          { label: 'Projected balance less the goal', value: money(diff), sub: diff >= 0 ? 'above the goal' : 'below the goal' },
+          { label: 'Share of the goal', value: pct(share), sub: `${money(end)} of ${money(s.o_target)}` },
+          { label: 'Goal reached at these inputs in', value: when, sub: needYears === null ? 'not within 100 years' : needYears === 0 ? 'the starting amount already meets the goal' : `year ${Math.ceil(needYears)}` }
         ],
-        callout: reached ? `At your current plan the goal is reached early. You could also reach <b>${money(s.o_target)}</b> on time with about <b>${money(needPmt)}</b> a month.` : `Each lever is a trade-off: saving <b>${money(needPmt - s.o_pmt)}</b> more a month, waiting <b>${needYears === null ? 'many' : Math.max(0, Math.ceil(needYears - s.o_years))}</b> extra years, or taking on more risk for a higher assumed return.`,
-        teach: '<b>The savings lever is the only one fully in your control.</b> Return depends on markets and the risk you accept; time depends on when you need the money. This is why plans usually start with the contribution.',
+        callout: `At these inputs the projected balance after ${plural(s.o_years, 'year')} is <b>${money(end)}</b>, <b>${pct(share)}</b> of the <b>${money(s.o_target)}</b> goal. ${needYears === null ? 'The balance does not reach the goal within 100 years.' : needYears === 0 ? 'The starting amount already meets the goal.' : `The balance reaches the goal in <b>${yrs(needYears)}</b>.`}`,
         chart: { kind: 'line', x: rows.map(r => r.t), series: [{ name: 'Projected balance', color: 'var(--c1)', values: rows.map(r => r.bal), area: true }], goal: { value: s.o_target, label: 'Goal ' + compact(s.o_target) }, aria: 'Line chart of projected balance against a goal line' },
-        copy: [`Goal ${money(s.o_target)} in ${s.o_years} years; starting ${money(s.o_principal)}; ${pct(s.o_rate)} assumed return, compounded monthly.`, `Needs ${money(needPmt)}/month; or ${needYears === null ? '100+ years' : yrs(needYears)} at ${money(s.o_pmt)}/month; or a ${needRate === null ? '60%+' : pct(needRate * 100)} return. As entered, ends at ${money(end)}.`]
+        copy: [`Goal ${money(s.o_target)} in ${s.o_years} years; starting ${money(s.o_principal)}; ${money(s.o_pmt)}/month; ${pct(s.o_rate)} assumed return, compounded monthly.`, `Projected balance ${money(end)} (${pct(share)} of the goal); goal reached at these inputs in ${when.toLowerCase()}.`]
       };
     }
   },
@@ -1081,7 +1086,7 @@ const MODULES = [
     lede: 'Shows how long a retirement balance lasts at a given withdrawal and assumed return, and the first-year withdrawal that would last a chosen number of years.',
     fields: [
       moneyField('p_bal', 'Starting balance at retirement', 0, 5000000, 10000, DEFAULTS.retireBalance),
-      intField('p_years', 'Years the money should last', 5, 50, 1, 30, 'Sets the sustainable withdrawal below.'),
+      intField('p_years', 'Withdrawal period', 5, 50, 1, 30, 'Years used for the withdrawal that lasts this long.'),
       segField('p_mode', 'Withdrawal set as', [{ v: 'amt', label: 'Monthly amount' }, { v: 'pct', label: '% of starting balance' }], 'amt'),
       moneyField('p_wd', 'Monthly withdrawal (first year)', 0, 50000, 100, DEFAULTS.retireMonthly),
       pctField('p_pct', 'Withdrawal rate (% of starting balance)', 0, 15, 0.1, DEFAULTS.retirePct, 'Of the starting balance, in year one.'),
@@ -1111,18 +1116,17 @@ const MODULES = [
           { label: 'First-year withdrawals', value: money(w * 12), sub: s.p_bal > 0 ? `${money(w)} a month, ${pct(w * 12 / s.p_bal * 100)} of the starting balance` : 'enter a starting balance' },
           { label: adjust ? 'Monthly withdrawal in year 20' : 'Monthly withdrawal (level)', value: money(wdYear20), sub: adjust ? `inflated at ${pct(s.p_infl)} a year` : 'no inflation adjustment' },
           { label: 'Total withdrawn', value: money(res.total), sub: lasts ? `over ${yrs(yearsLast)}` : `over ${maxY} years` },
-          { label: `Sustainable for ${T} years`, value: money(sustain30) + '/mo', accent: true, sub: `${pct(sustain30 * 12 / Math.max(1, s.p_bal) * 100)} initial rate, ends near zero at year ${T}` }
+          { label: `Withdrawal that lasts ${T} years`, value: money(sustain30) + '/mo', accent: true, sub: `${pct(sustain30 * 12 / Math.max(1, s.p_bal) * 100)} initial rate, ends near zero at year ${T}` }
         ],
-        callout: lasts && yearsLast < T ? `At this withdrawal the balance runs out in <b>${yrs(yearsLast)}</b>. To last ${T} years under the same assumptions, the first-year withdrawal would be about <b>${money(sustain30)}</b> a month.` : `Under these assumptions the balance supports <b>${money(sustain30)}</b> a month for ${T} years. Lower returns or higher inflation than assumed would shorten that.`,
-        teach: '<b>Sequence matters in real life.</b> This illustration assumes the same return every year. A run of poor returns early in retirement, combined with withdrawals, can shorten how long a balance lasts even if the average return turns out as assumed.',
+        callout: lasts && yearsLast < T ? `At this withdrawal the balance runs out in <b>${yrs(yearsLast)}</b>. Under the same assumptions, a first-year withdrawal of <b>${money(sustain30)}</b> a month lasts ${T} years.` : `Under these assumptions a first-year withdrawal of <b>${money(sustain30)}</b> a month lasts ${T} years. Lower returns or higher inflation than assumed would shorten that.`,
         chart: { kind: 'line', x: res.rows.map(r => r.t), series: [{ name: 'Remaining balance', color: 'var(--c1)', values: res.rows.map(r => r.bal), area: true }], endLabels: !lasts, marker: lasts ? { x: yearsLast, y: 0, label: 'Depleted, year ' + (Math.round(yearsLast * 10) / 10) } : null, aria: 'Area chart of remaining retirement balance by year' },
         copy: [`Starting balance ${money(s.p_bal)}; ${money(w)}/month${adjust ? ' rising ' + pct(s.p_infl) + '/yr' : ' level'}; ${pct(s.p_rate)} assumed return, compounded monthly.`, lasts ? `Balance lasts ${yrs(yearsLast)}; total withdrawn ${money(res.total)}.` : `Balance lasts ${maxY}+ years; remaining at year ${maxY} ${money(res.endBal)}.`, `Sustainable ${T}-year withdrawal under these assumptions: ${money(sustain30)}/month.`]
       };
     }
   },
   {
-    output: 'Coverage period; spending capacity', desc: 'Combines living expenses, Social Security, pension and other retirement income, and an investment balance. Shows whether the portfolio covers the gap, for how long, and how much extra spending it could support.', id: 'cashflow', group: 'live', tab: 'Income & expenses', title: 'Retirement income and expenses', question: 'With your income, Social Security, and expenses, how far do your investments go?',
-    lede: 'Projects a portfolio that covers the gap between annual expenses and income from Social Security, pensions, and other sources, and shows how long it lasts and the spending it could support.',
+    output: 'Coverage period', desc: 'Combines living expenses, Social Security, pension and other retirement income, and an investment balance. Shows whether the portfolio covers the gap between expenses and income, for how long, and any expenses left unfunded.', id: 'cashflow', group: 'live', tab: 'Income & expenses', title: 'Retirement income and expenses', question: 'With your income, Social Security, and expenses, how far do your investments go?',
+    lede: 'Projects a portfolio that covers the gap between annual expenses and income from Social Security, pensions, and other sources, and shows how long it lasts and any expenses left unfunded.',
     fields: [
       moneyField('f_bal', 'Investment balance', 0, 10000000, 10000, DEFAULTS.cfBalance),
       moneyField('f_exp', 'Annual living expenses (today)', 0, 500000, 1000, DEFAULTS.cfExpenses, 'Everything you spend in a year, in today’s dollars.'),
@@ -1145,25 +1149,22 @@ const MODULES = [
       const gap1 = s.f_exp - (s.f_incStart === 0 ? s.f_inc : 0) - (ssStart === 0 ? s.f_ss : 0); const wdRate1 = s.f_bal > 0 ? Math.max(0, gap1) / s.f_bal * 100 : 0;
       const ssNote = s.f_ss > 0 ? (ssStart === 0 ? `Social Security of ${money(s.f_ss)} a year is already counted.` : `Social Security of ${money(s.f_ss)} a year (today’s dollars) begins in year ${ssStart}, at age ${s.f_ssage}.`) : 'No Social Security is entered.';
       const totalSs = rows.reduce((a, r) => a + r.ssUsed, 0);
-      const cap = spendingCapacity(p); const depleted = res.depletedAt !== null;
+      const depleted = res.depletedAt !== null;
       const totalWd = rows.reduce((a, r) => a + r.wd, 0), totalShort = rows.reduce((a, r) => a + r.short, 0);
       const firstShort = rows.find(r => r.short > 0.5);
       return {
         hero: depleted
           ? { label: 'How long your investments cover the gap', value: yrs(res.depletedAt), sub: `Expenses outrun Social Security and pension & other income by ${money(Math.max(0, gap1))} in year one and the gap grows with inflation. The portfolio covers it until year ${Math.ceil(res.depletedAt)}; after that, ${money(totalShort)} of expenses would go unfunded over the rest of the ${s.f_years} years. ${ssNote}` }
-          : { label: `Covered for all ${s.f_years} years, with` , value: money(last.bal) + ' left', sub: `Worth ${money(last.real)} in today’s dollars at year ${s.f_years}. ${gap1 > 0 ? `The portfolio funds ${money(gap1)} of expenses in year one, and the gap grows with inflation.` : 'Social Security and pension & other income more than cover expenses, so the portfolio keeps growing.'} ${ssNote}` },
+          : { label: 'How long your investments cover the gap', value: s.f_years + '+ years', sub: `Covered for all ${s.f_years} years, with ${money(last.bal)} left (${money(last.real)} in today’s dollars) at year ${s.f_years}. ${gap1 > 0 ? `The portfolio funds ${money(gap1)} of expenses in year one, and the gap grows with inflation.` : 'Social Security and pension & other income more than cover expenses, so the portfolio keeps growing.'} ${ssNote}` },
         tiles: [
           { label: 'Year-1 gap the portfolio must fill', value: money(Math.max(0, gap1)), sub: gap1 > 0 ? `${pct(wdRate1)} of the balance, after ${money((ssStart === 0 ? s.f_ss : 0) + (s.f_incStart === 0 ? s.f_inc : 0))} of income` : `income exceeds expenses by ${money(-gap1)}` },
           { label: `Balance at year ${s.f_years}`, value: depleted ? '$0' : money(last.bal), sub: depleted ? `runs out in year ${Math.ceil(res.depletedAt)}` : `${money(last.real)} in today’s dollars` },
           { label: 'Total drawn from the portfolio', value: money(totalWd), sub: `over ${depleted ? yrs(res.depletedAt) : plural(s.f_years, 'year')}; Social Security pays ${money(totalSs)} of expenses` },
-          cap >= 0
-            ? { label: 'What else it could do', value: money(cap) + '/yr', accent: true, sub: `extra spending, in today’s dollars, and still last ${s.f_years} years` }
-            : { label: 'Spending change to last the full period', value: money(cap) + '/yr', accent: true, sub: `cut needed, in today’s dollars, to reach year ${s.f_years}` }
+          { label: 'Expenses left unfunded', value: money(totalShort), sub: depleted ? `from year ${Math.ceil(res.depletedAt)} through year ${s.f_years}` : `every year through year ${s.f_years} is covered` }
         ],
-        callout: cap >= 0
-          ? `Under these assumptions the portfolio could support about <b>${money(cap)}</b> more a year in today’s dollars, whether that is travel, gifts to family, or a larger cushion, and still last ${s.f_years} years. Leaving it uninvested is a choice too: it becomes the <b>${money(last.real)}</b> left at the end, in today’s dollars.`
-          : `At this spending the portfolio runs out in <b>${yrs(res.depletedAt)}</b>. Closing the gap takes about <b>${money(-cap)}</b> a year less spending in today’s dollars, more pension or other income, or a different balance between the two.`,
-        teach: '<b>The gap is what matters, not the balance alone.</b> Expenses rise with inflation every year; Social Security rises with it too, but a pension often does not. The portfolio has to cover a gap that can widen over time, which is why a plan that works in year one can fall short in year twenty. Social Security is usually the largest inflation-protected income a retiree has, so the benefit amount and the claiming age move these results more than almost any other input.',
+        callout: depleted
+          ? `At this spending the portfolio covers the gap for <b>${yrs(res.depletedAt)}</b> of the ${plural(s.f_years, 'year')} shown, and <b>${money(totalShort)}</b> of expenses are left unfunded after that.`
+          : `Under these assumptions the portfolio covers the gap for all ${plural(s.f_years, 'year')} and ends with <b>${money(last.real)}</b> in today’s dollars.`,
         chart: { kind: 'stack', x: rows.slice(1).map(r => r.t), totalLabel: 'Expenses', series: [
           { name: 'Portfolio withdrawals', color: 'var(--c1)', values: rows.slice(1).map(r => r.wd) },
           { name: 'Social Security', color: 'var(--c3)', values: rows.slice(1).map(r => r.ssUsed) },
@@ -1174,7 +1175,7 @@ const MODULES = [
           { name: 'In today’s dollars', color: 'var(--c1)', values: rows.map(r => r.real), area: true },
           { name: 'Nominal balance', color: 'var(--c2)', values: rows.map(r => r.bal) }
         ], endLabels: !depleted, marker: depleted ? { x: Math.min(s.f_years, Math.round(res.depletedAt * 10) / 10), y: 0, label: 'Depleted, year ' + (Math.round(res.depletedAt * 10) / 10) } : null, aria: 'Line chart of investment balance, nominal and inflation-adjusted' },
-        copy: [`Balance ${money(s.f_bal)}; expenses ${money(s.f_exp)}/yr; Social Security ${money(s.f_ss)}/yr (today’s dollars) from age ${s.f_ssage} (current age ${s.f_age}), inflation-adjusted; pension & other income ${money(s.f_inc)}/yr starting in year ${s.f_incStart}${s.f_incAdj ? ' (inflation-adjusted)' : ' (level)'}; ${pct(s.f_rate)} return compounded monthly; ${pct(s.f_infl)} inflation; ${s.f_years} years.`, depleted ? `Portfolio covers the gap for ${yrs(res.depletedAt)}; spending change needed to last ${s.f_years} years: ${money(cap)}/yr in today’s dollars.` : `Balance at year ${s.f_years}: ${money(last.bal)} (${money(last.real)} today’s dollars); extra spending capacity about ${money(cap)}/yr in today’s dollars.`]
+        copy: [`Balance ${money(s.f_bal)}; expenses ${money(s.f_exp)}/yr; Social Security ${money(s.f_ss)}/yr (today’s dollars) from age ${s.f_ssage} (current age ${s.f_age}), inflation-adjusted; pension & other income ${money(s.f_inc)}/yr starting in year ${s.f_incStart}${s.f_incAdj ? ' (inflation-adjusted)' : ' (level)'}; ${pct(s.f_rate)} return compounded monthly; ${pct(s.f_infl)} inflation; ${s.f_years} years.`, depleted ? `Portfolio covers the gap for ${yrs(res.depletedAt)}; ${money(totalShort)} of expenses unfunded through year ${s.f_years}.` : `Balance at year ${s.f_years}: ${money(last.bal)} (${money(last.real)} today’s dollars).`]
       };
     }
   },
@@ -1208,11 +1209,10 @@ const MODULES = [
         tiles: [
           { label: 'Total interest, scheduled', value: money(base.totI), sub: `${pct(base.totI / (base.totP + base.totI) * 100, 0)} of every dollar paid` },
           { label: 'Interest share in year 1', value: pct(share1, 0), sub: cross ? `Principal overtakes interest in year ${cross.t}` : 'Interest exceeds principal for the whole term' },
-          { label: hasExtra ? `Payoff with ${money(s.l_extra)}/mo extra` : 'Payoff as scheduled', value: fmtMo(act.months), sub: hasExtra ? `${fmtMo(base.months - act.months)} sooner` : 'Add an extra payment to see the change', accent: hasExtra },
-          { label: hasExtra ? 'Interest saved by the extra payment' : 'Interest saved', value: hasExtra ? money(saved) : '—', sub: hasExtra ? `total interest falls to ${money(act.totI)}` : 'no extra payment entered', accent: hasExtra }
+          { label: hasExtra ? `Payoff with ${money(s.l_extra)}/mo extra` : 'Payoff as scheduled', value: fmtMo(act.months), sub: hasExtra ? `${fmtMo(base.months - act.months)} sooner` : 'no extra payment entered', accent: hasExtra },
+          { label: hasExtra ? 'Interest saved by the extra payment' : 'Interest saved', value: money(hasExtra ? saved : 0), sub: hasExtra ? `total interest falls to ${money(act.totI)}` : 'no extra payment entered', accent: hasExtra }
         ],
         callout: hasExtra ? `An extra <b>${money(s.l_extra)}</b> a month pays the loan off <b>${fmtMo(base.months - act.months)}</b> sooner and avoids <b>${money(saved)}</b> of interest. Every extra dollar goes straight to principal, so it also removes all the future interest that dollar would have carried.` : `In year 1, <b>${pct(share1, 0)}</b> of your payments go to interest. ${cross ? `Not until year <b>${cross.t}</b> does more of each payment go to principal than to interest.` : 'Interest stays the larger share for the entire term.'}`,
-        teach: '<b>Why the split shifts:</b> each payment is the same, but interest is charged only on what you still owe. As the balance falls, the interest portion shrinks and the rest of the payment goes to principal. Extra payments speed this up because they shrink the balance that future interest is charged on.',
         extraTitle: 'Amortization schedule', extraSub: (s.l_view === 'y' ? 'by year' : 'by month') + (hasExtra ? ', including the extra payment' : ''), extraPanel: true,
         extra: `<div class="sched">${sched}</div>`,
         chart: { kind: 'stack', x: yrsX, totalLabel: 'Payments', series: [
@@ -1328,28 +1328,26 @@ const MODULES = [
       const pv = Math.abs(r - g) < 1e-9 ? n * I / (1 + r) : I / (1 + r) * (1 - Math.pow((1 + g) / (1 + r), n)) / (1 - (1 + g) / (1 + r));
       const debts = s.n_mortgage + s.n_debts; const immediate = debts + s.n_edu + s.n_final; const total = pv + immediate; const have = s.n_cover + s.n_assets; const gap = total - have;
       return {
-        hero: gap > 0
-          ? { label: 'Additional coverage indicated', value: money(gap), sub: `Total need of ${money(total)} less ${money(have)} already in place (existing coverage and assets).` }
-          : { label: 'Coverage in place exceeds the estimated need by', value: money(-gap), sub: `Total need of ${money(total)} against ${money(have)} in existing coverage and assets.` },
+        hero: { label: 'Estimated need less what is in place', value: money(gap), sub: gap > 0 ? `Total need of ${money(total)} less ${money(have)} already in place (existing coverage and assets).` : `Existing coverage and assets of ${money(have)} exceed the total need of ${money(total)}.` },
         tiles: [
           { label: 'Income replacement, as a lump sum', value: money(pv), sub: `${money(I)} a year (${money(s.n_income)} less ${money(s.n_ss)} survivor benefits) for ${n} years, rising ${pct(s.n_infl)}, invested at ${pct(s.n_rate)}` },
           { label: 'Mortgage, debts, education, final expenses', value: money(immediate), sub: `${money(s.n_mortgage)} + ${money(s.n_debts)} + ${money(s.n_edu)} + ${money(s.n_final)}` },
           { label: 'Total need', value: money(total), sub: 'before existing coverage and assets' },
           { label: 'Already in place', value: money(have), accent: true, sub: `${money(s.n_cover)} coverage + ${money(s.n_assets)} assets` }
         ],
-        callout: `Income replacement is <b>${pct(total > 0 ? pv / total * 100 : 0, 0)}</b> of the total need${s.n_ss > 0 ? `, after <b>${money(s.n_ss)}</b> a year in survivor benefits` : ''}; paying off the mortgage is <b>${pct(total > 0 ? s.n_mortgage / total * 100 : 0, 0)}</b>. ${gap > 0 ? `The indicated gap is about <b>${(gap / Math.max(1, s.n_income)).toFixed(1)}×</b> household income.` : 'Existing coverage and assets cover the estimated need under these assumptions.'} Needs change with each life event, so this estimate should be revisited regularly. Any insurance decision involves product features, costs, and underwriting that this estimate does not address.`,
+        callout: `Income replacement is <b>${pct(total > 0 ? pv / total * 100 : 0, 0)}</b> of the total need${s.n_ss > 0 ? `, after <b>${money(s.n_ss)}</b> a year in survivor benefits` : ''}; paying off the mortgage is <b>${pct(total > 0 ? s.n_mortgage / total * 100 : 0, 0)}</b>. ${gap > 0 ? `The estimated gap is about <b>${(gap / Math.max(1, s.n_income)).toFixed(1)}×</b> household income.` : 'Existing coverage and assets cover the estimated need under these assumptions.'} Any insurance decision involves product features, costs, and underwriting that this estimate does not address.`,
         chart: { kind: 'bars', x: [0, 1, 2, 3, 4, 5], xLabels: ['Income', 'Mortgage', 'Debts', 'Education', 'Final', 'In place'], xName: 'Component', colors: ['var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c2)'], series: [{ name: 'Amount', color: 'var(--c1)', values: [pv, s.n_mortgage, s.n_debts, s.n_edu, s.n_final, have] }], aria: 'Column chart of the components of the life insurance need and the amount already in place' },
         copy: [`Replace ${money(I)}/yr (${money(s.n_income)} income less ${money(s.n_ss)} survivor benefits) for ${n} years (${pct(s.n_infl)} inflation, ${pct(s.n_rate)} return compounded annually); mortgage ${money(s.n_mortgage)}; other debts ${money(s.n_debts)}; education ${money(s.n_edu)}; final expenses ${money(s.n_final)}; existing coverage ${money(s.n_cover)}; assets ${money(s.n_assets)}.`, `Total need ${money(total)}; already in place ${money(have)}; ${gap > 0 ? 'additional coverage indicated ' + money(gap) : 'coverage exceeds need by ' + money(-gap)}.`]
       };
     }
   },
   {
-    output: 'Amount needed at retirement; on-track check', desc: 'Starts from retirement spending, subtracts Social Security and pension & other income, and finds the balance needed at retirement to fund the gap through a chosen age. Compares it with where current savings and contributions are headed.', id: 'retire', group: 'live', tab: 'How much to retire', title: 'Savings needed at retirement', question: 'What balance funds retirement spending after Social Security, and are you on track?',
+    output: 'Amount needed at retirement compared with projected savings', desc: 'Starts from retirement spending, subtracts Social Security and pension & other income, and finds the balance needed at retirement to fund the gap through a chosen age. Compares it with where current savings and contributions are headed.', id: 'retire', group: 'live', tab: 'How much to retire', title: 'Savings needed at retirement', question: 'What balance funds retirement spending after Social Security, and how does it compare with projected savings?',
     lede: 'Estimates the balance needed at retirement to cover spending, less Social Security and pension & other income, through the planning age, and compares it with projected savings.',
     fields: [
       intField('r2_age', 'Current age', 18, 80, 1, DEFAULTS.age),
       intField('r2_retage', 'Retirement age', 50, 80, 1, DEFAULTS.retireAge),
-      intField('r2_endage', 'Plan through age', 70, 105, 1, DEFAULTS.endAge, 'The age the money should last to.'),
+      intField('r2_endage', 'Plan through age', 70, 105, 1, DEFAULTS.endAge, 'The last age included in the plan.'),
       moneyField('r2_now', 'Retirement savings today', 0, 10000000, 10000, DEFAULTS.savingsNow),
       moneyField('r2_pmt', 'Monthly contribution', 0, 20000, 50, DEFAULTS.monthly, 'Until retirement age.'),
       pctField('r2_ret', 'Return before retirement', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.'),
@@ -1370,7 +1368,7 @@ const MODULES = [
       const need = neededBalance(draw); const needNoSs = neededBalance(Object.assign({}, draw, { ss: 0 }));
       const acc = simulate({ P: s.r2_now, pmt: s.r2_pmt, r: s.r2_ret / 100, years: N }); const projected = acc[acc.length - 1].bal;
       const gap = need - projected; const onTrack = gap <= 0;
-      const extraPmt = N > 0 ? Math.max(0, requiredPmt(need, s.r2_now, s.r2_ret / 100, N) - s.r2_pmt) : null;
+      const covered = need > 0 ? projected / need * 100 : 100;
       const exp1 = s.r2_exp * Math.pow(1 + infl, N), ss1 = ssStart === 0 ? s.r2_ss * Math.pow(1 + infl, N) : 0, inc1 = s.r2_inc * (s.r2_incAdj ? Math.pow(1 + infl, N) : 1);
       const port1 = Math.max(0, exp1 - ss1 - inc1); const ssShare = exp1 > 0 ? Math.min(ss1, exp1) / exp1 * 100 : 0;
       const dd = simulateCashflow(Object.assign({ B: projected }, draw)); const depleted = dd.depletedAt !== null;
@@ -1380,15 +1378,14 @@ const MODULES = [
         hero: { label: `Needed at age ${s.r2_retage} to fund ${plural(R, 'year')} of spending`, value: money(need), sub: `Spending of ${money(exp1)} a year at ${s.r2_retage} (${money(s.r2_exp)} today, rising ${pct(s.r2_infl)}), less Social Security and pension & other income, through age ${s.r2_endage} at an assumed ${pct(s.r2_retret)} return.` },
         tiles: [
           { label: `Projected savings at ${s.r2_retage}`, value: money(projected), sub: N > 0 ? `${money(s.r2_now)} today plus ${money(s.r2_pmt)} a month for ${plural(N, 'year')} at ${pct(s.r2_ret)}` : 'retirement age is now' },
-          onTrack ? { label: 'Projected surplus at retirement', value: money(-gap), accent: true, sub: 'projected savings exceed the amount needed' } : { label: 'Projected shortfall at retirement', value: money(gap), sub: `${pct(need > 0 ? projected / need * 100 : 100, 0)} of the need is covered` },
-          { label: onTrack ? 'Additional saving needed' : 'Extra monthly saving to close the gap', value: onTrack ? 'None' : extraPmt === null ? '—' : money(extraPmt) + '/mo', accent: !onTrack && extraPmt !== null, sub: onTrack ? 'under these assumptions' : extraPmt === null ? 'no years left to save' : `on top of ${money(s.r2_pmt)} a month, for ${plural(N, 'year')}` },
+          { label: 'Projected savings less the need', value: money(-gap), sub: onTrack ? 'projected savings exceed the amount needed' : 'projected savings fall short of the amount needed' },
+          { label: 'Share of the need covered', value: pct(covered, 0), sub: `${money(projected)} of ${money(need)}` },
           { label: 'Social Security’s share of year-one spending', value: pct(ssShare, 0), sub: ssStart === 0 ? `${money(ss1)} a year from age ${s.r2_ssage}` : `benefit begins at ${s.r2_ssage}, ${plural(ssStart, 'year')} after retirement` }
         ],
-        callout: `Without Social Security the balance needed would be <b>${money(needNoSs)}</b>, about <b>${money(needNoSs - need)}</b> more. ${onTrack ? `Current savings and contributions are projected to reach <b>${money(projected)}</b>, which is <b>${money(-gap)}</b> above the need.` : depleted ? `On the current path the portfolio would run out around age <b>${Math.round(depAge)}</b>, ${plural(Math.round(s.r2_endage - depAge), 'year')} short of the plan.` : `On the current path the portfolio lasts to age ${s.r2_endage} but leaves less cushion than planned.`} ${!onTrack && extraPmt !== null ? `Saving an extra <b>${money(extraPmt)}</b> a month until ${s.r2_retage} closes the gap under these assumptions.` : ''}`,
-        teach: '<b>Social Security is the hinge.</b> It is inflation-protected income for life, so every dollar of benefit is a dollar the portfolio never has to produce, every year, for as long as retirement lasts. This calculator uses the benefit you enter at the age you enter; it does not adjust the benefit for claiming early or late. Claiming before full retirement age permanently reduces the monthly benefit, and each year of delay up to 70 increases it. Check your estimate at ssa.gov and ask your advisor how claiming age fits the rest of the plan.',
+        callout: `Without Social Security the balance needed would be <b>${money(needNoSs)}</b>, about <b>${money(needNoSs - need)}</b> more. ${onTrack ? `Current savings and contributions are projected to reach <b>${money(projected)}</b>, which is <b>${money(-gap)}</b> above the need.` : depleted ? `On the current path the portfolio would run out around age <b>${Math.round(depAge)}</b>, ${plural(Math.round(s.r2_endage - depAge), 'year')} short of the plan.` : `On the current path the portfolio lasts to age ${s.r2_endage} but leaves less cushion than planned.`}`,
         chart: { kind: 'line', x, series: [{ name: 'Projected balance', color: 'var(--c1)', values: vals, area: true }], goal: { value: need, label: 'Needed at ' + s.r2_retage + ': ' + compact(need) }, endLabels: !depleted, marker: depleted ? { x: N + dd.depletedAt, y: 0, label: 'Runs out, age ' + Math.round(depAge) } : null, aria: 'Area chart of the projected balance from today through retirement, with the needed amount as a dashed line' },
         chart2: { kind: 'bars', x: [0, 1, 2], xLabels: ['Social Security', 'Pension & other', 'Portfolio'], xName: 'Source', colors: ['var(--c3)', 'var(--c2)', 'var(--c1)'], series: [{ name: `Year-one spending (${money(exp1)})`, color: 'var(--c1)', values: [Math.min(ss1, exp1), Math.min(inc1, Math.max(0, exp1 - ss1)), port1] }], aria: 'Column chart of year-one retirement spending by source' },
-        copy: [`Age ${s.r2_age}, retire at ${s.r2_retage}, plan to ${s.r2_endage}; savings ${money(s.r2_now)} + ${money(s.r2_pmt)}/mo at ${pct(s.r2_ret)} before retirement, ${pct(s.r2_retret)} after; spending ${money(s.r2_exp)}/yr today’s dollars; Social Security ${money(s.r2_ss)}/yr from ${s.r2_ssage}; pension & other income ${money(s.r2_inc)}/yr${s.r2_incAdj ? ' inflation-adjusted' : ' level'}; ${pct(s.r2_infl)} inflation.`, `Needed at ${s.r2_retage}: ${money(need)} (${money(needNoSs)} without Social Security); projected ${money(projected)}; ${onTrack ? 'surplus ' + money(-gap) : 'shortfall ' + money(gap) + (extraPmt !== null ? ', extra saving needed ' + money(extraPmt) + '/mo' : '')}.`]
+        copy: [`Age ${s.r2_age}, retire at ${s.r2_retage}, plan to ${s.r2_endage}; savings ${money(s.r2_now)} + ${money(s.r2_pmt)}/mo at ${pct(s.r2_ret)} before retirement, ${pct(s.r2_retret)} after; spending ${money(s.r2_exp)}/yr today’s dollars; Social Security ${money(s.r2_ss)}/yr from ${s.r2_ssage}; pension & other income ${money(s.r2_inc)}/yr${s.r2_incAdj ? ' inflation-adjusted' : ' level'}; ${pct(s.r2_infl)} inflation.`, `Needed at ${s.r2_retage}: ${money(need)} (${money(needNoSs)} without Social Security); projected ${money(projected)}; ${onTrack ? 'surplus ' + money(-gap) : 'shortfall ' + money(gap)}; ${pct(covered, 0)} of the need covered.`]
       };
     }
   },
@@ -1426,8 +1423,7 @@ const MODULES = [
           { label: `RMD plus Social Security at ${fa}`, value: money(first.rmd + ssAt), accent: true, sub: `${money(ssAt)} Social Security (${money(s.d_ss)} today, inflation-adjusted); about ${money(deflate(first.rmd + ssAt))} in today’s dollars` },
           { label: 'RMD at age 85', value: at85 ? money(at85.rmd) : '—', sub: at85 ? `${pct(100 / at85.div, 2)} of a ${money(at85.before)} balance` : '' }
         ],
-        callout: `Required distributions start at <b>${pct(100 / first.div, 2)}</b> of the account and rise every year: by 85 the required share is <b>${at85 ? pct(100 / at85.div, 2) : '—'}</b>, by 90 about <b>${pct(100 / RMD_TABLE[90], 2)}</b>. Over ages ${fa}–95 the schedule withdraws <b>${money(totalRmd)}</b>, all taxable as ordinary income. Together with Social Security, the RMD can push a retiree into a higher bracket, affect Medicare premiums, and make more of the Social Security benefit taxable; those are the reasons advisors look at Roth conversions and withdrawal timing before the required age.`,
-        teach: `<b>The rules in brief.</b> The required age is 73 for people born 1951–1959 and 75 for those born in 1960 or later (born ${birth} here). The first RMD may be delayed to April 1 of the following year, but that doubles up two distributions in one tax year. Missing an RMD carries a 25% excise tax, reduced to 10% if corrected promptly. Roth IRAs and, since 2024, Roth 401(k)s have no lifetime RMDs. Inherited accounts follow different rules. This estimate uses the Uniform Lifetime Table, which assumes a spouse not more than ten years younger.`,
+        callout: `Required distributions start at <b>${pct(100 / first.div, 2)}</b> of the account and rise every year: by 85 the required share is <b>${at85 ? pct(100 / at85.div, 2) : '—'}</b>, by 90 about <b>${pct(100 / RMD_TABLE[90], 2)}</b>. Over ages ${fa}–95 the schedule withdraws <b>${money(totalRmd)}</b>, all taxable as ordinary income. Together with Social Security, the RMD can push a retiree into a higher bracket, affect Medicare premiums, and make more of the Social Security benefit taxable.`,
         extraTitle: 'RMD schedule', extraSub: `ages ${fa}–95, Uniform Lifetime Table`, extra: `<div class="sched">${sched}</div>`,
         chart: { kind: 'line', x: rmdRows.map(r => r.age), xUnit: 'Age', series: [{ name: 'Required distribution', color: 'var(--c1)', values: rmdRows.map(r => r.rmd), area: true }], endLabels: false, aria: 'Area chart of the required minimum distribution by age' },
         chart2: { kind: 'line', x: rows.map(r => r.age), xUnit: 'Age', series: [{ name: 'Pre-tax balance', color: 'var(--c2)', values: rows.map(r => r.bal), area: true }], endLabels: false, marker: { x: startAge, y: first.before, label: 'RMDs begin at ' + startAge }, aria: 'Area chart of the pre-tax balance by age' },
@@ -1461,16 +1457,14 @@ const MODULES = [
       const tie = same ? null : s.h_now;
       const who = Math.abs(diff) < 1 ? 'tie' : diff > 0 ? 'roth' : 'trad';
       return {
-        hero: who === 'tie' ? { label: 'The two accounts tie', value: money(rEnd), sub: 'With the same tax rate now and in retirement, paying tax before or after growth leaves the same amount.' }
-          : { label: who === 'roth' ? 'Roth ahead, after tax, by' : 'Traditional ahead, after tax, by', value: money(Math.abs(diff)), sub: `After ${plural(s.h_years, 'year')} at ${pct(s.h_rate)}: Roth ${money(rEnd)} tax-free versus traditional ${money(tEnd)} after ${pct(s.h_wd, 0)} tax on withdrawal.${same ? ` Contributing the same ${money(C)} to the Roth costs ${money(rothCostNow)} more take-home pay each year.` : ''}` },
+        hero: { label: 'Roth less traditional, after tax', value: money(who === 'tie' ? 0 : diff), sub: who === 'tie' ? 'With the same tax rate now and in retirement, paying tax before or after growth leaves the same amount.' : `${who === 'roth' ? 'The Roth ends ahead' : 'Traditional ends ahead'}. After ${plural(s.h_years, 'year')} at ${pct(s.h_rate)}: Roth ${money(rEnd)} tax-free versus traditional ${money(tEnd)} after ${pct(s.h_wd, 0)} tax on withdrawal.${same ? ` Contributing the same ${money(C)} to the Roth costs ${money(rothCostNow)} more take-home pay each year.` : ''}` },
         tiles: [
           { label: 'Traditional, after tax at withdrawal', value: money(tEnd), sub: `${money(trad[trad.length - 1].bal)} before ${money(taxLater)} of tax` },
           { label: 'Roth, tax-free', value: money(rEnd), accent: who === 'roth', sub: same ? `${money(C)} a year after tax` : `${money(rothC)} a year, the after-tax cost of ${money(C)} pre-tax` },
           { label: 'Extra tax paid now (Roth)', value: money(C * tn * s.h_years), sub: `over ${plural(s.h_years, 'year')} at ${pct(s.h_now, 0)}` },
-          same ? { label: 'Extra take-home cost of the Roth', value: money(rothCostNow) + '/yr', sub: 'to contribute the same amount' } : { label: 'Retirement tax rate where they tie', value: pct(tie, 0), sub: s.h_wd > s.h_now ? 'a higher rate later favors the Roth' : s.h_wd < s.h_now ? 'a lower rate later favors traditional' : 'equal rates, equal result' }
+          { label: 'Extra take-home cost of the Roth', value: money(rothCostNow) + '/yr', sub: same ? 'to contribute the same amount' : `same take-home pay on both; they tie when the retirement rate equals today’s ${pct(tie, 0)}` }
         ],
-        callout: same ? `On the same contribution the Roth wins by <b>${money(Math.abs(diff))}</b>, but only because more is going in: ${money(C)} after tax is worth ${money(C / (1 - tn))} pre-tax. Compare on the same take-home pay to isolate the tax effect.` : `With the same take-home pay, the comparison reduces to one question: is your tax rate in retirement (<b>${pct(s.h_wd, 0)}</b>) higher or lower than today (<b>${pct(s.h_now, 0)}</b>)? ${who === 'tie' ? 'Here they are equal, so the accounts tie.' : who === 'roth' ? 'Here it is higher, so paying tax now at the lower rate leaves more.' : 'Here it is lower, so deferring the tax to the lower rate leaves more.'} Many people split contributions to hedge, since future rates and brackets are unknown.`,
-        teach: '<b>Beyond the arithmetic.</b> Traditional contributions reduce taxable income this year; Roth withdrawals are tax-free when qualified, and Roth accounts have no lifetime RMDs, which can keep later Social Security and Medicare costs lower. Employer matching contributions are usually pre-tax regardless of your choice. Contribution limits apply to the two accounts combined, and some plans do not offer a Roth option.',
+        callout: same ? `On the same contribution the Roth ends <b>${money(Math.abs(diff))}</b> ${diff >= 0 ? 'ahead' : 'behind'}, in part because more is going in: ${money(C)} after tax is worth ${money(C / (1 - tn))} pre-tax. The same-take-home basis isolates the tax effect.` : `With the same take-home pay, the comparison reduces to one question: is your tax rate in retirement (<b>${pct(s.h_wd, 0)}</b>) higher or lower than today (<b>${pct(s.h_now, 0)}</b>)? ${who === 'tie' ? 'Here they are equal, so the accounts tie.' : who === 'roth' ? 'Here it is higher, so paying tax now at the lower rate leaves more.' : 'Here it is lower, so deferring the tax to the lower rate leaves more.'}`,
         chart: { kind: 'line', x: trad.map(x => x.t), series: [{ name: 'Roth (tax-free)', color: 'var(--c1)', values: rothAfter }, { name: 'Traditional (after tax)', color: 'var(--c2)', values: tradAfter }], aria: 'Line chart of the after-tax value of a Roth and a traditional account by year' },
         copy: [`${money(C)}/yr pre-tax for ${plural(s.h_years, 'year')} at ${pct(s.h_rate)} compounded annually; tax ${pct(s.h_now, 0)} now, ${pct(s.h_wd, 0)} at withdrawal; compared on ${same ? 'the same contribution' : 'the same take-home pay'}.`, `Traditional after tax ${money(tEnd)}; Roth ${money(rEnd)}; ${who === 'tie' ? 'tie' : (who === 'roth' ? 'Roth' : 'Traditional') + ' ahead by ' + money(Math.abs(diff))}.`]
       };
@@ -1498,16 +1492,14 @@ const MODULES = [
       const balOf = (res, t) => t === 0 ? s.x_amount : ((res.yearly.find(y => y.t === t) || { bal: 0 }).bal);
       const fmtMo = mo => yrs(mo / 12);
       return {
-        hero: saved >= 0 ? { label: 'Interest saved with Option B', value: money(saved), sub: `Option B costs ${money(B.totI)} in interest against ${money(A.totI)} for Option A, and is paid off in ${fmtMo(B.months)} instead of ${fmtMo(A.months)}.` }
-          : { label: 'Extra interest with Option B', value: money(-saved), sub: `Option B costs ${money(B.totI)} in interest against ${money(A.totI)} for Option A.` },
+        hero: { label: 'Interest saved with Option B', value: money(saved), sub: `Option B costs ${money(B.totI)} in interest against ${money(A.totI)} for Option A, and is paid off in ${fmtMo(B.months)} instead of ${fmtMo(A.months)}.` },
         tiles: [
           { label: 'Option A payment', value: money(A.pay) + '/mo', sub: `${plural(s.x_yearsA, 'year')} at ${pct(s.x_rateA, 2)}` },
-          { label: 'Option B payment', value: bi ? money(base.pay / 2) + ' bi-weekly' : money(base.pay) + '/mo', accent: true, sub: bi ? `${money(monthlyB)} a month equivalent; ${plural(s.x_yearsB, 'year')} at ${pct(s.x_rateB, 2)}` : `${plural(s.x_yearsB, 'year')} at ${pct(s.x_rateB, 2)}` },
-          { label: more >= 0 ? 'Extra each month for Option B' : 'Monthly saving with Option B', value: money(Math.abs(more)), sub: more >= 0 ? `${pct(A.pay > 0 ? more / A.pay * 100 : 0, 0)} more than Option A` : `${pct(A.pay > 0 ? -more / A.pay * 100 : 0, 0)} less than Option A` },
+          { label: 'Option B payment', value: money(monthlyB) + '/mo', accent: true, sub: bi ? `paid as ${money(base.pay / 2)} every two weeks; ${plural(s.x_yearsB, 'year')} at ${pct(s.x_rateB, 2)}` : `${plural(s.x_yearsB, 'year')} at ${pct(s.x_rateB, 2)}` },
+          { label: 'Option B monthly payment less Option A', value: money(more), sub: more >= 0 ? `${pct(A.pay > 0 ? more / A.pay * 100 : 0, 0)} more than Option A` : `${pct(A.pay > 0 ? -more / A.pay * 100 : 0, 0)} less than Option A` },
           { label: 'Option B paid off in', value: fmtMo(B.months), sub: `${fmtMo(Math.abs(A.months - B.months))} ${A.months >= B.months ? 'sooner' : 'later'} than Option A${bi ? '; bi-weekly payments cut ' + fmtMo(base.months - B.months) + ' off the term' : ''}` }
         ],
-        callout: `Every dollar of the higher payment goes to principal sooner, so the balance that interest is charged on falls faster. ${saved >= 0 ? `Here the extra <b>${money(Math.max(0, more))}</b> a month buys <b>${money(saved)}</b> of avoided interest and a loan that ends <b>${fmtMo(Math.abs(A.months - B.months))}</b> sooner.` : 'Here the lower payment costs more interest over the life of the loan.'} The trade-off is flexibility: a longer term with voluntary extra payments can reach a similar result while keeping the required payment lower.`,
-        teach: '<b>Bi-weekly payments:</b> half the monthly payment every two weeks is 26 half-payments, or 13 full payments a year instead of 12. This illustration models that as one-twelfth of a payment added to principal each month, which is how most lenders and bi-weekly programs apply it. Confirm there is no prepayment penalty or program fee, and that extra amounts are applied to principal.',
+        callout: `Every dollar of the higher payment goes to principal sooner, so the balance that interest is charged on falls faster. ${saved >= 0 ? `Here the extra <b>${money(Math.max(0, more))}</b> a month buys <b>${money(saved)}</b> of avoided interest and a loan that ends <b>${fmtMo(Math.abs(A.months - B.months))}</b> sooner.` : 'Here the lower payment costs more interest over the life of the loan.'}`,
         chart: { kind: 'line', x: xs, endLabels: false, series: [{ name: 'Option A', color: 'var(--c2)', values: xs.map(t => balOf(A, t)) }, { name: 'Option B', color: 'var(--c1)', values: xs.map(t => balOf(B, t)), area: true }], aria: 'Line chart of the remaining balance under each option by year' },
         chart2: { kind: 'bars', x: [0, 1], xLabels: ['Option A', 'Option B'], xName: 'Option', colors: ['var(--c2)', 'var(--c1)'], series: [{ name: 'Total interest', color: 'var(--c1)', values: [A.totI, B.totI] }], aria: 'Column chart of total interest under each option' },
         copy: [`Loan ${money(s.x_amount)}. Option A: ${s.x_yearsA} years at ${pct(s.x_rateA, 2)}. Option B: ${s.x_yearsB} years at ${pct(s.x_rateB, 2)}${bi ? ', paid bi-weekly' : ''}.`, `Payments ${money(A.pay)} vs ${money(monthlyB)}/mo; total interest ${money(A.totI)} vs ${money(B.totI)}; ${saved >= 0 ? 'interest saved ' + money(saved) : 'extra interest ' + money(-saved)}; payoff ${fmtMo(A.months)} vs ${fmtMo(B.months)}.`]
@@ -1542,16 +1534,15 @@ const MODULES = [
       const who = X <= 0 || s.v_bal <= 0 ? 'none' : Math.abs(diff) < 1 ? 'tie' : diff > 0 ? 'invest' : 'pay';
       const yrsF = mo => yrs(mo / 12);
       return {
-        hero: who === 'none' ? { label: s.v_bal <= 0 ? 'Enter a loan balance' : 'Enter an extra monthly amount', value: '—', sub: 'The comparison needs a loan and an extra monthly amount to direct to one path or the other.' }
-          : { label: who === 'tie' ? 'The two paths tie at year ' + Math.round(T / 12) : (who === 'invest' ? 'Investing ends ahead by' : 'Paying down the loan ends ahead by'), value: who === 'tie' ? money(res.invA) : money(Math.abs(diff)), sub: `At the loan’s scheduled payoff in ${yrsF(T)}: investing ${money(X)} a month at ${pct(s.v_ret)} reaches ${money(res.invA)}; paying it to the loan clears it ${yrsF(T - accel.months)} early, then investing the freed ${money(pay + X)} a month reaches ${money(res.invB)}.` },
+        hero: who === 'none' ? { label: s.v_bal <= 0 ? 'No loan balance entered' : 'No extra monthly amount entered', value: '—', sub: 'The comparison uses a loan balance and an extra monthly amount directed to one path or the other.' }
+          : { label: 'Investing less paying down, at the loan’s payoff date', value: money(who === 'tie' ? 0 : diff), sub: `${who === 'tie' ? 'The two paths tie.' : who === 'invest' ? 'Investing ends ahead.' : 'Paying down the loan ends ahead.'} At the loan’s scheduled payoff in ${yrsF(T)}: investing ${money(X)} a month at ${pct(s.v_ret)} reaches ${money(res.invA)}; paying it to the loan clears it ${yrsF(T - accel.months)} early, then investing the freed ${money(pay + X)} a month reaches ${money(res.invB)}.` },
         tiles: [
           { label: 'Interest saved by paying down', value: money(saved), accent: who === 'pay', sub: `loan paid off in ${yrsF(accel.months)} instead of ${yrsF(T)}` },
           { label: 'Investing the extra: value at payoff date', value: money(res.invA), accent: who === 'invest', sub: `${money(X)} a month for ${yrsF(T)} at ${pct(s.v_ret)}` },
           { label: 'Pay down, then invest the freed payment', value: money(res.invB), sub: `${money(pay + X)} a month for ${yrsF(T - accel.months)} after payoff` },
-          { label: 'Break-even investment return', value: breakeven === null ? '—' : pct(breakeven, 1), sub: breakeven === null ? '' : `above this, investing wins; it is ${breakeven > s.v_rate ? 'above' : 'near'} the ${pct(s.v_rate, 2)} loan rate` }
+          { label: 'Break-even investment return', value: breakeven === null ? '—' : pct(breakeven, 1), sub: breakeven === null ? '' : `above this return, investing ends ahead; it is ${breakeven > s.v_rate ? 'above' : 'near'} the ${pct(s.v_rate, 2)} loan rate` }
         ],
-        callout: who === 'none' ? 'Add a loan balance and an extra monthly amount to compare the two paths.' : `Paying down the loan is a guaranteed <b>${pct(s.v_rate, 2)}</b> return; investing is an assumed <b>${pct(s.v_ret)}</b> that is not guaranteed and is shown gross of fees. ${who === 'invest' ? `Under these assumptions investing ends <b>${money(diff)}</b> ahead, but the margin depends entirely on earning the assumed return.` : who === 'pay' ? `Under these assumptions paying down the loan ends <b>${money(-diff)}</b> ahead, with no market risk.` : 'Under these assumptions they tie.'} Taxes on investment gains, any deductibility of loan interest, liquidity, and the value of being debt-free are not in these figures.`,
-        teach: '<b>What the numbers leave out.</b> Money sent to a loan cannot be withdrawn in an emergency; an investment can, though possibly at a loss. Higher-rate debt such as credit cards almost always beats an assumed investment return, and most employer 401(k) matches beat paying down a mortgage. The comparison here is for one loan and one extra amount; the order in which returns arrive would change the investing result in real life.',
+        callout: who === 'none' ? 'A loan balance and an extra monthly amount are both needed to compare the two paths.' : `Paying down the loan saves interest at the <b>${pct(s.v_rate, 2)}</b> loan rate; investing earns an assumed <b>${pct(s.v_ret)}</b> that is not guaranteed and is shown gross of fees. ${who === 'invest' ? `Under these assumptions investing ends <b>${money(diff)}</b> ahead, but the margin depends entirely on earning the assumed return.` : who === 'pay' ? `Under these assumptions paying down the loan ends <b>${money(-diff)}</b> ahead, with no market risk.` : 'Under these assumptions they tie.'} Taxes on investment gains, any deductibility of loan interest, liquidity, and the value of being debt-free are not in these figures.`,
         chart: { kind: 'line', x: xs, series: [{ name: 'Invest the extra', color: 'var(--c1)', values: res.a }, { name: 'Pay down the loan', color: 'var(--c2)', values: res.b }], endLabels: false, aria: 'Line chart of net position under each path by year' },
         copy: [`Extra ${money(X)}/mo; loan ${money(s.v_bal)} at ${pct(s.v_rate, 2)} with ${plural(s.v_term, 'year')} remaining; investment return ${pct(s.v_ret)} compounded monthly, gross of fees.`, `At scheduled payoff (${yrsF(T)}): investing ${money(res.invA)}; pay-down-then-invest ${money(res.invB)}; interest saved ${money(saved)}; ${who === 'invest' ? 'investing ahead by ' + money(diff) : who === 'pay' ? 'paying down ahead by ' + money(-diff) : 'tie'}; break-even return ${breakeven === null ? 'n/a' : pct(breakeven, 1)}.`]
       };
@@ -1584,8 +1575,7 @@ const MODULES = [
           { label: 'Home equity', value: money(equity), sub: s.w_home > 0 ? `${pct(equity / s.w_home * 100, 0)} of the home’s value` : 'no home entered' },
           { label: 'Investable assets', value: money(investable), accent: true, sub: `${money(liquid)} outside retirement accounts` }
         ],
-        callout: nw > 0 ? `Home equity is <b>${pct(equity / nw * 100, 0)}</b> of net worth and investable assets are <b>${pct(investable / nw * 100, 0)}</b>. ${liquid > 0 ? `Cash and taxable investments of <b>${money(liquid)}</b> are what can be reached without selling the house or tapping retirement accounts.` : 'Nothing is held outside the house and retirement accounts, so there is no reserve that can be reached without penalty or a sale.'} Repeat this snapshot once a year; the trend matters more than any single figure.` : `Liabilities exceed assets by <b>${money(liabs - assets)}</b>. Paying down debt raises net worth dollar for dollar; see Debt vs. investment for the trade-off.`,
-        teach: '<b>Reading it:</b> net worth that is mostly home equity is real but not spendable; investable assets fund goals and emergencies. Retirement accounts count fully here, though withdrawals before 59½ generally carry tax and a penalty, and all pre-tax balances carry a future tax bill.',
+        callout: nw > 0 ? `Home equity is <b>${pct(equity / nw * 100, 0)}</b> of net worth and investable assets are <b>${pct(investable / nw * 100, 0)}</b>. ${liquid > 0 ? `Cash and taxable investments of <b>${money(liquid)}</b> are what can be reached without selling the house or tapping retirement accounts.` : 'Nothing is held outside the house and retirement accounts, so there is no reserve that can be reached without penalty or a sale.'}` : `Liabilities exceed assets by <b>${money(liabs - assets)}</b>.`,
         extraTitle: 'Balance sheet', extra: `<div class="sched">${table}</div>`,
         chart: { kind: 'bars', x: [0, 1, 2, 3, 4, 5, 6], xLabels: ['Cash', 'Retirement', 'Taxable', 'Home', 'Other', 'Mortgage', 'Other debts'], xName: 'Item', colors: ['var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c3)', 'var(--c3)'], series: [{ name: 'Amount', color: 'var(--c1)', values: [s.w_cash, s.w_ret, s.w_tax, s.w_home, s.w_other, s.w_mort, s.w_debt] }], aria: 'Column chart of assets and liabilities' },
         copy: [`Cash ${money(s.w_cash)}; retirement ${money(s.w_ret)}; taxable ${money(s.w_tax)}; home ${money(s.w_home)}; other ${money(s.w_other)}; mortgage ${money(s.w_mort)}; other debts ${money(s.w_debt)}.`, `Assets ${money(assets)}; liabilities ${money(liabs)}; net worth ${money(nw)}; home equity ${money(equity)}; investable ${money(investable)}.`]
@@ -1705,19 +1695,29 @@ const forCompute = (mod, s) => mod.id === 'loan' && s.l_view !== 'y' ? Object.as
 // Read a displayed figure back into a number so A and B can be differenced; anything else shows "—"
 function readShown(t) {
   t = String(t).trim(); let m;
-  if ((m = /^(-)?\$([\d,]+)(\/mo)?$/.exec(t))) return { k: 'money' + (m[3] || ''), v: (m[1] ? -1 : 1) * Number(m[2].replace(/,/g, '')) };
-  if ((m = /^(-?\d+(?:\.(\d+))?)%$/.exec(t))) return { k: 'pct', v: Number(m[1]), d: (m[2] || '').length };
+  if ((m = /^(-)?\$([\d,]+)(\/mo|\/yr)?$/.exec(t))) return { k: 'money' + (m[3] || ''), v: (m[1] ? -1 : 1) * Number(m[2].replace(/,/g, '')) };
+  if ((m = /^(-?[\d,]+(?:\.(\d+))?)%$/.exec(t))) return { k: 'pct', v: Number(m[1].replace(/,/g, '')), d: (m[2] || '').length };
   if ((m = /^(\d+) years?(?: (\d+) mo)?$/.exec(t))) return { k: 'mo', v: Number(m[1]) * 12 + Number(m[2] || 0) };
-  if ((m = /^(\d+\.\d) years$/.exec(t))) return { k: 'yr', v: Number(m[1]) };
+  if ((m = /^(\d+) mo$/.exec(t))) return { k: 'mo', v: Number(m[1]) };
+  if ((m = /^(\d+)\+ years$/.exec(t)) || (m = /^Over (\d+) years$/.exec(t))) return { k: 'mo', v: Number(m[1]) * 12, plus: true };   // beyond the period shown
+  if (t === 'Already reached') return { k: 'mo', v: 0 };
+  if ((m = /^(\d+\.\d) (?:years|yrs)$/.exec(t))) return { k: 'yr', v: Number(m[1]) };
   if ((m = /^Year (\d+)$/.exec(t))) return { k: 'year', v: Number(m[1]) };
+  if ((m = /^After year (\d+)$/.exec(t))) return { k: 'year', v: Number(m[1]), plus: true };
   if ((m = /^([\d,]+(?:\.\d+)?)×$/.exec(t))) return { k: 'x', v: Number(m[1].replace(/,/g, '')) };
   return null;
 }
 function changeText(a, b) {
   const A = readShown(a), B = readShown(b); if (!A || !B || A.k !== B.k) return '—';
-  const d = B.v - A.v; if (Math.abs(d) < 1e-9) return 'No change';
+  if (A.plus && B.plus) return A.v === B.v ? 'No change' : '—';
+  const d = B.v - A.v; if (Math.abs(d) < 1e-9 && !A.plus && !B.plus) return 'No change';
+  const more = A.plus || B.plus ? ' or more' : '';   // one side runs past the period shown, so the change is at least this
   const sg = d > 0 ? '+' : '−', ad = Math.abs(d);
-  if (A.k.startsWith('money')) return sg + '$' + Math.round(ad).toLocaleString('en-US') + (A.k.endsWith('/mo') ? '/mo' : '');
+  if (more && ad < 1e-9) return 'No change';
+  return fmtChange(A, B, sg, ad) + more;
+}
+function fmtChange(A, B, sg, ad) {
+  if (A.k.startsWith('money')) return sg + '$' + Math.round(ad).toLocaleString('en-US') + A.k.slice(5);
   if (A.k === 'pct') return sg + ad.toFixed(Math.max(A.d, B.d)) + ' pts';
   if (A.k === 'mo') { const y = Math.floor(ad / 12), mo = Math.round(ad - y * 12); return sg + (y ? y + (y === 1 ? ' year' : ' years') : '') + (y && mo ? ' ' : '') + (mo ? mo + ' mo' : ''); }
   if (A.k === 'yr') return sg + ad.toFixed(1) + ' years';
@@ -1727,7 +1727,7 @@ function changeText(a, b) {
 // Results (hero + tiles) side by side, and the inputs that differ; cls picks the page or the printout table style
 function scenTables(mod, sA, sB, rA, rB, cls) {
   const pairs = [[rA.hero, rB.hero]].concat(rB.tiles.map((t, i) => [rA.tiles[i] || { label: '', value: '—' }, t]));
-  const rows = pairs.map(([a, b]) => ({ label: b.label, aLabel: a.label !== b.label ? a.label : '', a: a.value, b: b.value, d: a.label === b.label ? changeText(a.value, b.value) : '—' }));
+  const rows = pairs.map(([a, b]) => ({ label: b.label, aLabel: a.label !== b.label ? a.label : '', a: a.value, b: b.value, d: changeText(a.value, b.value) }));
   const diffs = mod.fields.filter(f => f.kind === 'seg' ? sA[f.id] !== sB[f.id] : Math.abs(sA[f.id] - sB[f.id]) > 1e-9).map(f => ({ label: f.label, a: fmtVal(f, sA[f.id], sA), b: fmtVal(f, sB[f.id], sB) }));
   const results = h('table', { class: cls }, h('thead', {}, h('tr', {}, h('th', {}, 'Result'), h('th', { class: 'v' }, 'Scenario A'), h('th', { class: 'v' }, 'Scenario B'), h('th', { class: 'v' }, 'B vs. A'))),
     h('tbody', {}, ...rows.map(r => h('tr', {}, h('td', {}, r.label), h('td', { class: 'v' }, r.a, r.aLabel ? h('span', { class: 'al' }, 'A: ' + r.aLabel) : null), h('td', { class: 'v' }, r.b), h('td', { class: 'v d' }, r.d)))));
@@ -1737,7 +1737,8 @@ function scenTables(mod, sA, sB, rA, rB, cls) {
 }
 // Scenario A's lines drawn dotted over B's chart: each solid line for a line chart, the total for a stacked chart; bar charts are left alone
 function withA(data, a) {
-  if (!a || !data || data.kind === 'bars' || a.kind === 'bars') return data;
+  if (!a || !data) return data;
+  if (data.kind === 'bars') return a.kind === 'bars' ? Object.assign({}, data, { barsA: a.series[0].values, labelsA: a.xLabels }) : data;   // A's bars beside B's, by position
   const over = data.kind === 'stack'
     ? [{ name: (data.totalLabel || 'Total') + ' (A)', color: 'var(--ink-2)', x: a.x, values: a.x.map((_, i) => a.series.reduce((t, s) => t + s.values[i], 0)), overlay: true }]
     : a.series.filter(s => !s.dash).map(s => ({ name: s.name + ' (A)', color: s.color, x: a.x, values: s.values, overlay: true }));
@@ -1848,20 +1849,20 @@ const METHODS = {
   compare: 'Both paths start with the same amount and add the same monthly deposit; one grows at the savings rate ÷ 12 and the other at the investment return ÷ 12, compounded monthly. Difference = investment balance − savings balance. Growth multiple = investment growth ÷ savings growth. The savings rate is treated as a nominal annual rate compounded monthly; a bank’s quoted APY is slightly higher than the same nominal rate, so entering an APY here slightly overstates the savings balance.',
   inflation: 'The nominal balance follows Compound growth with monthly compounding. In today’s dollars = nominal ÷ (1 + inflation)^years. Real rate of return = (1 + return) ÷ (1 + inflation) − 1, the exact Fisher relation on the stated annual rates. The $100 basket = 100 × (1 + inflation)^years.',
   rule72: 'Estimate = 72 ÷ rate. Exact doubling time = ln 2 ÷ ln(1 + rate). Doublings within the horizon = the whole number of exact doubling times that fit. Value at the horizon = starting amount × (1 + rate)^years, compounded annually with no further deposits.',
-  wait: 'Both savers deposit the same amount monthly at the return ÷ 12, and both stop on the goal date; the late starter deposits for (years − delay) years. The saver who starts today invests the starting amount now; the late starter holds it uninvested, earning nothing, until the delay ends and then invests it. Cost of waiting = the difference between the two balances on the goal date, split into the part from skipped deposits and the part from the uninvested starting amount. Catch-up contribution = the level monthly deposit over (years − delay) years that, together with the starting amount invested at that point, reaches the on-time saver’s balance.',
-  goal: 'Monthly contribution needed = (goal − starting amount × (1 + m)^n) × m ÷ ((1 + m)^n − 1), with m = return ÷ 12 and n = months, never below zero. Years needed = the first month at which the entered contribution reaches the goal, up to 100 years. Required return = the annual rate (monthly rate × 12) at which the entered contribution reaches the goal in the stated years, found by bisection.',
+  wait: 'Both savers deposit the same amount monthly at the return ÷ 12, and both stop on the goal date; the late starter deposits for (years − delay) years. The saver who starts today invests the starting amount now; the late starter holds it uninvested, earning nothing, until the delay ends and then invests it. Cost of waiting = the difference between the two balances on the goal date, split into the part from skipped deposits and the part from the uninvested starting amount. Late start as a share of on time = the late starter’s balance ÷ the on-time saver’s balance.',
+  goal: 'Projected balance = the starting amount plus the monthly contribution, compounded monthly at the return ÷ 12 for the years entered, with deposits at the end of each month. Projected balance less the goal = projected balance − goal amount. Share of the goal = projected balance ÷ goal amount. Goal reached in = the first month at which the balance reaches the goal at the entered contribution and return, up to 100 years.',
   taxdef: 'The annual contribution is deposited at each year end and compounds annually. Tax-deferred: the full pre-tax contribution grows at the return; the ending balance is taxed once at the withdrawal rate. Taxable: the contribution after today’s tax grows at the return × (1 − tax on earnings), a simplification that taxes every year’s earnings at that one rate. Tax paid along the way = taxable growth × t ÷ (1 − t).',
-  roth: 'Annual year-end contributions, annual compounding. Traditional: the pre-tax contribution grows at the return and the ending balance is taxed at the retirement rate. Roth on the same take-home pay: the contribution × (1 − today’s rate) grows and is not taxed. Roth on the same contribution: the same dollars go in, and because they come from after-tax pay the client gives up the deduction, so take-home pay falls by an extra contribution × today’s rate each year. In both cases the extra tax paid now is contribution × today’s rate a year. On the same-take-home basis the two tie exactly when the retirement rate equals today’s rate.',
+  roth: 'Annual year-end contributions, annual compounding. Traditional: the pre-tax contribution grows at the return and the ending balance is taxed at the retirement rate. Roth on the same take-home pay: the contribution × (1 − today’s rate) grows and is not taxed. Roth on the same contribution: the same dollars go in, and because they come from after-tax pay the client gives up the deduction, so take-home pay falls by an extra contribution × today’s rate each year. In both cases the extra tax paid now is contribution × today’s rate a year. The headline = Roth after tax − traditional after tax, so a negative figure means traditional ends ahead. On the same-take-home basis the two tie exactly when the retirement rate equals today’s rate.',
   networth: 'Total assets = cash and savings + retirement accounts + taxable investments + home value + other assets. Total liabilities = mortgage + other debts. Net worth = assets − liabilities. Home equity = home value − mortgage. Investable assets = cash + taxable investments + retirement accounts.',
-  payout: 'Each month the balance grows at the return ÷ 12, then the withdrawal is taken. If “rise with inflation” is on, the withdrawal increases by the inflation rate at each year end. The money is “depleted” in the month the balance falls to half a cent or less. Withdrawal rate = first-year monthly withdrawal × 12 ÷ starting balance. “Sustainable for N years” = the first-year monthly withdrawal, with the same inflation setting, that brings the balance to zero at exactly the number of years entered (30 by default), found by bisection. The balance is illustrated for 40 years, or for the number of years entered if longer.',
-  cashflow: 'Each year: expenses = today’s expenses × (1 + inflation)^year; Social Security as described under the conventions; pension & other income from its start year, rising with inflation if selected, otherwise level. The gap = (expenses − Social Security − pension & other income) ÷ 12 is withdrawn each month after growth at the return ÷ 12; a surplus is added to the balance. Coverage = the month the balance reaches zero. Spending capacity = the level change to today’s-dollar spending, positive or negative, that makes the balance land at zero at the end of the horizon, found by bisection.',
-  retire: 'Years to retirement = retirement age − current age; years in retirement = plan-through age − retirement age. Needed at retirement = the smallest balance that funds the gap (spending − Social Security − pension & other income, each inflated from today) for the retirement years at the return in retirement, month by month as in Income & expenses, found by bisection. Projected savings = savings today plus monthly contributions at the pre-retirement return. Extra monthly saving = the contribution that would reach the need, less the current contribution. Social Security’s share = the year-one benefit ÷ year-one spending, both in retirement-year dollars; zero if the claiming age is after the retirement age.',
+  payout: 'Each month the balance grows at the return ÷ 12, then the withdrawal is taken. If “rise with inflation” is on, the withdrawal increases by the inflation rate at each year end. The money is “depleted” in the month the balance falls to half a cent or less. Withdrawal rate = first-year monthly withdrawal × 12 ÷ starting balance. “Withdrawal that lasts N years” = the first-year monthly withdrawal, with the same inflation setting, that brings the balance to zero at exactly the withdrawal period entered (30 years by default), found by bisection. The balance is illustrated for 40 years, or for the withdrawal period if longer.',
+  cashflow: 'Each year: expenses = today’s expenses × (1 + inflation)^year; Social Security as described under the conventions; pension & other income from its start year, rising with inflation if selected, otherwise level. The gap = (expenses − Social Security − pension & other income) ÷ 12 is withdrawn each month after growth at the return ÷ 12; a surplus is added to the balance. Coverage = the month the balance reaches zero. Expenses left unfunded = the sum, over the years shown, of each year’s expenses not covered by Social Security, pension & other income, or the portfolio once it runs out. If the portfolio lasts every year shown, the headline reads that number of years with a plus sign.',
+  retire: 'Years to retirement = retirement age − current age; years in retirement = plan-through age − retirement age. Needed at retirement = the smallest balance that funds the gap (spending − Social Security − pension & other income, each inflated from today) for the retirement years at the return in retirement, month by month as in Income & expenses, found by bisection. Projected savings = savings today plus monthly contributions at the pre-retirement return. Projected savings less the need = projected savings − needed balance (negative when savings fall short). Share of the need covered = projected savings ÷ needed balance. Social Security’s share = the year-one benefit ÷ year-one spending, both in retirement-year dollars; zero if the claiming age is after the retirement age.',
   rmd: 'Birth year = calendar year − current age. RMDs begin at 73 for birth years 1951–1959 and at 75 for 1960 or later. The balance grows monthly with contributions until the retirement age at the pre-retirement return, then at the retirement return. From the starting age, each year’s RMD = the prior year-end balance ÷ the IRS Uniform Lifetime Table divisor for that age, withdrawn at year end. Tax = RMD × retirement tax rate. Social Security at the RMD age = today’s benefit × (1 + inflation)^years. Today’s-dollar figures divide by the same factor.',
   loan: 'Payment = balance × m ÷ (1 − (1 + m)^−n), with m = rate ÷ 12 and n = months. Each month: interest = balance × m; principal = payment − interest + extra payment, limited to the balance remaining. Interest share in year 1 = year-one interest ÷ year-one payments. Payoff = the month the balance reaches zero; interest saved = scheduled total interest − total interest with the extra payment.',
   mortgage: 'Monthly income = gross annual income ÷ 12. Maximum housing payment = the lower of (housing limit × monthly income) and (total-debt limit × monthly income − other monthly debt payments), never below zero. Principal and interest = housing payment − taxes and insurance. Loan = P&I × (1 − (1 + m)^−n) ÷ m. Home price = loan + down payment. Price change per 1% of rate = loan at (rate − 0.5%) − loan at (rate + 0.5%).',
-  mortcmp: 'Each option is amortized as in Loan amortization. Bi-weekly on Option B is modeled as one-twelfth of the monthly payment added to principal each month, the equivalent of 13 payments a year; its monthly equivalent is the payment × 13 ÷ 12. Interest saved = Option A total interest − Option B total interest.',
-  debtinv: 'The loan’s scheduled payment comes from Loan amortization. Path A invests the extra amount every month at the investment return ÷ 12 for the loan’s remaining term. Path B adds the extra amount to principal until the loan is paid off, then invests the full payment plus the extra for the remaining months, together with the unused part of the smaller final payment. Both paths are valued at the scheduled payoff date, when both have the loan paid off. Interest saved comes from the two schedules. Break-even = the investment return at which the paths tie, found by bisection; valued at one rate, that is the loan rate.',
-  insure: 'Income to replace = household income − survivor benefits, never below zero. It is paid at the end of each year for the stated years, rising with inflation from the second year, and discounted annually at the return on proceeds: present value = Σ income × (1 + inflation)^(t − 1) ÷ (1 + return)^t. Total need = that present value + mortgage + other debts + education + final expenses. Additional coverage = total need − existing coverage − assets available.'
+  mortcmp: 'Each option is amortized as in Loan amortization. Bi-weekly on Option B is modeled as one-twelfth of the monthly payment added to principal each month, the equivalent of 13 payments a year; its monthly equivalent is the payment × 13 ÷ 12. Interest saved = Option A total interest − Option B total interest (negative when Option B costs more interest). Option B monthly payment less Option A uses the monthly equivalent for bi-weekly payments.',
+  debtinv: 'The loan’s scheduled payment comes from Loan amortization. Path A invests the extra amount every month at the investment return ÷ 12 for the loan’s remaining term. Path B adds the extra amount to principal until the loan is paid off, then invests the full payment plus the extra for the remaining months, together with the unused part of the smaller final payment. Both paths are valued at the scheduled payoff date, when both have the loan paid off. The headline = investing path − pay-down path, so a negative figure means paying down ends ahead. Interest saved comes from the two schedules. Break-even = the investment return at which the paths tie, found by bisection; valued at one rate, that is the loan rate.',
+  insure: 'Income to replace = household income − survivor benefits, never below zero. It is paid at the end of each year for the stated years, rising with inflation from the second year, and discounted annually at the return on proceeds: present value = Σ income × (1 + inflation)^(t − 1) ÷ (1 + return)^t. Total need = that present value + mortgage + other debts + education + final expenses. Estimated need less what is in place = total need − existing coverage − assets available (negative when what is in place exceeds the need).'
 };
 const LIMITS = [
   'Returns are constant. Real returns vary year to year, and the order of returns changes outcomes when money is being withdrawn (sequence risk). None of the calculators models that.',
