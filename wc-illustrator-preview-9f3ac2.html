@@ -1005,8 +1005,9 @@ const MODULES = [
   },
   {
     output: 'Cost of delay; catch-up contribution', desc: 'Compares a saver who starts contributing today with one who starts a few years later. Shows the gap at the goal date and the larger contribution the late starter would need to catch up.', id: 'wait', group: 'grow', tab: 'Cost of waiting', title: 'Cost of delaying contributions', question: 'What does starting a few years late really cost?',
-    lede: 'Compares two savers who contribute the same monthly amount toward the same date, one starting now and one after a delay.',
+    lede: 'Compares two savers with the same starting amount and monthly contribution, saving toward the same date, one starting now and one after a delay.',
     fields: [
+      moneyField('w_principal', 'Starting amount', 0, 1000000, 500, DEFAULTS.principal, 'Already saved today. The saver who starts today invests it now; the late starter leaves it uninvested until starting.'),
       moneyField('w_pmt', 'Monthly contribution', 0, 10000, 50, DEFAULTS.monthly),
       pctField('w_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded monthly.'),
       intField('w_years', 'Years until the goal date', 5, 50, 1, DEFAULTS.years),
@@ -1015,27 +1016,32 @@ const MODULES = [
     chart: { title: 'Start now vs. start later', subtitle: 'Both stop contributing on the same goal date' },
     onChange(id, s, specs) { const d = specs.find(x => x.id === 'w_delay'); if (s.w_delay >= s.w_years) d._set(Math.max(1, s.w_years - 1)); },
     compute(s) {
-      const delay = Math.min(s.w_delay, s.w_years - 1);
-      const now = simulate({ P: 0, pmt: s.w_pmt, r: s.w_rate / 100, years: s.w_years });
-      const lateRows = simulate({ P: 0, pmt: s.w_pmt, r: s.w_rate / 100, years: s.w_years - delay });
-      const late = now.map((r, i) => i < delay ? 0 : lateRows[i - delay].bal);
+      const delay = Math.min(s.w_delay, s.w_years - 1), P = s.w_principal || 0, r = s.w_rate / 100;
+      const now = simulate({ P, pmt: s.w_pmt, r, years: s.w_years });
+      const lateRows = simulate({ P, pmt: s.w_pmt, r, years: s.w_years - delay });
+      const late = now.map((row, i) => i < delay ? P : lateRows[i - delay].bal);   // the starting amount sits uninvested during the delay
       const endNow = now[now.length - 1].bal, endLate = late[late.length - 1]; const gap = endNow - endLate; const skipped = s.w_pmt * 12 * delay;
-      const catchUp = requiredPmt(endNow, 0, s.w_rate / 100, s.w_years - delay);
+      const endOf = (p, pmt, y) => { const rows = simulate({ P: p, pmt, r, years: y }); return rows[rows.length - 1].bal; };
+      const gapDeposits = endOf(0, s.w_pmt, s.w_years) - endOf(0, s.w_pmt, s.w_years - delay), gapStart = gap - gapDeposits;
+      const catchUp = requiredPmt(endNow, P, r, s.w_years - delay);
+      const startTxt = P > 0 ? `${money(P)} now plus ` : '';
       return {
-        hero: { label: `Waiting ${plural(delay, 'year')} costs`, value: money(gap), sub: `The late starter skips ${money(skipped)} of deposits but ends ${money(gap)} behind. The difference is lost compounding time.` },
+        hero: { label: `Waiting ${plural(delay, 'year')} costs`, value: money(gap), sub: P > 0 ? `The late starter skips ${money(skipped)} of deposits and leaves the ${money(P)} starting amount uninvested for ${plural(delay, 'year')}, ending ${money(gap)} behind. The difference is lost compounding time.` : `The late starter skips ${money(skipped)} of deposits but ends ${money(gap)} behind. The difference is lost compounding time.` },
         tiles: [
-          { label: 'Start today', value: money(endNow), accent: true, sub: `${money(s.w_pmt)} a month for ${s.w_years} years` },
-          { label: `Start in ${plural(delay, 'year')}`, value: money(endLate), sub: `${money(s.w_pmt)} a month for ${s.w_years - delay} years` },
+          { label: 'Start today', value: money(endNow), accent: true, sub: `${startTxt}${money(s.w_pmt)} a month for ${s.w_years} years` },
+          { label: `Start in ${plural(delay, 'year')}`, value: money(endLate), sub: `${startTxt.replace(' now', '')}${money(s.w_pmt)} a month for ${s.w_years - delay} years` },
           { label: 'Deposits skipped', value: money(skipped), sub: `vs. a gap of ${money(gap)}` },
           { label: 'To catch up, the late starter needs', value: money(catchUp) + '/mo', sub: `${money(catchUp - s.w_pmt)} more a month, every month` }
         ],
-        callout: `Every dollar skipped in the delay years costs <b>$${(gap / Math.max(1, skipped)).toFixed(2)}</b> at the goal date. The earliest deposits are the ones with the most time to compound.`,
+        callout: P > 0 && skipped > 0 ? `Of the <b>${money(gap)}</b> gap, <b>${money(gapDeposits)}</b> comes from the skipped deposits and <b>${money(gapStart)}</b> from leaving the starting amount uninvested. Every dollar of deposits skipped in the delay years costs <b>$${(gapDeposits / skipped).toFixed(2)}</b> at the goal date.`
+          : P > 0 ? `The whole <b>${money(gap)}</b> gap comes from leaving the ${money(P)} starting amount uninvested for ${plural(delay, 'year')}.`
+          : `Every dollar skipped in the delay years costs <b>$${(gap / Math.max(1, skipped)).toFixed(2)}</b> at the goal date. The earliest deposits are the ones with the most time to compound.`,
         teach: '<b>The lesson is about time, not timing.</b> Starting with a smaller amount today usually beats waiting to start with a larger one. The late starter cannot buy back the years; they can only contribute more.',
         chart: { kind: 'line', x: now.map(r => r.t), series: [
           { name: 'Start today', color: 'var(--c1)', values: now.map(r => r.bal), area: true },
           { name: `Start in ${plural(delay, 'year')}`, color: 'var(--c2)', values: late }
         ], aria: 'Line chart comparing a saver who starts now with one who starts after a delay' },
-        copy: [`${money(s.w_pmt)}/month at ${pct(s.w_rate)} compounded monthly; goal in ${s.w_years} years; delay ${delay} years.`, `Start today ${money(endNow)}; start later ${money(endLate)}; cost of waiting ${money(gap)}; catch-up contribution ${money(catchUp)}/month.`]
+        copy: [`${P > 0 ? money(P) + ' starting amount (held uninvested by the late starter during the delay); ' : ''}${money(s.w_pmt)}/month at ${pct(s.w_rate)} compounded monthly; goal in ${s.w_years} years; delay ${delay} years.`, `Start today ${money(endNow)}; start later ${money(endLate)}; cost of waiting ${money(gap)}; catch-up contribution ${money(catchUp)}/month.`]
       };
     }
   },
@@ -1071,10 +1077,11 @@ const MODULES = [
     }
   },
   {
-    output: 'Years the balance lasts; sustainable withdrawal', desc: 'Draws a balance down with monthly withdrawals, optionally rising with inflation. Shows how long the money lasts and what withdrawal it could sustain for 30 years.', id: 'payout', group: 'live', tab: 'Retirement payout', title: 'Retirement withdrawals: how long a balance lasts', question: 'How long will a balance last at a given withdrawal?',
-    lede: 'Shows how long a retirement balance lasts at a given withdrawal and assumed return, and the first-year withdrawal that would last 30 years.',
+    output: 'Years the balance lasts; sustainable withdrawal', desc: 'Draws a balance down with monthly withdrawals, optionally rising with inflation. Shows how long the money lasts and what withdrawal it could sustain for the number of years chosen.', id: 'payout', group: 'live', tab: 'Retirement payout', title: 'Retirement withdrawals: how long a balance lasts', question: 'How long will a balance last at a given withdrawal?',
+    lede: 'Shows how long a retirement balance lasts at a given withdrawal and assumed return, and the first-year withdrawal that would last a chosen number of years.',
     fields: [
       moneyField('p_bal', 'Starting balance at retirement', 0, 5000000, 10000, DEFAULTS.retireBalance),
+      intField('p_years', 'Years the money should last', 5, 50, 1, 30, 'Sets the sustainable withdrawal below.'),
       segField('p_mode', 'Withdrawal set as', [{ v: 'amt', label: 'Monthly amount' }, { v: 'pct', label: '% of starting balance' }], 'amt'),
       moneyField('p_wd', 'Monthly withdrawal (first year)', 0, 50000, 100, DEFAULTS.retireMonthly),
       pctField('p_pct', 'Withdrawal rate (% of starting balance)', 0, 15, 0.1, DEFAULTS.retirePct, 'Of the starting balance, in year one.'),
@@ -1093,22 +1100,23 @@ const MODULES = [
     },
     compute(s) {
       const w = s.p_mode === 'amt' ? s.p_wd : s.p_bal * s.p_pct / 100 / 12; const infl = s.p_infl / 100; const adjust = !!s.p_adj;
-      const res = simulatePayout({ B: s.p_bal, w, r: s.p_rate / 100, infl, adjust, maxYears: 40 });
+      const T = s.p_years || 30, maxY = Math.max(40, T);   // shown up to 40 years, or longer if the money should last longer
+      const res = simulatePayout({ B: s.p_bal, w, r: s.p_rate / 100, infl, adjust, maxYears: maxY });
       const lasts = res.depletedAt !== null; const yearsLast = lasts ? res.depletedAt / 12 : null;
-      const sustain30 = sustainableWithdrawal(s.p_bal, s.p_rate / 100, infl, adjust, 30);
+      const sustain30 = sustainableWithdrawal(s.p_bal, s.p_rate / 100, infl, adjust, T);
       const wdYear20 = adjust ? w * Math.pow(1 + infl, 19) : w;
       return {
-        hero: s.p_bal <= 0 ? { label: 'How long the money lasts', value: '—', sub: 'Enter a starting balance to see how long it lasts.' } : { label: 'How long the money lasts', value: lasts ? yrs(yearsLast) : '40+ years', sub: lasts ? `Withdrawing ${money(w)} a month${adjust ? ', rising with inflation,' : ''} at an assumed ${pct(s.p_rate)} return, the balance reaches zero in year ${Math.ceil(yearsLast)}.` : `After 40 years of withdrawals the balance is still ${money(res.endBal)}. The assumed return is covering the withdrawals.` },
+        hero: s.p_bal <= 0 ? { label: 'How long the money lasts', value: '—', sub: 'Enter a starting balance to see how long it lasts.' } : { label: 'How long the money lasts', value: lasts ? yrs(yearsLast) : maxY + '+ years', sub: lasts ? `Withdrawing ${money(w)} a month${adjust ? ', rising with inflation,' : ''} at an assumed ${pct(s.p_rate)} return, the balance reaches zero in year ${Math.ceil(yearsLast)}.` : `After ${maxY} years of withdrawals the balance is still ${money(res.endBal)}. The assumed return is covering the withdrawals.` },
         tiles: [
           { label: 'First-year withdrawals', value: money(w * 12), sub: s.p_bal > 0 ? `${money(w)} a month, ${pct(w * 12 / s.p_bal * 100)} of the starting balance` : 'enter a starting balance' },
           { label: adjust ? 'Monthly withdrawal in year 20' : 'Monthly withdrawal (level)', value: money(wdYear20), sub: adjust ? `inflated at ${pct(s.p_infl)} a year` : 'no inflation adjustment' },
-          { label: 'Total withdrawn', value: money(res.total), sub: lasts ? `over ${yrs(yearsLast)}` : 'over 40 years' },
-          { label: 'Sustainable for 30 years', value: money(sustain30) + '/mo', accent: true, sub: `${pct(sustain30 * 12 / Math.max(1, s.p_bal) * 100)} initial rate, ends near zero at year 30` }
+          { label: 'Total withdrawn', value: money(res.total), sub: lasts ? `over ${yrs(yearsLast)}` : `over ${maxY} years` },
+          { label: `Sustainable for ${T} years`, value: money(sustain30) + '/mo', accent: true, sub: `${pct(sustain30 * 12 / Math.max(1, s.p_bal) * 100)} initial rate, ends near zero at year ${T}` }
         ],
-        callout: lasts && yearsLast < 30 ? `At this withdrawal the balance runs out in <b>${yrs(yearsLast)}</b>. To last 30 years under the same assumptions, the first-year withdrawal would be about <b>${money(sustain30)}</b> a month.` : `Under these assumptions the balance supports <b>${money(sustain30)}</b> a month for 30 years. Lower returns or higher inflation than assumed would shorten that.`,
+        callout: lasts && yearsLast < T ? `At this withdrawal the balance runs out in <b>${yrs(yearsLast)}</b>. To last ${T} years under the same assumptions, the first-year withdrawal would be about <b>${money(sustain30)}</b> a month.` : `Under these assumptions the balance supports <b>${money(sustain30)}</b> a month for ${T} years. Lower returns or higher inflation than assumed would shorten that.`,
         teach: '<b>Sequence matters in real life.</b> This illustration assumes the same return every year. A run of poor returns early in retirement, combined with withdrawals, can shorten how long a balance lasts even if the average return turns out as assumed.',
         chart: { kind: 'line', x: res.rows.map(r => r.t), series: [{ name: 'Remaining balance', color: 'var(--c1)', values: res.rows.map(r => r.bal), area: true }], endLabels: !lasts, marker: lasts ? { x: yearsLast, y: 0, label: 'Depleted, year ' + (Math.round(yearsLast * 10) / 10) } : null, aria: 'Area chart of remaining retirement balance by year' },
-        copy: [`Starting balance ${money(s.p_bal)}; ${money(w)}/month${adjust ? ' rising ' + pct(s.p_infl) + '/yr' : ' level'}; ${pct(s.p_rate)} assumed return, compounded monthly.`, lasts ? `Balance lasts ${yrs(yearsLast)}; total withdrawn ${money(res.total)}.` : `Balance lasts 40+ years; remaining at year 40 ${money(res.endBal)}.`, `Sustainable 30-year withdrawal under these assumptions: ${money(sustain30)}/month.`]
+        copy: [`Starting balance ${money(s.p_bal)}; ${money(w)}/month${adjust ? ' rising ' + pct(s.p_infl) + '/yr' : ' level'}; ${pct(s.p_rate)} assumed return, compounded monthly.`, lasts ? `Balance lasts ${yrs(yearsLast)}; total withdrawn ${money(res.total)}.` : `Balance lasts ${maxY}+ years; remaining at year ${maxY} ${money(res.endBal)}.`, `Sustainable ${T}-year withdrawal under these assumptions: ${money(sustain30)}/month.`]
       };
     }
   },
@@ -1840,12 +1848,12 @@ const METHODS = {
   compare: 'Both paths start with the same amount and add the same monthly deposit; one grows at the savings rate ÷ 12 and the other at the investment return ÷ 12, compounded monthly. Difference = investment balance − savings balance. Growth multiple = investment growth ÷ savings growth. The savings rate is treated as a nominal annual rate compounded monthly; a bank’s quoted APY is slightly higher than the same nominal rate, so entering an APY here slightly overstates the savings balance.',
   inflation: 'The nominal balance follows Compound growth with monthly compounding. In today’s dollars = nominal ÷ (1 + inflation)^years. Real rate of return = (1 + return) ÷ (1 + inflation) − 1, the exact Fisher relation on the stated annual rates. The $100 basket = 100 × (1 + inflation)^years.',
   rule72: 'Estimate = 72 ÷ rate. Exact doubling time = ln 2 ÷ ln(1 + rate). Doublings within the horizon = the whole number of exact doubling times that fit. Value at the horizon = starting amount × (1 + rate)^years, compounded annually with no further deposits.',
-  wait: 'Both savers deposit the same amount monthly at the return ÷ 12; the late starter deposits for (years − delay) years, both ending on the goal date. Cost of waiting = the difference between the two balances on that date. Catch-up contribution = the level monthly deposit over (years − delay) years whose future value equals the on-time saver’s balance.',
+  wait: 'Both savers deposit the same amount monthly at the return ÷ 12, and both stop on the goal date; the late starter deposits for (years − delay) years. The saver who starts today invests the starting amount now; the late starter holds it uninvested, earning nothing, until the delay ends and then invests it. Cost of waiting = the difference between the two balances on the goal date, split into the part from skipped deposits and the part from the uninvested starting amount. Catch-up contribution = the level monthly deposit over (years − delay) years that, together with the starting amount invested at that point, reaches the on-time saver’s balance.',
   goal: 'Monthly contribution needed = (goal − starting amount × (1 + m)^n) × m ÷ ((1 + m)^n − 1), with m = return ÷ 12 and n = months, never below zero. Years needed = the first month at which the entered contribution reaches the goal, up to 100 years. Required return = the annual rate (monthly rate × 12) at which the entered contribution reaches the goal in the stated years, found by bisection.',
   taxdef: 'The annual contribution is deposited at each year end and compounds annually. Tax-deferred: the full pre-tax contribution grows at the return; the ending balance is taxed once at the withdrawal rate. Taxable: the contribution after today’s tax grows at the return × (1 − tax on earnings), a simplification that taxes every year’s earnings at that one rate. Tax paid along the way = taxable growth × t ÷ (1 − t).',
   roth: 'Annual year-end contributions, annual compounding. Traditional: the pre-tax contribution grows at the return and the ending balance is taxed at the retirement rate. Roth on the same take-home pay: the contribution × (1 − today’s rate) grows and is not taxed. Roth on the same contribution: the same dollars go in, and because they come from after-tax pay the client gives up the deduction, so take-home pay falls by an extra contribution × today’s rate each year. In both cases the extra tax paid now is contribution × today’s rate a year. On the same-take-home basis the two tie exactly when the retirement rate equals today’s rate.',
   networth: 'Total assets = cash and savings + retirement accounts + taxable investments + home value + other assets. Total liabilities = mortgage + other debts. Net worth = assets − liabilities. Home equity = home value − mortgage. Investable assets = cash + taxable investments + retirement accounts.',
-  payout: 'Each month the balance grows at the return ÷ 12, then the withdrawal is taken. If “rise with inflation” is on, the withdrawal increases by the inflation rate at each year end. The money is “depleted” in the month the balance falls to half a cent or less; the illustration runs up to 40 years. Withdrawal rate = first-year monthly withdrawal × 12 ÷ starting balance. “Sustainable for 30 years” = the first-year monthly withdrawal, with the same inflation setting, that brings the balance to zero at exactly 30 years, found by bisection.',
+  payout: 'Each month the balance grows at the return ÷ 12, then the withdrawal is taken. If “rise with inflation” is on, the withdrawal increases by the inflation rate at each year end. The money is “depleted” in the month the balance falls to half a cent or less. Withdrawal rate = first-year monthly withdrawal × 12 ÷ starting balance. “Sustainable for N years” = the first-year monthly withdrawal, with the same inflation setting, that brings the balance to zero at exactly the number of years entered (30 by default), found by bisection. The balance is illustrated for 40 years, or for the number of years entered if longer.',
   cashflow: 'Each year: expenses = today’s expenses × (1 + inflation)^year; Social Security as described under the conventions; pension & other income from its start year, rising with inflation if selected, otherwise level. The gap = (expenses − Social Security − pension & other income) ÷ 12 is withdrawn each month after growth at the return ÷ 12; a surplus is added to the balance. Coverage = the month the balance reaches zero. Spending capacity = the level change to today’s-dollar spending, positive or negative, that makes the balance land at zero at the end of the horizon, found by bisection.',
   retire: 'Years to retirement = retirement age − current age; years in retirement = plan-through age − retirement age. Needed at retirement = the smallest balance that funds the gap (spending − Social Security − pension & other income, each inflated from today) for the retirement years at the return in retirement, month by month as in Income & expenses, found by bisection. Projected savings = savings today plus monthly contributions at the pre-retirement return. Extra monthly saving = the contribution that would reach the need, less the current contribution. Social Security’s share = the year-one benefit ÷ year-one spending, both in retirement-year dollars; zero if the claiming age is after the retirement age.',
   rmd: 'Birth year = calendar year − current age. RMDs begin at 73 for birth years 1951–1959 and at 75 for 1960 or later. The balance grows monthly with contributions until the retirement age at the pre-retirement return, then at the retirement return. From the starting age, each year’s RMD = the prior year-end balance ÷ the IRS Uniform Lifetime Table divisor for that age, withdrawn at year end. Tax = RMD × retirement tax rate. Social Security at the RMD age = today’s benefit × (1 + inflation)^years. Today’s-dollar figures divide by the same factor.',
@@ -1897,7 +1905,7 @@ const PLAN_INFO = [
   { id: 'pl_office', fixed: true, value: 0 }
 ];
 const PLAN_ASSUMP = [
-  { id: 'pl_start', label: 'Starting amount', kind: 'money', value: DEFAULTS.principal, map: ['g_principal', 'c_principal', 'i_principal', 'o_principal', 'r_principal'] },
+  { id: 'pl_start', label: 'Starting amount', kind: 'money', value: DEFAULTS.principal, map: ['g_principal', 'c_principal', 'i_principal', 'o_principal', 'r_principal', 'w_principal'] },
   { id: 'pl_now', label: 'Retirement savings today', kind: 'money', value: DEFAULTS.savingsNow, map: ['r2_now', 'd_bal', 'w_ret'] },
   { id: 'pl_pmt', label: 'Monthly contribution', kind: 'money', value: DEFAULTS.monthly, map: ['g_pmt', 'c_pmt', 'i_pmt', 'w_pmt', 'o_pmt', 't_contrib*12', 'h_contrib*12', 'r2_pmt', 'd_pmt', 'v_extra'] },
   { id: 'pl_ret', label: 'Assumed annual return', kind: 'pct', value: DEFAULTS.rate, map: ['g_rate', 'c_inv', 'i_rate', 'r_rate', 'w_rate', 'o_rate', 't_rate', 'h_rate', 'r2_ret', 'd_ret', 'v_ret'] },
