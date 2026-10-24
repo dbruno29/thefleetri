@@ -2048,15 +2048,15 @@ const setAll = on => { plan.pl_include = on ? MODULES.map(m => m.id) : []; check
 colPr.append(h('div', { class: 'checks-head' }, h('b', {}, 'Calculators to include'), h('span', {}, h('button', { type: 'button', onclick: () => setAll(true) }, 'all'), '·', h('button', { type: 'button', onclick: () => setAll(false) }, 'none'))));
 colPr.append(h('div', { class: 'legend' }, h('span', { class: 'tag plan' }, 'Standard'), h('span', {}, 'runs on the standard assumptions'), h('span', { class: 'tag enter' }, 'Enter'), h('span', {}, 'needs client figures typed into the calculator before printing')));
 const basisEls = {};
-function basisTag(m, withList) {
-  const b = basisOf(m);
-  const tag = h('button', { type: 'button', class: 'tag ' + (b.standard ? 'plan' : b.todo.length ? 'enter' : 'done'), title: b.standard ? 'Every input comes from the standard assumptions or is a scenario setting' : 'Open ' + m.tab, onclick: () => show(m.id, true) },
-    b.standard ? 'Standard' : b.todo.length ? 'Enter' : 'Entered');
+function basisTag(m, withList, plain) {   // plain: a label only (the calculators list, where the name and arrow open the calculator)
+  const b = basisOf(m); const cls = 'tag ' + (b.standard ? 'plan' : b.todo.length ? 'enter' : 'done'), text = b.standard ? 'Standard' : b.todo.length ? 'Enter' : 'Entered';
+  const tag = plain ? h('span', { class: cls }, text)
+    : h('button', { type: 'button', class: cls, title: b.standard ? 'Every input comes from the standard assumptions or is a scenario setting' : 'Open ' + m.tab, onclick: () => show(m.id, true) }, text);
   if (!withList || b.standard) return tag;
   const sub = h('span', { class: 'basis-sub' }, b.manual.map(f => f.label).join(', ') + (b.todo.length ? ' — ' + (b.todo.length === b.manual.length ? 'all' : b.todo.length) + ' still at default values' : ' — entered'));
   return h('span', { class: 'basis' }, tag, sub);
 }
-function refreshBasis(modId) { const m = MODULES.find(x => x.id === modId); if (!m) return; Object.values(basisEls).forEach(host => { if (host.mod === m) host.el.replaceChildren(basisTag(m, host.withList)); }); }
+function refreshBasis(modId) { const m = MODULES.find(x => x.id === modId); if (!m) return; Object.values(basisEls).forEach(host => { if (host.mod === m) host.el.replaceChildren(basisTag(m, host.withList, host.plain)); }); }
 GROUPS.forEach(g => { checks.append(h('div', { class: 'grp' }, g.name)); MODULES.filter(m => m.group === g.id).forEach(m => {
   const c = h('input', { type: 'checkbox', id: 'inc_' + m.id }); c.checked = plan.pl_include.includes(m.id);
   c.addEventListener('change', () => { plan.pl_include = MODULES.map(x => x.id).filter(id => id === m.id ? c.checked : plan.pl_include.includes(id)); planEdited(); });
@@ -2064,7 +2064,7 @@ GROUPS.forEach(g => { checks.append(h('div', { class: 'grp' }, g.name)); MODULES
   checks.append(h('div', { class: 'chk-row' }, h('label', { class: 'chk', for: 'inc_' + m.id }, c, m.tab), host)); }); });
 colPr.append(checks);
 /* same tag on the calculators list page */
-MODULES.forEach(m => { const host = document.getElementById('bh_' + m.id); if (host) basisEls['ls_' + m.id] = { mod: m, el: host, withList: true }; });
+MODULES.forEach(m => { const host = document.getElementById('bh_' + m.id); if (host) basisEls['ls_' + m.id] = { mod: m, el: host, withList: true, plain: true }; });
 MODULES.forEach(m => refreshBasis(m.id));
 planHooks.push(refreshBasis);
 colPr.append(h('div', { class: 'sub-h' }, 'Include in each calculator'));
