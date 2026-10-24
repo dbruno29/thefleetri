@@ -173,19 +173,19 @@ main .wrap.pad { padding-block: 28px 56px; }
 /* Calculators list */
 .catlist { display: grid; gap: 30px; }
 .catlist .cat + .cat { border-top: 3px solid var(--navy); padding-top: 30px; }   /* a bold rule where one category ends and the next begins */
-.row-item .go { border: 0; background: none; padding: 6px 4px; color: var(--green); cursor: pointer; display: inline-flex; align-items: center; transition: transform .15s; }
+.row-item .go { padding: 6px 4px; color: var(--green); display: inline-flex; align-items: center; transition: transform .15s; }
 .row-item .go svg { width: 30px; height: 17px; display: block; }
-.row-item .go:hover { transform: translateX(4px); color: var(--green-text); }
-.row-item .go:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.row-item:hover .go { transform: translateX(4px); color: var(--green-text); }
+.row-item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (max-width: 640px) { .row-item .go { grid-column: 2; grid-row: 1; align-self: start; } }
 .cat { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; }
 @media (max-width: 860px) { .cat { grid-template-columns: 1fr; gap: 10px; } }
 .cat .t { font-family: var(--display); font-weight: 700; font-size: 24px; line-height: 1.1; color: var(--navy); }
 .cat .b { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; }
 .rows { border-top: 1px solid var(--line); }
-.row-item { display: grid; grid-template-columns: 220px 1fr auto; gap: 18px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
-.row-item .name { border: 0; background: none; padding: 0; text-align: left; font: 700 15.5px/1.2 var(--ui); color: var(--navy); cursor: pointer; }
-.row-item .name:hover { text-decoration: underline; text-underline-offset: 4px; }
+.row-item { display: grid; grid-template-columns: 220px 1fr auto; gap: 18px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
+.row-item .name { display: inline-block; text-align: left; font: 700 15.5px/1.2 var(--ui); color: var(--navy); }
+.row-item:hover .name { text-decoration: underline; text-underline-offset: 4px; }
 .row-item .q { font-size: 13.5px; color: var(--ink-2); line-height: 1.5; }
 @media (max-width: 640px) { .row-item { grid-template-columns: 1fr auto; } .row-item .q { grid-column: 1 / -1; } }
 
@@ -1696,10 +1696,13 @@ const listPage = h('section', { id: 'mod_list', hidden: '' },
 const catlist = h('div', { class: 'catlist' });
 GROUPS.forEach(g => {
   const rows = h('div', { class: 'rows' });
-  MODULES.filter(m => m.group === g.id).forEach(m => rows.append(h('div', { class: 'row-item' },
-    h('div', { class: 'namecell' }, h('button', { type: 'button', class: 'name', id: 'idx_' + m.id, onclick: () => show(m.id, true) }, m.tab), h('span', { class: 'basis-host list', id: 'bh_' + m.id })),
+  MODULES.filter(m => m.group === g.id).forEach(m => { const row = h('div', { class: 'row-item', role: 'button', tabindex: '0', 'aria-label': 'Open ' + m.tab },
+    h('div', { class: 'namecell' }, h('span', { class: 'name', id: 'idx_' + m.id }, m.tab), h('span', { class: 'basis-host list', id: 'bh_' + m.id })),
     h('div', { class: 'q' }, m.desc),
-    h('button', { type: 'button', class: 'go', 'aria-label': 'Open ' + m.tab, title: 'Open ' + m.tab, onclick: () => show(m.id, true), html: '<svg viewBox="0 0 28 16" aria-hidden="true"><path d="M1 8h24M18 1l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' }))));
+    h('span', { class: 'go', 'aria-hidden': 'true', html: '<svg viewBox="0 0 28 16"><path d="M1 8h24M18 1l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>' }));
+    row.addEventListener('click', () => show(m.id, true));
+    row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(m.id, true); } });
+    rows.append(row); });
   catlist.append(h('div', { class: 'cat', id: 'cat_' + g.id }, h('div', {}, h('span', { class: 'eyebrow' }, GROUP_META[g.id].n), h('div', { class: 't' }, g.name), h('div', { class: 'b' }, g.blurb)), rows));
 });
 listPage.append(h('div', { class: 'wrap pad' }, catlist));
@@ -2267,8 +2270,11 @@ function closeReport() { document.title = docTitle; if (reportReturn) { const id
 /* ---------- Router ---------- */
 const PAGES = { home, plan: planPage, list: listPage, methods: methodsPage };
 document.getElementById('hyp-methods').addEventListener('click', () => show('methods', true));
-function show(id, user) {
-  if (!PAGES[id] && !built[id]) id = 'home';
+const validRoute = id => !!(PAGES[id] || built[id]);
+let current = null;
+/* render: show the page and sync the nav; never touches history */
+function render(id) {
+  if (!validRoute(id)) id = 'home';
   Object.keys(PAGES).forEach(k => { PAGES[k].hidden = k !== id; });
   MODULES.forEach(m => { const b = built[m.id]; const on = m.id === id; b.section.hidden = !on; if (on) b.update(); });
   const calcPage = id === 'list' || !!built[id];
@@ -2276,11 +2282,30 @@ function show(id, user) {
   select.value = built[id] ? id : 'list';
   const navKey = built[id] ? 'list' : id;
   document.querySelectorAll('#navlinks [data-page]').forEach(b => b.classList.toggle('is-on', b.dataset.page === navKey));
-  if (user) { try { history.replaceState(null, '', '#' + id); } catch (e) {} window.scrollTo({ top: 0 }); }
+  current = id;
 }
+/* show: user navigation; one pushState per page change, none when re-selecting the current page */
+function show(id, user) {
+  if (!validRoute(id)) id = 'home';
+  if (user && id !== current) { try { history.pushState(null, '', '#' + id); } catch (e) {} }
+  render(id);
+  if (user) window.scrollTo({ top: 0 });
+}
+/* Back/Forward and direct hash links: render what the URL now names; no history writes.
+   popstate and hashchange can both fire for one move; render is idempotent, so that's fine. */
+const renderFromURL = () => {
+  const id = (location.hash || '').replace('#', '');
+  const ok = validRoute(id);
+  if (id && !ok) { try { history.replaceState(null, '', '#home'); } catch (e) {} }  // correct an invalid route in place
+  const target = ok ? id : 'home';
+  if (target !== current) render(target);
+};
+window.addEventListener('popstate', renderFromURL);
+window.addEventListener('hashchange', renderFromURL);
+/* Initial load: replaceState only to correct an invalid hash; an empty hash stays as-is */
 const start = (location.hash || '').replace('#', '');
-show(PAGES[start] || built[start] ? start : 'home', false);
-window.addEventListener('hashchange', () => { const id = (location.hash || '').replace('#', ''); show(PAGES[id] || built[id] ? id : 'home', false); });
+if (start && !validRoute(start)) { try { history.replaceState(null, '', '#home'); } catch (e) {} }
+render(start);
 })();
 </script>
 
