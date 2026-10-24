@@ -68,7 +68,7 @@ h2.disp { font-size: clamp(24px, 2.6vw, 32px); }
 /* Navigation */
 .nav { background: var(--bg); border-bottom: 1px solid var(--line); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 7; }
 .nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 66px; }
-.brandmark { display: flex; align-items: center; gap: 14px; text-decoration: none; min-width: 0; }
+.brandmark { display: flex; align-items: center; gap: 14px; text-decoration: none; min-width: 0; flex: none; }
 .brandmark img { display: block; width: 150px; height: auto; }
 .brandmark .sub { font: 600 10.5px/1.2 var(--ui); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); padding-left: 14px; border-left: 1px solid var(--line); white-space: nowrap; }
 .navlinks { display: flex; align-items: center; gap: 4px; }
@@ -77,6 +77,10 @@ h2.disp { font-size: clamp(24px, 2.6vw, 32px); }
 .navlinks button.is-on { color: var(--navy); border-bottom-color: var(--green); }
 .navlinks .cta { margin-left: 10px; }
 @media (max-width: 760px) { .navlinks .nav-long { display: none; } .brandmark .sub { display: none; } .navlinks .cta { display: none; } .navlinks button { padding: 10px 6px; font-size: 11px; letter-spacing: .04em; } .brandmark img { width: 110px; } .navlinks { gap: 0; } }
+@media (max-width: 1100px) { .brandmark .sub { display: none; } }
+@media (max-width: 760px) { .subbar .hyp { white-space: normal; text-align: right; line-height: 1.4; } }
+@media (max-width: 520px) { .nav .wrap { flex-wrap: wrap; gap: 0; padding-top: 8px; } .navlinks { width: 100%; justify-content: space-between; } .navlinks button { padding: 10px 2px 9px; } }
+@media (max-width: 360px) { .navlinks button { font-size: 10px; letter-spacing: .01em; } }
 .subbar { border-bottom: 1px solid var(--line-soft); background: var(--surface-2); }
 .subbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 10px 18px; padding-block: 8px; flex-wrap: wrap; }
 .picker { display: flex; align-items: center; gap: 10px; min-width: 0; }
@@ -531,7 +535,7 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
       <button type="button" data-page="home">Overview</button>
       <button type="button" data-page="plan"><span class="nav-long">Illustration </span>Inputs</button>
       <button type="button" data-page="list">Calculators</button>
-      <button type="button" class="cta sm" id="nav-print">Print an illustration</button>
+      <button type="button" data-page="methods">Methodology</button>
     </div>
   </div>
 </nav>
@@ -1706,7 +1710,6 @@ select.append(h('option', { value: 'list' }, 'All calculators'));
 GROUPS.forEach(g => { const og = h('optgroup', { label: g.name }); MODULES.filter(m => m.group === g.id).forEach(m => og.append(h('option', { value: m.id }, m.tab))); select.append(og); });
 select.addEventListener('change', () => show(select.value, true));
 document.querySelectorAll('#navlinks [data-page]').forEach(b => b.addEventListener('click', () => show(b.dataset.page, true)));
-document.getElementById('nav-print').addEventListener('click', () => { show('plan', true); const el = document.getElementById('pl_preview'); if (el) el.scrollIntoView({ block: 'center' }); });
 const footCalcs = document.getElementById('foot-calcs'); MODULES.forEach(m => footCalcs.append(h('li', {}, h('button', { type: 'button', onclick: () => show(m.id, true) }, m.tab))));
 const footExplore = document.getElementById('foot-explore'); [['home', 'Overview'], ['plan', 'Illustration inputs'], ['list', 'Calculators'], ['methods', 'Methodology']].forEach(([id, t]) => footExplore.append(h('li', {}, h('button', { type: 'button', onclick: () => show(id, true) }, t))));
 footExplore.append(h('li', {}, h('a', { href: 'https://www.wcipllc.com/', target: '_blank', rel: 'noopener noreferrer', style: 'text-decoration:none' }, 'wcipllc.com ↗')));
