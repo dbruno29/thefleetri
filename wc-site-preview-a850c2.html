@@ -259,9 +259,12 @@ footer .wrap { padding-top: 56px; padding-bottom: 32px; display: grid; gap: 36px
 
 /* Home hero: the dock photo, zoomed so the couple and boat sit to the right of the headline */
 .hero > img.dock { object-position: center 60%; transform: scale(1.5); transform-origin: 0% 62%; }
-.hero::before { background: linear-gradient(90deg, rgba(0,0,50,.84) 0%, rgba(0,0,50,.62) 38%, rgba(0,0,50,.14) 62%, rgba(0,0,50,0) 100%); }
-@media (max-width: 1180px) { .hero .eyebrow { max-width: 380px; } }
-@media (max-width: 640px) { .hero::before { background: rgba(0,0,50,.74); } }
+.hero::before { background: linear-gradient(90deg, rgba(0,0,50,.66) 0%, rgba(0,0,50,.44) 38%, rgba(0,0,50,.08) 62%, rgba(0,0,50,0) 100%); }
+.hero h1 { text-shadow: 0 2px 14px rgba(0,0,30,.45), 0 1px 2px rgba(0,0,30,.35); }
+.hero .eyebrow { max-width: 380px; text-shadow: 0 1px 2px rgba(0,0,30,.7), 0 0 10px rgba(0,0,30,.5); }
+.hero .cta.ghost { background: rgba(0,0,40,.32); }
+.hero .cta.ghost:hover { background: rgba(255,255,255,.14); }
+@media (max-width: 640px) { .hero::before { background: rgba(0,0,50,.60); } }
 
 /* Photos sit on the page without frames or captions */
 .figure { margin: 0; padding: 0; background: none; border: 0; display: block; }
