@@ -277,7 +277,8 @@ svg .end-label { font-size: 12px; font-weight: 700; fill: var(--ink); }
 svg .cross { stroke: var(--line); stroke-width: 1; }
 
 /* Plan inputs page */
-.plan { border: 1px solid var(--line); border-radius: 2px; display: grid; grid-template-columns: 1fr 1fr 1.15fr; }
+.plan { border: 1px solid var(--line); border-radius: 2px; display: grid; grid-template-columns: 1fr 1fr; }
+.plan-col h3.h-gap { margin-top: 14px; padding-top: 16px; border-top: 1px solid var(--line); }
 .plan-col { padding: 18px 20px 20px; border-left: 1px solid var(--line-soft); min-width: 0; display: grid; gap: 8px; align-content: start; }
 .plan-col:first-child { border-left: 0; }
 .plan-col h3 { font: 600 11px/1 var(--ui); letter-spacing: .18em; text-transform: uppercase; color: var(--green-text); }
@@ -355,21 +356,6 @@ details.adv > .field:first-of-type { border-top: 1px solid var(--line-soft); }
 .legend i.ov { height: 0; width: 14px; border-top: 2.5px dotted; border-radius: 0; }
 /* Plan inputs: hover shows which calculators use each input */
 .prow label.feeds { text-decoration: underline dotted var(--line); text-underline-offset: 4px; cursor: help; }
-/* Client plans */
-.clients { border: 1px solid var(--line); border-radius: 2px; padding: 14px 20px 14px; margin-bottom: 18px; display: grid; gap: 10px; }
-.cl-head { display: flex; gap: 6px 12px; align-items: baseline; flex-wrap: wrap; }
-.cl-head h3 { font: 600 11px/1 var(--ui); letter-spacing: .18em; text-transform: uppercase; color: var(--green-text); }
-.cl-head span { font-size: 12.5px; color: var(--muted); }
-.cl-row { display: flex; gap: 10px 22px; align-items: center; flex-wrap: wrap; }
-.cl-grp { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.cl-grp + .cl-grp { padding-left: 22px; border-left: 1px solid var(--line-soft); }
-.clients .select-wrap select { min-width: 240px; }
-.cl-status { font-size: 13px; color: var(--ink-2); }
-.cl-status b { color: var(--ink); }
-.cl-status .dirty { color: #8A4B00; }
-.cl-msg { font-size: 12.5px; color: var(--green-text); }
-.cl-msg:empty { display: none; }
-@media (max-width: 760px) { .cl-grp + .cl-grp { padding-left: 0; border-left: 0; } .clients .select-wrap select { min-width: 0; } .clients { padding: 12px 14px; } }
 .client-chip { margin-left: auto; font: 600 12px/1.2 var(--ui); color: var(--ink-2); border: 1px solid var(--line); border-radius: 2px; padding: 4px 9px; max-width: 40ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .client-chip b { color: var(--ink); }
 @media (hover: none) { .hover-hint { display: none; } }
@@ -1600,6 +1586,9 @@ MODULES.forEach(m => m.fields.forEach(f => { if (f.kind === 'pct' && /tax rate/i
 // Loans: realistic ceilings. Past ~30% over 50+ years the month-by-month schedule loses floating-point precision.
 ['l_rate', 'm_rate', 'x_rateA', 'x_rateB', 'v_rate'].forEach(id => MODULES.forEach(m => m.fields.forEach(f => { if (f.id === id) f.hard = 30; })));
 ['l_years', 'm_years', 'x_yearsA', 'x_yearsB', 'v_term'].forEach(id => MODULES.forEach(m => m.fields.forEach(f => { if (f.id === id) f.hard = 50; })));
+// Client figures entered in each calculator (the plan page holds only the standard assumptions); kept in input order
+const MANUAL_ADD = { taxdef: ['t_now', 't_wd'], roth: ['h_now', 'h_wd'], cashflow: ['f_age', 'f_ss', 'f_ssage'], retire: ['r2_age', 'r2_retage', 'r2_endage', 'r2_ss', 'r2_ssage'], rmd: ['d_age', 'd_retage', 'd_tax', 'd_ss'], mortgage: ['m_income', 'm_debts'], mortcmp: ['x_amount'], debtinv: ['v_bal'], insure: ['n_income', 'n_mortgage', 'n_cover'], networth: ['w_mort'] };
+MODULES.forEach(m => { const want = new Set((m.manual || []).concat(MANUAL_ADD[m.id] || [])); m.manual = m.fields.map(f => f.id).filter(id => want.has(id)); });
 /* Fee disclosure: every investment figure is gross of fees; loan and mortgage math involves no advisory fee */
 const FEE_FREE = ['loan', 'mortgage', 'mortcmp', 'networth'];
 // Long figures (billions and up) get a smaller size instead of wrapping mid-number
@@ -1647,7 +1636,7 @@ home.append(
       h('ul', { class: 'stat-list' }, ...GROUPS.map(g => h('li', {}, h('button', { type: 'button', onclick: () => { show('list', true); const el = document.getElementById('cat_' + g.id); if (el) el.scrollIntoView({ block: 'start' }); } }, g.name))))))),
   h('section', { class: 'sec' }, h('div', { class: 'wrap' }, h('div', { class: 'two' },
     h('div', { class: 'text' }, h('span', { class: 'eyebrow' }, 'How it works'), h('h2', { class: 'disp' }, 'Shared plan information'),
-      h('p', { class: 'lead' }, 'Client name, ages, Social Security, starting balance, contributions, return, inflation, household income and debts, and retirement withdrawals live in one place. Every calculator reads from them, flags anything you change for a single scenario, and the printout shows exactly which inputs were used and which were entered by hand.'),
+      h('p', { class: 'lead' }, 'The client name and the standard assumptions, such as starting amount, contributions, returns, inflation, and horizon, live in one place. Every calculator that uses them reads from them and flags anything you change for a single scenario. Client figures such as ages, Social Security, income, and debts are entered in each calculator, and the printout shows which inputs came from the plan and which were entered.'),
       h('div', {}, h('button', { type: 'button', class: 'arrow-link', onclick: () => show('plan', true) }, 'Go to plan inputs'))),
     h('div', { class: 'figure', html: growthFigure() + '<div class="cap">Illustrative: ' + money(DEFAULTS.principal) + ' to start, ' + money(DEFAULTS.monthly) + ' a month, ' + DEFAULTS.rate + '% assumed, 30 years. Hypothetical, gross of fees.</div>' })))),
   h('section', { class: 'sec' }, h('div', { class: 'wrap' },
@@ -1660,7 +1649,7 @@ mainEl.append(home);
 
 /* Plan inputs page */
 const planPage = h('section', { id: 'mod_plan', hidden: '' },
-  h('div', { class: 'pagehead' }, h('div', { class: 'wrap' }, h('span', { class: 'eyebrow' }, 'Plan inputs'), h('h1', {}, 'Enter plan information'), h('p', { class: 'lead' }, 'Please fill in the client’s information and assumptions below. General information appears on the printed cover. Standard assumptions apply to every calculator that uses them; an input changed on a single calculator is flagged. Choose what the printed plan includes in the right-hand column.'))),
+  h('div', { class: 'pagehead' }, h('div', { class: 'wrap' }, h('span', { class: 'eyebrow' }, 'Plan inputs'), h('h1', {}, 'Enter plan information'), h('p', { class: 'lead' }, 'Enter the client’s name and the date, which appear on the printed plan, and the standard assumptions, which apply to every calculator that uses them. Client figures such as ages, Social Security, income, and debts are entered in each calculator. Choose what the printed plan includes in the right-hand column. Nothing entered here is saved or sent anywhere; closing or reloading the page clears it.'))),
   h('div', { class: 'wrap pad', id: 'plan-host' }));
 mainEl.append(planPage);
 
@@ -1894,12 +1883,13 @@ const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + St
 const fmtDate = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return iso || ''; return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
 const OFFICES = ['690 Douglas Pike, Smithfield, RI 02917', '35 Dyer Street, Portsmouth, RI 02871'];
 const PLAN_INFO = [
-  { id: 'pl_client', label: 'Prepared for', type: 'text', value: '', placeholder: 'Client name(s)', wide: true },
-  { id: 'pl_advisor', label: 'Prepared by', type: 'text', value: 'Derek D. Doo, AIF®, PPC™, CPFA', wide: true },
-  { id: 'pl_email', label: 'Advisor email', type: 'text', value: 'derek.doo@wcipllc.com' },
-  { id: 'pl_phone', label: 'Advisor phone', type: 'text', value: '401-735-4500' },
-  { id: 'pl_office', label: 'Office', type: 'select', value: 0 },
-  { id: 'pl_date', label: 'Date', type: 'date', value: todayISO() }
+  { id: 'pl_client', label: 'Client name', type: 'text', value: '', placeholder: 'Client name(s)', wide: true },
+  { id: 'pl_date', label: 'Date', type: 'date', value: todayISO() },
+  // not shown on the plan page; still printed on the cover and in each printout
+  { id: 'pl_advisor', fixed: true, value: 'Derek D. Doo, AIF®, PPC™, CPFA' },
+  { id: 'pl_email', fixed: true, value: 'derek.doo@wcipllc.com' },
+  { id: 'pl_phone', fixed: true, value: '401-735-4500' },
+  { id: 'pl_office', fixed: true, value: 0 }
 ];
 const PLAN_ASSUMP = [
   { id: 'pl_start', label: 'Starting amount', kind: 'money', value: DEFAULTS.principal, map: ['g_principal', 'c_principal', 'i_principal', 'o_principal', 'r_principal'] },
@@ -1912,24 +1902,8 @@ const PLAN_ASSUMP = [
   { id: 'pl_years', label: 'Years / horizon', kind: 'int', value: DEFAULTS.years, map: ['g_years', 'c_years', 'i_years', 'r_years', 'w_years', 'o_years', 't_years', 'f_years', 'h_years'] },
   { id: 'pl_bal', label: 'Retirement balance / goal', kind: 'money', value: DEFAULTS.retireBalance, map: ['p_bal', 'f_bal', 'o_target'] },
   { id: 'pl_exp', label: 'Annual expenses (today)', kind: 'money', value: DEFAULTS.cfExpenses, map: ['f_exp', 'r2_exp'] },
-  { id: 'pl_inc', label: 'Pension & other retirement income (today)', kind: 'money', value: DEFAULTS.cfIncome, map: ['f_inc', 'r2_inc'] },
-  { id: 'pl_wdmode', label: 'Withdrawal set as', kind: 'seg', group: 'wd', value: 'amt', options: [{ v: 'amt', label: 'Monthly amount' }, { v: 'pct', label: '% of starting balance' }], map: ['p_mode'] },
-  { id: 'pl_wd', label: 'Monthly withdrawal (first year)', kind: 'money', group: 'wd', value: DEFAULTS.retireMonthly, map: ['p_wd'], when: () => plan.pl_wdmode === 'amt' },
-  { id: 'pl_wdpct', label: 'Withdrawal rate (% of starting balance)', kind: 'pct', group: 'wd', value: Math.round(DEFAULTS.retireMonthly * 12 / DEFAULTS.retireBalance * 1000) / 10, map: ['p_pct'], when: () => plan.pl_wdmode === 'pct' },
-  { id: 'pl_wdadj', label: 'Withdrawals rise with inflation', kind: 'seg', group: 'wd', value: 1, options: [{ v: 1, label: 'Yes' }, { v: 0, label: 'No' }], map: ['p_adj'] },
-  { id: 'pl_hhinc', label: 'Gross annual household income', kind: 'money', group: 'hh', value: 150000, map: ['m_income', 'n_income'] },
-  { id: 'pl_tax', label: 'Marginal tax rate today', kind: 'pct', group: 'hh', value: DEFAULTS.taxNow, map: ['t_now', 'h_now'] },
-  { id: 'pl_taxret', label: 'Tax rate in retirement', kind: 'pct', group: 'hh', value: DEFAULTS.taxRetire, map: ['t_wd', 'h_wd', 'd_tax'] },
-  { id: 'pl_mort', label: 'Mortgage balance', kind: 'money', group: 'hh', value: DEFAULTS.mortgage, map: ['n_mortgage', 'x_amount', 'v_bal', 'w_mort'] },
-  { id: 'pl_debt', label: 'Other monthly debt payments', kind: 'money', group: 'hh', value: 500, map: ['m_debts'] },
-  { id: 'pl_cover', label: 'Existing life insurance', kind: 'money', group: 'hh', value: 250000, map: ['n_cover'] },
-  { id: 'pl_age', label: 'Current age', kind: 'int', unit: 'yrs', group: 'age', value: DEFAULTS.age, map: ['f_age', 'r2_age', 'd_age'] },
-  { id: 'pl_retage', label: 'Retirement age', kind: 'int', unit: 'yrs', group: 'age', value: DEFAULTS.retireAge, map: ['r2_retage', 'd_retage'] },
-  { id: 'pl_endage', label: 'Plan through age', kind: 'int', unit: 'yrs', group: 'age', value: DEFAULTS.endAge, map: ['r2_endage'] },
-  { id: 'pl_ss', label: 'Social Security benefit (annual, today’s dollars)', kind: 'money', group: 'age', value: DEFAULTS.ss, map: ['f_ss', 'r2_ss', 'd_ss'] },
-  { id: 'pl_ssage', label: 'Social Security claiming age', kind: 'int', unit: 'yrs', group: 'age', value: DEFAULTS.ssAge, map: ['f_ssage', 'r2_ssage'] }
+  { id: 'pl_inc', label: 'Pension & other retirement income (today)', kind: 'money', value: DEFAULTS.cfIncome, map: ['f_inc', 'r2_inc'] }
 ];
-const HH_USERS = 'tax, mortgage, debt, net worth and life insurance';
 const PARTS = [
   { id: 'pp_assump', label: 'Assumptions used', value: true },
   { id: 'pp_stats', label: 'Key statistics', value: true },
@@ -1940,28 +1914,10 @@ const PARTS = [
 ];
 const defaultPlan = () => { const o = {}; PLAN_INFO.forEach(f => { o[f.id] = f.id === 'pl_date' ? todayISO() : f.value; }); PLAN_ASSUMP.forEach(f => { o[f.id] = f.value; }); PARTS.forEach(f => { o[f.id] = f.value; });
   o.pl_include = MODULES.map(m => m.id); o.pl_highlight = true; o.pl_source = 'current'; return o; };
-/* Anything read back from browser storage or from a plan file is untrusted: keep only known inputs, of the right type, within the input limits */
-function cleanPlan(src) {
-  const out = {}; if (!src || typeof src !== 'object') return out;
-  PLAN_INFO.forEach(f => { const v = src[f.id]; if (f.type === 'select') { if (Number.isInteger(v) && v >= 0 && v < OFFICES.length) out[f.id] = v; } else if (typeof v === 'string') out[f.id] = v.slice(0, 200); });
-  PLAN_ASSUMP.forEach(f => { const v = src[f.id]; if (f.kind === 'seg') { if (f.options.some(o => o.v === v)) out[f.id] = v; } else if (typeof v === 'number' && isFinite(v)) out[f.id] = Math.max(0, Math.min(HARD_MAX[f.kind], v)); });
-  PARTS.forEach(p => { if (typeof src[p.id] === 'boolean') out[p.id] = src[p.id]; });
-  if (typeof src.pl_highlight === 'boolean') out.pl_highlight = src.pl_highlight;
-  if (src.pl_source === 'plan' || src.pl_source === 'current') out.pl_source = src.pl_source;
-  if (Array.isArray(src.pl_include)) out.pl_include = MODULES.map(m => m.id).filter(id => src.pl_include.includes(id));
-  return out;
-}
-function cleanStates(src) {
-  const out = {}; if (!src || typeof src !== 'object') return out;
-  MODULES.forEach(m => { const s = src[m.id]; if (!s || typeof s !== 'object') return; const o = {};
-    m.fields.forEach(f => { const v = s[f.id]; if (f.kind === 'seg') { if (f.options.some(x => x.v === v)) o[f.id] = v; } else if (typeof v === 'number' && isFinite(v)) o[f.id] = clampTyped(f, v); });
-    out[m.id] = o; });
-  return out;
-}
+/* Nothing is saved: every input lives in this page only and clears when it is closed or reloaded. Remove anything earlier versions left in this browser. */
 const plan = defaultPlan();
-try { Object.assign(plan, cleanPlan(JSON.parse(localStorage.getItem('wcip-plan') || 'null'))); } catch (e) {}
-var onPlanSaved = null;
-const savePlan = () => { try { localStorage.setItem('wcip-plan', JSON.stringify(plan)); } catch (e) {} if (onPlanSaved) onPlanSaved(); };
+try { ['wcip-plan', 'wcip-clients', 'wcip-work'].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+const planEdited = () => { const name = (plan.pl_client || '').trim(); document.querySelectorAll('.client-chip').forEach(c => { c.hidden = !name; c.replaceChildren('Client: ', h('b', {}, name)); c.title = name; }); };
 
 const fieldById = {}; MODULES.forEach(m => m.fields.forEach(f => { fieldById[f.id] = { mod: m, f }; }));
 const planMap = {}; PLAN_ASSUMP.forEach(a => a.map.forEach(m => { const [fid, k] = m.split('*'); planMap[fid] = { a, k: k ? Number(k) : 1 }; }));
@@ -1997,68 +1953,25 @@ planHooks.push(markCustom);
 /* Plan panel (on the overview) */
 const planEl = h('div', { class: 'plan', id: 'plan' });
 const moneyIn = (id, value, onInput) => { const i = h('input', { type: 'text', id, class: 'money', inputmode: 'numeric', autocomplete: 'off', value: Math.round(value).toLocaleString('en-US') }); i.addEventListener('input', () => { const raw = i.value.replace(/[^0-9.]/g, ''); if (raw === '') return; onInput(Number(raw)); }); i.addEventListener('blur', () => { i.value = Math.round(plan[id]).toLocaleString('en-US'); }); return i; };
-// General information
-const colInfo = h('div', { class: 'plan-col' }, h('h3', {}, 'General information'));
-PLAN_INFO.forEach(f => {
-  let input;
-  if (f.type === 'select') { input = h('select', { id: f.id }); OFFICES.forEach((o, i) => input.append(h('option', { value: i }, o))); input.value = plan[f.id]; input.addEventListener('change', () => { plan[f.id] = Number(input.value); savePlan(); }); }
-  else { input = h('input', { type: f.type, id: f.id, class: 'text' + (f.wide ? ' wide' : ''), value: plan[f.id], placeholder: f.placeholder || '', autocomplete: 'off' }); input.addEventListener('input', () => { plan[f.id] = input.value; savePlan(); }); }
-  colInfo.append(h('div', { class: 'prow' }, h('label', { for: f.id }, f.label), h('div', { class: 'field-val' }, input)));
+// Client and standard assumptions share the left column
+const colAs = h('div', { class: 'plan-col' }, h('h3', {}, 'Client'));
+PLAN_INFO.filter(f => !f.fixed).forEach(f => {
+  const input = h('input', { type: f.type, id: f.id, class: 'text' + (f.wide ? ' wide' : ''), value: plan[f.id], placeholder: f.placeholder || '', autocomplete: 'off' });
+  input.addEventListener('input', () => { plan[f.id] = input.value; planEdited(); });
+  colAs.append(h('div', { class: 'prow' }, h('label', { for: f.id }, f.label), h('div', { class: 'field-val' }, input)));
 });
-// Standard assumptions
-const colAs = h('div', { class: 'plan-col' }, h('h3', {}, 'Standard assumptions', h('span', { class: 'hover-hint' }, 'hover over an input to see which calculators use it')), h('div', { class: 'plan-fee' }, 'Rates of return are gross of advisory fees and other costs; results net of fees would be lower.'));
-let wdUI = null;
-const syncWd = () => { const bal = plan.pl_bal; if (plan.pl_wdmode === 'amt') plan.pl_wdpct = bal > 0 ? Math.round(plan.pl_wd * 12 / bal * 1000) / 10 : 0; else plan.pl_wd = Math.round(bal * plan.pl_wdpct / 100 / 12); };
-function refreshWd() {
-  if (!wdUI) return; const amt = plan.pl_wdmode === 'amt';
-  wdUI.amtRow.hidden = !amt; wdUI.pctRow.hidden = amt;
-  if (amt) wdUI.pct.value = plan.pl_wdpct; else if (document.activeElement !== wdUI.amt) wdUI.amt.value = Math.round(plan.pl_wd).toLocaleString('en-US');
-  wdUI.help.textContent = amt ? '= ' + plan.pl_wdpct + '% of the ' + money(plan.pl_bal) + ' retirement balance a year' : '= ' + money(plan.pl_wd) + ' a month in year one, on a ' + money(plan.pl_bal) + ' balance';
-}
-function planChanged() { syncWd(); refreshWd(); savePlan(); MODULES.forEach(m => markCustom(m.id)); }
+colAs.append(h('h3', { class: 'h-gap' }, 'Standard assumptions', h('span', { class: 'hover-hint' }, 'hover over an input to see which calculators use it')), h('div', { class: 'plan-fee' }, 'Rates of return are gross of advisory fees and other costs; results net of fees would be lower. Ages, Social Security, income, taxes, and debts are entered in each calculator.'));
+function planChanged() { planEdited(); MODULES.forEach(m => markCustom(m.id)); }
 const numIn = f => { const input = h('input', { type: 'number', id: f.id, value: plan[f.id], step: f.kind === 'pct' ? 0.1 : 1, min: 0, inputmode: 'decimal' }); input.addEventListener('input', () => { const v = Number(input.value); if (!isFinite(v) || input.value === '') return; plan[f.id] = v; planChanged(); }); return input; };
 const valBox = (f, input) => h('div', { class: 'field-val' }, f.kind === 'money' ? h('span', { class: 'aff' }, '$') : null, input, f.kind === 'pct' ? h('span', { class: 'aff' }, '%') : f.kind === 'int' ? h('span', { class: 'aff' }, 'yrs') : null);
 const segIn = f => { const seg = h('div', { class: 'seg', role: 'group', 'aria-label': f.label, id: f.id });
   f.options.forEach(o => { const bt = h('button', { type: 'button', id: f.id + '_' + o.v, class: o.v === plan[f.id] ? 'is-on' : '', 'aria-pressed': String(o.v === plan[f.id]) }, o.label);
     bt.addEventListener('click', () => { plan[f.id] = o.v; seg.querySelectorAll('button').forEach(x => { x.classList.toggle('is-on', x === bt); x.setAttribute('aria-pressed', String(x === bt)); }); planChanged(); }); seg.append(bt); });
   return seg; };
-PLAN_ASSUMP.filter(f => !f.group).forEach(f => {
+PLAN_ASSUMP.forEach(f => {
   const input = f.kind === 'money' ? moneyIn(f.id, plan[f.id], v => { plan[f.id] = v; planChanged(); }) : numIn(f);
   colAs.append(planRow(f, f.label, valBox(f, input)));
 });
-{
-  const A = id => PLAN_ASSUMP.find(a => a.id === id);
-  const fMode = A('pl_wdmode'), fAmt = A('pl_wd'), fPct = A('pl_wdpct'), fAdj = A('pl_wdadj');
-  const amt = moneyIn(fAmt.id, plan[fAmt.id], v => { plan.pl_wd = v; planChanged(); });
-  const pct = numIn(fPct);
-  const amtRow = planRow(fAmt, fAmt.label, valBox(fAmt, amt));
-  const pctRow = planRow(fPct, 'Withdrawal rate', valBox(fPct, pct));
-  const help = h('div', { class: 'wd-help', id: 'pl_wdhelp' });
-  colAs.append(h('div', { class: 'wd-group' },
-    h('div', { class: 'wd-h' }, 'Retirement withdrawals', h('span', {}, 'applies to Retirement payout')),
-    planRow(fMode, fMode.label, segIn(fMode), ' stack'),
-    amtRow, pctRow, help,
-    planRow(fAdj, fAdj.label, segIn(fAdj), ' stack')));
-  wdUI = { amt, pct, amtRow, pctRow, help };
-  syncWd(); refreshWd();
-}
-{
-  const hh = h('div', { class: 'wd-group' }, h('div', { class: 'wd-h' }, 'Household', h('span', {}, 'feeds the ' + HH_USERS + ' calculators')));
-  PLAN_ASSUMP.filter(f => f.group === 'hh').forEach(f => {
-    const input = f.kind === 'money' ? moneyIn(f.id, plan[f.id], v => { plan[f.id] = v; planChanged(); }) : numIn(f);
-    hh.append(planRow(f, f.label, valBox(f, input)));
-  });
-  colAs.append(hh);
-}
-{
-  const ag = h('div', { class: 'wd-group' }, h('div', { class: 'wd-h' }, 'Ages & Social Security', h('span', {}, 'feeds Income & expenses, How much to retire, and the RMD estimate')));
-  PLAN_ASSUMP.filter(f => f.group === 'age').forEach(f => {
-    const input = f.kind === 'money' ? moneyIn(f.id, plan[f.id], v => { plan[f.id] = v; planChanged(); }) : numIn(f);
-    ag.append(planRow(f, f.label, valBox(f, input)));
-  });
-  ag.append(h('div', { class: 'wd-help', style: 'border-bottom:0' }, 'Enter the benefit at the claiming age from the client’s ssa.gov statement; the calculators do not adjust it for claiming earlier or later.'));
-  colAs.append(ag);
-}
 const applyStatus = h('span', { class: 'status' });
 const applyBtn = h('button', { type: 'button', class: 'btn btn-primary', id: 'pl_apply' }, 'Apply to all calculators');
 applyBtn.addEventListener('click', () => { const n = applyPlanAll(); applyStatus.textContent = n ? 'Applied to ' + n + ' calculator' + (n === 1 ? '' : 's') : 'All calculators already match the plan'; setTimeout(() => { applyStatus.textContent = ''; }, 3000); });
@@ -2066,7 +1979,7 @@ colAs.append(h('div', { class: 'plan-actions' }, applyBtn, applyStatus));
 // Printable plan
 const colPr = h('div', { class: 'plan-col' }, h('h3', {}, 'Printable plan'));
 const checks = h('div', { class: 'checks' });
-const setAll = on => { plan.pl_include = on ? MODULES.map(m => m.id) : []; checks.querySelectorAll('input').forEach(c => { c.checked = on; }); savePlan(); };
+const setAll = on => { plan.pl_include = on ? MODULES.map(m => m.id) : []; checks.querySelectorAll('input').forEach(c => { c.checked = on; }); planEdited(); };
 colPr.append(h('div', { class: 'checks-head' }, h('b', {}, 'Calculators to include'), h('span', {}, h('button', { type: 'button', onclick: () => setAll(true) }, 'all'), '·', h('button', { type: 'button', onclick: () => setAll(false) }, 'none'))));
 colPr.append(h('div', { class: 'legend' }, h('span', { class: 'tag plan' }, 'Standard'), h('span', {}, 'runs on the standard assumptions'), h('span', { class: 'tag enter' }, 'Enter'), h('span', {}, 'needs client figures typed into the calculator before printing')));
 const basisEls = {};
@@ -2081,7 +1994,7 @@ function basisTag(m, withList) {
 function refreshBasis(modId) { const m = MODULES.find(x => x.id === modId); if (!m) return; Object.values(basisEls).forEach(host => { if (host.mod === m) host.el.replaceChildren(basisTag(m, host.withList)); }); }
 GROUPS.forEach(g => { checks.append(h('div', { class: 'grp' }, g.name)); MODULES.filter(m => m.group === g.id).forEach(m => {
   const c = h('input', { type: 'checkbox', id: 'inc_' + m.id }); c.checked = plan.pl_include.includes(m.id);
-  c.addEventListener('change', () => { plan.pl_include = MODULES.map(x => x.id).filter(id => id === m.id ? c.checked : plan.pl_include.includes(id)); savePlan(); });
+  c.addEventListener('change', () => { plan.pl_include = MODULES.map(x => x.id).filter(id => id === m.id ? c.checked : plan.pl_include.includes(id)); planEdited(); });
   const host = h('span', { class: 'basis-host' }); basisEls['pr_' + m.id] = { mod: m, el: host, withList: true };
   checks.append(h('div', { class: 'chk-row' }, h('label', { class: 'chk', for: 'inc_' + m.id }, c, m.tab), host)); }); });
 colPr.append(checks);
@@ -2091,13 +2004,13 @@ MODULES.forEach(m => refreshBasis(m.id));
 planHooks.push(refreshBasis);
 colPr.append(h('div', { class: 'sub-h' }, 'Include in each calculator'));
 const parts = h('div', { class: 'checks' });
-PARTS.forEach(p => { const c = h('input', { type: 'checkbox', id: p.id }); c.checked = !!plan[p.id]; c.addEventListener('change', () => { plan[p.id] = c.checked; savePlan(); }); parts.append(h('label', { class: 'chk', for: p.id }, c, p.label)); });
-const hl = h('input', { type: 'checkbox', id: 'pl_highlight' }); hl.checked = !!plan.pl_highlight; hl.addEventListener('change', () => { plan.pl_highlight = hl.checked; savePlan(); });
+PARTS.forEach(p => { const c = h('input', { type: 'checkbox', id: p.id }); c.checked = !!plan[p.id]; c.addEventListener('change', () => { plan[p.id] = c.checked; planEdited(); }); parts.append(h('label', { class: 'chk', for: p.id }, c, p.label)); });
+const hl = h('input', { type: 'checkbox', id: 'pl_highlight' }); hl.checked = !!plan.pl_highlight; hl.addEventListener('change', () => { plan.pl_highlight = hl.checked; planEdited(); });
 parts.append(h('label', { class: 'chk', for: 'pl_highlight' }, hl, 'Flag inputs that differ from the plan'));
 colPr.append(parts);
 colPr.append(h('div', { class: 'sub-h' }, 'Print with'));
 const radios = h('div', { class: 'radios' });
-[['current', 'Each calculator’s current inputs'], ['plan', 'Plan assumptions applied to every calculator']].forEach(([v, label]) => { const r = h('input', { type: 'radio', name: 'pl_source', id: 'pl_source_' + v, value: v }); r.checked = plan.pl_source === v; r.addEventListener('change', () => { if (r.checked) { plan.pl_source = v; savePlan(); } }); radios.append(h('label', { class: 'chk', for: 'pl_source_' + v }, r, label)); });
+[['current', 'Each calculator’s current inputs'], ['plan', 'Plan assumptions applied to every calculator']].forEach(([v, label]) => { const r = h('input', { type: 'radio', name: 'pl_source', id: 'pl_source_' + v, value: v }); r.checked = plan.pl_source === v; r.addEventListener('change', () => { if (r.checked) { plan.pl_source = v; planEdited(); } }); radios.append(h('label', { class: 'chk', for: 'pl_source_' + v }, r, label)); });
 colPr.append(radios);
 const canPrint = (() => { try { return window.self === window.top; } catch (e) { return false; } })();
 const previewBtn = h('button', { type: 'button', class: 'btn btn-primary', id: 'pl_preview' }, 'Preview plan');
@@ -2105,136 +2018,11 @@ const printBtn = h('button', { type: 'button', class: 'btn', id: 'pl_print' }, '
 previewBtn.addEventListener('click', () => openReport(false));
 printBtn.addEventListener('click', () => openReport(true));
 colPr.append(h('div', { class: 'plan-actions' }, previewBtn, canPrint ? printBtn : h('span', { class: 'status', style: 'color:var(--muted)' }, 'Printing works from the saved file, not inside this viewer.')));
-planEl.append(colInfo, colAs, colPr);
+planEl.append(colAs, colPr);
 document.getElementById('plan-host').append(planEl);
 
 
-/* ---------- Client plans: kept in this browser's storage or saved to a file. Nothing is sent anywhere. ---------- */
-const STORE_KEY = 'wcip-clients', WORK_KEY = 'wcip-work', FILE_FORMAT = 'wealthcare-compounding-illustrator';
-const readStore = () => { try { const o = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if (o && typeof o === 'object' && o.plans && typeof o.plans === 'object' && !Array.isArray(o.plans)) return o; } catch (e) {} return { v: 1, plans: {} }; };
-const writeStore = st => { try { localStorage.setItem(STORE_KEY, JSON.stringify(st)); return true; } catch (e) { return false; } };
-const statesOf = get => { const o = {}; MODULES.forEach(m => { const s = get(m); if (!s) return; o[m.id] = {}; m.fields.forEach(f => { o[m.id][f.id] = s[f.id]; }); }); return o; };
-const snapshot = () => ({ plan: cleanPlan(plan), calc: statesOf(m => built[m.id].state), scen: statesOf(m => scenA[m.id]) });
-const keyOf = s => JSON.stringify({ plan: cleanPlan(s.plan), calc: cleanStates(s.calc), scen: cleanStates(s.scen) });
-const fmtStamp = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); };
-let activeName = '', baseKey = '';
-const isDirty = () => keyOf(snapshot()) !== baseKey;
-const markBase = () => { baseKey = keyOf(snapshot()); };
-function refreshPlanUI() {
-  PLAN_INFO.forEach(f => { const el = document.getElementById(f.id); if (el) el.value = plan[f.id]; });
-  PLAN_ASSUMP.forEach(f => {
-    if (f.kind === 'seg') { f.options.forEach(o => { const bt = document.getElementById(f.id + '_' + o.v); if (bt) { const on = o.v === plan[f.id]; bt.classList.toggle('is-on', on); bt.setAttribute('aria-pressed', String(on)); } }); return; }
-    const el = document.getElementById(f.id); if (el) el.value = f.kind === 'money' ? Math.round(plan[f.id]).toLocaleString('en-US') : plan[f.id]; });
-  PARTS.concat([{ id: 'pl_highlight' }]).forEach(p => { const el = document.getElementById(p.id); if (el) el.checked = !!plan[p.id]; });
-  MODULES.forEach(m => { const c = document.getElementById('inc_' + m.id); if (c) c.checked = plan.pl_include.includes(m.id); });
-  ['current', 'plan'].forEach(v => { const r = document.getElementById('pl_source_' + v); if (r) r.checked = plan.pl_source === v; });
-  syncWd(); refreshWd();
-}
-/* Replace the whole working session (plan inputs, every calculator's inputs, held scenarios); calculators missing from the snapshot go back to defaults */
-function applySnapshot(snap) {
-  const p = cleanPlan(snap.plan), calc = cleanStates(snap.calc), sc = cleanStates(snap.scen);
-  Object.keys(plan).forEach(k => { delete plan[k]; }); Object.assign(plan, defaultPlan(), p);
-  refreshPlanUI(); savePlan();
-  Object.keys(scenA).forEach(k => { delete scenA[k]; });
-  MODULES.forEach(m => { if (sc[m.id]) scenA[m.id] = Object.assign(defaultsOf(m), sc[m.id]); });
-  MODULES.forEach(m => { const b = built[m.id]; b.setState(Object.assign(defaultsOf(m), calc[m.id] || {})); b.onChange(null); });
-}
-var workT = null;
-function persistWork() { try { localStorage.setItem(WORK_KEY, JSON.stringify({ calc: statesOf(m => built[m.id].state), scen: statesOf(m => scenA[m.id]), active: activeName, base: baseKey })); } catch (e) {} }
-function workChanged() { clearTimeout(workT); workT = setTimeout(() => { persistWork(); updateClientStatus(); }, 350); }
-// a second click within four seconds confirms
-function armed(btn, label, run) {
-  if (btn.dataset.armed) { clearTimeout(btn._t); btn.textContent = btn.dataset.label; delete btn.dataset.armed; btn.classList.remove('is-warn'); run(); return; }
-  btn.dataset.label = btn.textContent; btn.dataset.armed = '1'; btn.textContent = label; btn.classList.add('is-warn');
-  btn._t = setTimeout(() => { btn.textContent = btn.dataset.label; delete btn.dataset.armed; btn.classList.remove('is-warn'); }, 4000);
-}
-const clientsEl = h('div', { class: 'clients', id: 'clients' });
-const savedSel = h('select', { id: 'cl_saved', 'aria-label': 'Saved client plans' });
-const saveBtn = h('button', { type: 'button', class: 'btn btn-primary', id: 'cl_save', title: 'Save the plan inputs, every calculator’s inputs, and any held Scenario A under the client name' }, 'Save plan');
-const newBtn = h('button', { type: 'button', class: 'btn', id: 'cl_new', title: 'Clear the client and return every input to the standard assumptions; advisor details and print options are kept' }, 'New client');
-const openBtn = h('button', { type: 'button', class: 'btn', id: 'cl_open' }, 'Open');
-const delBtn = h('button', { type: 'button', class: 'btn', id: 'cl_delete' }, 'Delete');
-const exportBtn = h('button', { type: 'button', class: 'btn', id: 'cl_export', title: 'Download this plan as a file, for a backup or to open it on another computer' }, 'Save to file');
-const importBtn = h('button', { type: 'button', class: 'btn', id: 'cl_import', title: 'Open a plan file saved from this site' }, 'Open file');
-const fileIn = h('input', { type: 'file', id: 'cl_file', accept: '.json,application/json', hidden: '' });
-const clStatus = h('div', { class: 'cl-status', id: 'cl_status' }), clMsg = h('div', { class: 'cl-msg', id: 'cl_msg', 'aria-live': 'polite' });
-const note = t => { clMsg.textContent = t; clearTimeout(note.t); note.t = setTimeout(() => { clMsg.textContent = ''; }, 6000); };
-clientsEl.append(
-  h('div', { class: 'cl-head' }, h('h3', {}, 'Client plans'), h('span', {}, 'Saved in this browser on this computer. Nothing is sent anywhere; Save to file makes a copy you can back up or move.')),
-  h('div', { class: 'cl-row' },
-    h('div', { class: 'cl-grp' }, saveBtn, newBtn),
-    h('div', { class: 'cl-grp' }, h('div', { class: 'select-wrap' }, savedSel), openBtn, delBtn),
-    h('div', { class: 'cl-grp' }, exportBtn, importBtn, fileIn)),
-  clStatus, clMsg);
-function updateClientStatus(st) {
-  st = st || readStore(); const name = (plan.pl_client || '').trim(); const e = activeName && st.plans[activeName];
-  document.querySelectorAll('.client-chip').forEach(c => { c.hidden = !name; c.replaceChildren('Client: ', h('b', {}, name)); c.title = name; });
-  if (e) clStatus.replaceChildren('Open: ', h('b', {}, activeName), isDirty() ? h('span', { class: 'dirty' }, ' · changes not saved yet') : ' · saved ' + fmtStamp(e.saved));
-  else clStatus.replaceChildren(name ? h('span', {}, h('b', {}, name), h('span', { class: 'dirty' }, ' · not saved in this browser yet')) : 'No client plan open. Enter a name under Prepared for, then Save plan.');
-}
-function refreshClients() {
-  const st = readStore(); const names = Object.keys(st.plans).sort((a, b) => a.localeCompare(b)); const cur = savedSel.value;
-  savedSel.replaceChildren(h('option', { value: '' }, names.length ? 'Saved plans (' + names.length + ')' : 'No saved plans yet'), ...names.map(n => h('option', { value: n }, n + ' · ' + fmtStamp(st.plans[n].saved))));
-  savedSel.value = names.includes(activeName) ? activeName : names.includes(cur) ? cur : '';
-  openBtn.disabled = delBtn.disabled = !names.length;
-  updateClientStatus(st);
-}
-saveBtn.addEventListener('click', () => {
-  const name = (plan.pl_client || '').trim();
-  if (!name) { note('Enter the client’s name under Prepared for, then save.'); const el = document.getElementById('pl_client'); if (el) el.focus(); return; }
-  const go = () => { const st = readStore(); st.plans[name] = Object.assign({ saved: new Date().toISOString() }, snapshot());
-    if (!writeStore(st)) { note('This browser would not store the plan (storage is full or turned off). Use Save to file instead.'); return; }
-    activeName = name; markBase(); persistWork(); refreshClients(); note('Saved “' + name + '” in this browser.'); };
-  if (readStore().plans[name] && name !== activeName) armed(saveBtn, 'Replace saved plan?', go); else go();
-});
-openBtn.addEventListener('click', () => {
-  const name = savedSel.value; if (!name) { note('Choose a saved plan from the list first.'); savedSel.focus(); return; }
-  const go = () => { const e = readStore().plans[name]; if (!e) { note('That plan is no longer saved in this browser.'); refreshClients(); return; }
-    applySnapshot(e); activeName = name; markBase(); persistWork(); refreshClients(); note('Opened “' + name + '”.'); };
-  if (isDirty() && name !== activeName) armed(openBtn, 'Discard unsaved changes?', go); else if (isDirty()) armed(openBtn, 'Discard changes and reopen?', go); else go();
-});
-delBtn.addEventListener('click', () => {
-  const name = savedSel.value; if (!name) { note('Choose a saved plan from the list first.'); savedSel.focus(); return; }
-  armed(delBtn, 'Delete from this browser?', () => { const st = readStore(); delete st.plans[name]; writeStore(st); if (activeName === name) activeName = ''; persistWork(); refreshClients(); note('Deleted “' + name + '” from this browser. The inputs on screen are unchanged.'); });
-});
-newBtn.addEventListener('click', () => {
-  const go = () => { const keep = {}; ['pl_advisor', 'pl_email', 'pl_phone', 'pl_office', 'pl_include', 'pl_highlight', 'pl_source'].concat(PARTS.map(p => p.id)).forEach(k => { keep[k] = plan[k]; });
-    applySnapshot({ plan: Object.assign(defaultPlan(), keep), calc: {}, scen: {} }); activeName = ''; markBase(); persistWork(); refreshClients();
-    note('New client: every input is back to the standard assumptions.'); const el = document.getElementById('pl_client'); if (el) el.focus(); };
-  if (isDirty()) armed(newBtn, 'Discard unsaved changes?', go); else go();
-});
-exportBtn.addEventListener('click', () => {
-  const name = (plan.pl_client || '').trim() || 'Client';
-  const data = Object.assign({ format: FILE_FORMAT, version: 1, name, exported: new Date().toISOString() }, snapshot());
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
-  const a = h('a', { href: url, download: 'WealthCare plan - ' + (name.replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '').trim().slice(0, 60) || 'Client') + ' - ' + todayISO() + '.json' });
-  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
-  note('Saved “' + name + '” to a file in your downloads folder.');
-});
-importBtn.addEventListener('click', () => { fileIn.value = ''; if (isDirty()) armed(importBtn, 'Discard unsaved changes?', () => fileIn.click()); else fileIn.click(); });
-fileIn.addEventListener('change', () => {
-  const file = fileIn.files && fileIn.files[0]; if (!file) return;
-  if (file.size > 2e6) { note('That file is too large to be a plan file from this site.'); return; }
-  file.text().then(t => { let d = null; try { d = JSON.parse(t); } catch (e) {}
-    if (!d || typeof d !== 'object' || d.format !== FILE_FORMAT) { note('That file is not a plan file from this site.'); return; }
-    applySnapshot(d); activeName = ''; markBase(); persistWork(); refreshClients();
-    note('Opened “' + ((plan.pl_client || '').trim() || 'plan') + '” from the file. Save plan to keep it in this browser.'); }, () => note('That file could not be read.'));
-});
-document.getElementById('plan-host').prepend(clientsEl);
-onPlanSaved = workChanged; planHooks.push(workChanged);
-// Restore the working session (each calculator's inputs and held scenarios) from the last visit
-{
-  let w = null; try { w = JSON.parse(localStorage.getItem(WORK_KEY) || 'null'); } catch (e) {}
-  if (w && typeof w === 'object') {
-    const calc = cleanStates(w.calc), sc = cleanStates(w.scen);
-    MODULES.forEach(m => { if (sc[m.id]) scenA[m.id] = Object.assign(defaultsOf(m), sc[m.id]);
-      if (calc[m.id]) { built[m.id].setState(Object.assign(defaultsOf(m), calc[m.id])); if (m.onChange) m.onChange(null, built[m.id].state, m.fields); } });
-    activeName = typeof w.active === 'string' ? w.active : ''; baseKey = typeof w.base === 'string' ? w.base : '';
-  }
-  if (!baseKey) markBase();
-  refreshClients();
-}
-MODULES.forEach(m => { markCustom(m.id); refreshBasis(m.id); });
+MODULES.forEach(m => markCustom(m.id));
 
 /* Report */
 const reportEl = h('div', { id: 'report' });
@@ -2275,8 +2063,7 @@ function openReport(andPrint, only) {
     return h('tr', {}, h('td', {}, a.label), h('td', { class: 'v' }, fmtVal({ kind: a.kind, id: a.id, options: a.options }, plan[a.id], plan)), h('td', {}, users.join(', ') || '—'));
   })));
   const g_name = g => g.name;
-  const live = PLAN_ASSUMP.filter(a => !a.when || a.when());
-  const assumpGroups = [['Standard assumptions', 'shared across the calculators that use them', live.filter(a => !a.group)], ['Retirement withdrawals', 'applies to Retirement payout', live.filter(a => a.group === 'wd')], ['Household', 'feeds the ' + HH_USERS + ' calculators', live.filter(a => a.group === 'hh')], ['Ages & Social Security', 'feeds Income & expenses, How much to retire, and the RMD estimate', live.filter(a => a.group === 'age')]];
+  const assumpGroups = [['Standard assumptions', 'shared across the calculators that use them', PLAN_ASSUMP]];
   const listTable = ms => h('table', { class: 'rtab' }, h('thead', {}, h('tr', {}, h('th', {}, 'Calculator'), h('th', {}, 'What it shows'), h('th', {}, 'Basis'))), h('tbody', {}, ...ms.map(m => { const b = basisOf(m);
     return h('tr', {}, h('td', {}, m.tab), h('td', {}, m.question), h('td', {}, b.standard ? 'Standard assumptions' : 'Entered in the calculator: ' + b.manual.map(f => f.label).join(', ') + (b.todo.length ? ' (' + (b.todo.length === b.manual.length ? 'default values' : b.todo.length + ' at default values') + ')' : ''))); })));
   reportEl.append(bar, pages);
