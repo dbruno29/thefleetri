@@ -538,6 +538,42 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
   @page cover { margin: 0; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+.foot-sub { font-size: 11.5px; }
+/* Larger grey text for readability (screen only; printouts keep their layout) */
+@media screen {
+  body:not(.report-mode) .brandmark .sub { font-size: 12px; }
+  body:not(.report-mode) .picker label { font-size: 12.5px; }
+  body:not(.report-mode) .hyp { font-size: 13px; }
+  body:not(.report-mode) .m-item h3 span { font-size: 14.5px; }
+  body:not(.report-mode) .figure .cap { font-size: 13px; }
+  body:not(.report-mode) .block .k { font-size: 13.5px; }
+  body:not(.report-mode) .field-val .aff { font-size: 13px; }
+  body:not(.report-mode) .field-help { font-size: 13.5px; }
+  body:not(.report-mode) .kstat .sub { font-size: 13.5px; }
+  body:not(.report-mode) .linkbtn { font-size: 13px; }
+  body:not(.report-mode) svg .tick { font-size: 12.5px; }
+  body:not(.report-mode) .more-btn .more-n { font-size: 13.5px; }
+  body:not(.report-mode) .plan-col h3 span, body:not(.report-mode) .wd-h span, body:not(.report-mode) .sec-h .sub { font-size: 13px; }
+  body:not(.report-mode) .wd-help { font-size: 13.5px; }
+  body:not(.report-mode) .checks .grp { font-size: 12px; }
+  body:not(.report-mode) .checks-head span button { font-size: 13.5px; }
+  body:not(.report-mode) .plan-status { font-size: 13.5px; }
+  body:not(.report-mode) .menu-list .mi-sub { font-size: 13px; }
+  body:not(.report-mode) details.adv > summary .v { font-size: 13px; }
+  body:not(.report-mode) .scen-tab .al { font-size: 12.5px; }
+  body:not(.report-mode) .scen-none { font-size: 14.5px; }
+  body:not(.report-mode) .feenote { font-size: 14px; }
+  body:not(.report-mode) .plan-fee { font-size: 13.5px; }
+  body:not(.report-mode) .legend { font-size: 13.5px; }
+  body:not(.report-mode) .basis-sub { font-size: 13px; }
+  body:not(.report-mode) .basis { max-width: 230px; }
+  body:not(.report-mode) .tag { font-size: 10.5px; padding: 2px 7px; }
+  body:not(.report-mode) .plan-actions .status { font-size: 13.5px; }
+  body:not(.report-mode) .stat-n span { font-size: 13px; }
+  body:not(.report-mode) .fine { font-size: 13px; }
+  body:not(.report-mode) .foot-sub { font-size: 13px; }
+}
 </style>
 
 <nav class="nav" aria-label="Site">
@@ -575,8 +611,8 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
       <div class="fcol"><h4>Calculators</h4><ul id="foot-calcs"></ul></div>
       <div class="fcol"><h4>Explore</h4><ul id="foot-explore"></ul></div>
       <div class="fcol"><h4>External tools</h4><ul>
-        <li><a href="https://www.schwab.com/ira/ira-calculators/roth-ira-conversion" target="_blank" rel="noopener noreferrer" style="text-decoration:none">Roth IRA Conversion Calculator ↗</a><br><span style="font-size:11.5px;color:rgba(255,255,255,.6)">Charles Schwab</span></li>
-        <li style="margin-top:8px"><a href="https://www.capitalgroup.com/advisor/tools/planning/ext/college-savings-calculator" target="_blank" rel="noopener noreferrer" style="text-decoration:none">College Savings Calculator ↗</a><br><span style="font-size:11.5px;color:rgba(255,255,255,.6)">Capital Group</span></li>
+        <li><a href="https://www.schwab.com/ira/ira-calculators/roth-ira-conversion" target="_blank" rel="noopener noreferrer" style="text-decoration:none">Roth IRA Conversion Calculator ↗</a><br><span class="foot-sub" style="color:rgba(255,255,255,.6)">Charles Schwab</span></li>
+        <li style="margin-top:8px"><a href="https://www.capitalgroup.com/advisor/tools/planning/ext/college-savings-calculator" target="_blank" rel="noopener noreferrer" style="text-decoration:none">College Savings Calculator ↗</a><br><span class="foot-sub" style="color:rgba(255,255,255,.6)">Capital Group</span></li>
       </ul></div>
     </div>
     <div class="fine">
