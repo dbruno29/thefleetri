@@ -473,3 +473,5 @@ a.utility__item:hover { color: var(--white); text-decoration: underline; }
 .legal h2 { font-size: 1.5rem; margin-top: 2.5rem; }
 .form__status.is-ok { border-color: #2E8B57; background: #EAF6EF; }
 .form__status.is-error { border-color: var(--blue); background: var(--blue-tint); }
+.form__fallback { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.form__fallback[hidden] { display: none; }

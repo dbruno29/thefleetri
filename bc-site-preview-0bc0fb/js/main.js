@@ -93,11 +93,40 @@
     pill.hidden = false;
   });
 
-  /* Appointment form: posts to the office inbox via FormSubmit.
-     With JavaScript it sends in the background and confirms on the page;
-     without JavaScript the form posts normally to the same service. */
+  /* Appointment form: sends the request to the office inbox (brunochiroteam@gmail.com)
+     through FormSubmit. If the online send fails for any reason (no connection, service
+     not yet activated by the office), the visitor gets a ready-to-send email with their
+     details filled in, so the request still reaches the office. */
+  var OFFICE_EMAIL = "brunochiroteam@gmail.com";
+  function field(form, name) {
+    var el = form.querySelector('[name="' + name + '"]');
+    if (!el) return "";
+    if (el.type === "radio") {
+      var c = form.querySelector('[name="' + name + '"]:checked');
+      return c ? c.value : "";
+    }
+    return (el.value || "").trim();
+  }
+  function requestMailto(form) {
+    var lines = [
+      "Hello, I'd like to request an appointment.",
+      "",
+      "Name: " + field(form, "name"),
+      "Phone: " + field(form, "phone"),
+      "Email: " + field(form, "email"),
+      "New or current patient: " + field(form, "patient"),
+      "Preferred day: " + field(form, "preferred_day"),
+      "Preferred time: " + field(form, "preferred_time"),
+      "Reason for visit: " + field(form, "message")
+    ];
+    return "mailto:" + OFFICE_EMAIL + "?subject=" + encodeURIComponent("Appointment request - " + (field(form, "name") || "website")) +
+      "&body=" + encodeURIComponent(lines.join("\n"));
+  }
+
   Array.prototype.forEach.call(document.querySelectorAll("form[data-mail-form]"), function (form) {
     var status = form.querySelector(".form__status");
+    var fallback = form.querySelector(".form__fallback");
+    var fallbackLink = fallback ? fallback.querySelector("a") : null;
     var button = form.querySelector('button[type="submit"]');
     function show(msg, ok) {
       if (!status) return;
@@ -106,10 +135,16 @@
       status.hidden = false;
       status.focus();
     }
+    function offerEmail() {
+      if (!fallback || !fallbackLink) return;
+      fallbackLink.href = requestMailto(form);
+      fallback.hidden = false;
+    }
     form.addEventListener("submit", function (e) {
       var endpoint = form.getAttribute("data-ajax");
       if (!endpoint || !window.fetch) return;
       e.preventDefault();
+      if (fallback) fallback.hidden = true;
       var name = form.querySelector('[name="name"]');
       var phone = form.querySelector('[name="phone"]');
       if (!name.value.trim() || !phone.value.trim()) {
@@ -118,19 +153,20 @@
         return;
       }
       if (button) { button.disabled = true; button.dataset.label = button.innerHTML; button.textContent = "Sending…"; }
+      var failMsg = "We couldn't send your request online. Use the button below to email it to the office, or call (401) 353-5990.";
       fetch(endpoint, { method: "POST", headers: { "Accept": "application/json" }, body: new FormData(form) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (res) {
-          if (res.ok && String(res.d.success) !== "false") {
+          var good = res.ok && String(res.d.success) === "true";
+          if (good) {
             form.reset();
-            show("Request sent. Someone from our office will contact you to confirm a time.", true);
+            show("Request sent to our office. We'll contact you to confirm a time.", true);
           } else {
-            show("Your request didn't go through. Please call (401) 353-5990 or email brunochiroteam@gmail.com.", false);
+            show(failMsg, false);
+            offerEmail();
           }
         })
-        .catch(function () {
-          show("Your request didn't go through. Please call (401) 353-5990 or email brunochiroteam@gmail.com.", false);
-        })
+        .catch(function () { show(failMsg, false); offerEmail(); })
         .then(function () { if (button) { button.disabled = false; button.innerHTML = button.dataset.label; } });
     });
   });
