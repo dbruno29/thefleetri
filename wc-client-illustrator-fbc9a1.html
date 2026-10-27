@@ -1640,7 +1640,7 @@ MODULES.forEach(m => m.fields.forEach(f => { if (f.kind === 'pct' && /tax rate/i
 ['l_rate', 'm_rate', 'x_rateA', 'x_rateB', 'v_rate'].forEach(id => MODULES.forEach(m => m.fields.forEach(f => { if (f.id === id) f.hard = 30; })));
 ['l_years', 'm_years', 'x_yearsA', 'x_yearsB', 'v_term'].forEach(id => MODULES.forEach(m => m.fields.forEach(f => { if (f.id === id) f.hard = 50; })));
 // Client figures entered in each calculator (the plan page holds only the standard assumptions); kept in input order
-const MANUAL_ADD = { payout: ['p_bal', 'p_wd', 'p_pct'], taxdef: ['t_now', 't_wd'], roth: ['h_now', 'h_wd'], cashflow: ['f_age', 'f_ss', 'f_ssage'], retire: ['r2_age', 'r2_retage', 'r2_endage', 'r2_ss', 'r2_ssage'], rmd: ['d_age', 'd_retage', 'd_tax', 'd_ss'], mortgage: ['m_income', 'm_debts'], mortcmp: ['x_amount'], debtinv: ['v_bal'], insure: ['n_income', 'n_mortgage', 'n_cover'], networth: ['w_mort'] };
+const MANUAL_ADD = { payout: ['p_bal', 'p_wd', 'p_pct'], taxdef: ['t_now', 't_wd'], roth: ['h_now', 'h_wd'], cashflow: ['f_age', 'f_ss', 'f_ssage', 'f_exp', 'f_inc'], retire: ['r2_age', 'r2_retage', 'r2_endage', 'r2_ss', 'r2_ssage', 'r2_now', 'r2_exp', 'r2_inc'], rmd: ['d_age', 'd_retage', 'd_tax', 'd_ss', 'd_bal'], mortgage: ['m_income', 'm_debts'], mortcmp: ['x_amount'], debtinv: ['v_bal'], insure: ['n_income', 'n_mortgage', 'n_cover'], networth: ['w_mort', 'w_ret'] };
 MODULES.forEach(m => { const want = new Set((m.manual || []).concat(MANUAL_ADD[m.id] || [])); m.manual = m.fields.map(f => f.id).filter(id => want.has(id)); });
 /* Fee disclosure: every investment figure is gross of fees; loan and mortgage math involves no advisory fee */
 const FEE_FREE = ['loan', 'mortgage', 'mortcmp', 'networth'];
@@ -1961,16 +1961,12 @@ const PLAN_INFO = [
 ];
 const PLAN_ASSUMP = [
   { id: 'pl_start', label: 'Starting amount', kind: 'money', value: DEFAULTS.principal, map: ['g_principal', 'c_principal', 'i_principal', 'o_principal', 'r_principal', 'w_principal'] },
-  { id: 'pl_now', label: 'Retirement savings today', kind: 'money', value: DEFAULTS.savingsNow, map: ['r2_now', 'd_bal', 'w_ret'] },
   { id: 'pl_pmt', label: 'Monthly contribution', kind: 'money', value: DEFAULTS.monthly, map: ['g_pmt', 'c_pmt', 'i_pmt', 'w_pmt', 'o_pmt', 't_contrib*12', 'h_contrib*12', 'r2_pmt', 'd_pmt', 'v_extra'] },
   { id: 'pl_ret', label: 'Assumed annual return', kind: 'pct', value: DEFAULTS.rate, map: ['g_rate', 'c_inv', 'i_rate', 'r_rate', 'w_rate', 'o_rate', 't_rate', 'h_rate', 'r2_ret', 'd_ret', 'v_ret'] },
   { id: 'pl_save', label: 'Savings account rate', kind: 'pct', value: DEFAULTS.savingsApy, map: ['c_save'] },
-  { id: 'pl_retret', label: 'Return in retirement', kind: 'pct', value: DEFAULTS.retireRate, map: ['f_rate', 'n_rate', 'r2_retret', 'd_retret'] },
   { id: 'pl_infl', label: 'Inflation', kind: 'pct', value: DEFAULTS.inflation, map: ['i_infl', 'f_infl', 'n_infl', 'r2_infl', 'd_infl'] },
   { id: 'pl_years', label: 'Years / horizon', kind: 'int', value: DEFAULTS.years, map: ['g_years', 'c_years', 'i_years', 'r_years', 'w_years', 'o_years', 't_years', 'f_years', 'h_years'] },
-  { id: 'pl_bal', label: 'Retirement balance / goal', kind: 'money', value: DEFAULTS.retireBalance, map: ['f_bal', 'o_target'] },
-  { id: 'pl_exp', label: 'Annual expenses (today)', kind: 'money', value: DEFAULTS.cfExpenses, map: ['f_exp', 'r2_exp'] },
-  { id: 'pl_inc', label: 'Pension & other retirement income (today)', kind: 'money', value: DEFAULTS.cfIncome, map: ['f_inc', 'r2_inc'] }
+  { id: 'pl_bal', label: 'Retirement balance / goal', kind: 'money', value: DEFAULTS.retireBalance, map: ['f_bal', 'o_target'] }
 ];
 const PARTS = [
   { id: 'pp_assump', label: 'Assumptions used', value: true },
