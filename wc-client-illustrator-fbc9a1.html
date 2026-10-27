@@ -467,6 +467,8 @@ button.tag:hover { filter: brightness(.96); }
 .chk-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: start; padding: 3px 0; border-bottom: 1px solid var(--line-soft); }
 .chk-row:last-child { border-bottom: 0; }
 .chk-row .chk { padding-top: 1px; }
+.chk-link { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.chk-link:hover, .chk-link:focus-visible { color: var(--navy); text-decoration-color: var(--navy); }
 .basis { display: grid; justify-items: end; gap: 2px; text-align: right; max-width: 190px; }
 .basis-sub { font-size: 11px; line-height: 1.35; color: var(--muted); }
 .namecell { display: grid; gap: 6px; justify-items: start; }
@@ -2091,7 +2093,11 @@ const chkRow = m => {
   const c = h('input', { type: 'checkbox', id: 'inc_' + m.id }); c.checked = plan.pl_include.includes(m.id);
   c.addEventListener('change', () => { plan.pl_include = MODULES.map(x => x.id).filter(id => id === m.id ? c.checked : plan.pl_include.includes(id)); planEdited(); });
   const host = h('span', { class: 'basis-host' }); basisEls['pr_' + m.id] = { mod: m, el: host, withList: true };
-  return h('div', { class: 'chk-row' }, h('label', { class: 'chk', for: 'inc_' + m.id }, c, m.tab), host);
+  c.setAttribute('aria-label', 'Include ' + m.tab);
+  /* the name opens the calculator; the checkbox alone selects it. Ctrl/Cmd-click opens it in a new tab */
+  const link = h('a', { href: '#' + m.id, class: 'chk-link', title: 'Open ' + m.tab }, m.tab);
+  link.addEventListener('click', e => { if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return; e.preventDefault(); show(m.id, true); });
+  return h('div', { class: 'chk-row' }, h('div', { class: 'chk' }, c, link), host);
 };
 stdMods.forEach(m => checks.append(chkRow(m)));
 GROUPS.forEach(g => { const ms = enterMods.filter(m => m.group === g.id); if (!ms.length) return; moreBody.append(h('div', { class: 'grp sub' }, g.name)); ms.forEach(m => moreBody.append(chkRow(m))); });
