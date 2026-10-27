@@ -1186,18 +1186,24 @@ const MODULES = [
       const depleted = res.depletedAt !== null;
       const totalWd = rows.reduce((a, r) => a + r.wd, 0), totalShort = rows.reduce((a, r) => a + r.short, 0);
       const firstShort = rows.find(r => r.short > 0.5);
+      // A portfolio can run short and later rebuild once income exceeds expenses (e.g. Social Security or a pension starts after depletion).
+      const recovered = depleted && last.bal > 0.5;
+      const drewLater = depleted && rows.some(r => r.t > Math.ceil(res.depletedAt) && r.wd > 0.5);
+      const lastShortRow = rows.filter(r => r.short > 0.005).pop(); const lastShortYear = lastShortRow ? lastShortRow.t : s.f_years;
+      const shortSpan = lastShortYear < s.f_years ? `through year ${lastShortYear}` : `over the rest of the ${s.f_years} years`;
+      const rebuildNote = recovered ? ` Once income exceeds expenses, the balance rebuilds to ${money(last.bal)} by year ${s.f_years}.` : '';
       return {
         hero: depleted
-          ? { label: 'How long your investments cover the gap', value: yrs(res.depletedAt), sub: `Expenses outrun Social Security and pension & other income by ${money(Math.max(0, gap1))} in year one and the gap grows with inflation. The portfolio covers it until year ${Math.ceil(res.depletedAt)}; after that, ${money(totalShort)} of expenses would go unfunded over the rest of the ${s.f_years} years. ${ssNote}` }
+          ? { label: 'How long your investments cover the gap', value: yrs(res.depletedAt), sub: `Expenses outrun Social Security and pension & other income by ${money(Math.max(0, gap1))} in year one and the gap grows with inflation. The portfolio covers it until year ${Math.ceil(res.depletedAt)}; after that, ${money(totalShort)} of expenses would go unfunded ${shortSpan}.${rebuildNote} ${ssNote}` }
           : { label: 'How long your investments cover the gap', value: s.f_years + '+ years', sub: `Covered for all ${s.f_years} years, with ${money(last.bal)} left (${money(last.real)} in today’s dollars) at year ${s.f_years}. ${gap1 > 0 ? `The portfolio funds ${money(gap1)} of expenses in year one, and the gap grows with inflation.` : 'Social Security and pension & other income more than cover expenses, so the portfolio keeps growing.'} ${ssNote}` },
         tiles: [
           { label: 'Year-1 gap the portfolio must fill', value: money(Math.max(0, gap1)), sub: gap1 > 0 ? `${pct(wdRate1)} of the balance, after ${money((ssStart === 0 ? s.f_ss : 0) + (s.f_incStart === 0 ? s.f_inc : 0))} of income` : `income exceeds expenses by ${money(-gap1)}` },
-          { label: `Balance at year ${s.f_years}`, value: depleted ? '$0' : money(last.bal), sub: depleted ? `runs out in year ${Math.ceil(res.depletedAt)}` : `${money(last.real)} in today’s dollars` },
-          { label: 'Total drawn from the portfolio', value: money(totalWd), sub: `over ${depleted ? yrs(res.depletedAt) : plural(s.f_years, 'year')}; Social Security pays ${money(totalSs)} of expenses` },
-          { label: 'Expenses left unfunded', value: money(totalShort), sub: depleted ? `from year ${Math.ceil(res.depletedAt)} through year ${s.f_years}` : `every year through year ${s.f_years} is covered` }
+          { label: `Balance at year ${s.f_years}`, value: depleted && !recovered ? '$0' : money(last.bal), sub: recovered ? `ran short in year ${Math.ceil(res.depletedAt)}, then rebuilt; ${money(last.real)} in today’s dollars` : depleted ? `runs out in year ${Math.ceil(res.depletedAt)}` : `${money(last.real)} in today’s dollars` },
+          { label: 'Total drawn from the portfolio', value: money(totalWd), sub: `over ${depleted && !recovered && !drewLater ? yrs(res.depletedAt) : plural(s.f_years, 'year')}; Social Security pays ${money(totalSs)} of expenses` },
+          { label: 'Expenses left unfunded', value: money(totalShort), sub: depleted ? `from year ${Math.ceil(res.depletedAt)} through year ${lastShortYear}` : `every year through year ${s.f_years} is covered` }
         ],
         callout: depleted
-          ? `At this spending the portfolio covers the gap for <b>${yrs(res.depletedAt)}</b> of the ${plural(s.f_years, 'year')} shown, and <b>${money(totalShort)}</b> of expenses are left unfunded after that.`
+          ? `At this spending the portfolio covers the gap for <b>${yrs(res.depletedAt)}</b> of the ${plural(s.f_years, 'year')} shown, and <b>${money(totalShort)}</b> of expenses are left unfunded ${lastShortYear < s.f_years ? `through year ${lastShortYear}` : 'after that'}.${rebuildNote}`
           : `Under these assumptions the portfolio covers the gap for all ${plural(s.f_years, 'year')} and ends with <b>${money(last.real)}</b> in today’s dollars.`,
         chart: { kind: 'stack', x: rows.slice(1).map(r => r.t), totalLabel: 'Expenses', series: [
           { name: 'Portfolio withdrawals', color: 'var(--c1)', values: rows.slice(1).map(r => r.wd) },
@@ -1208,8 +1214,8 @@ const MODULES = [
         chart2: { kind: 'line', x: rows.map(r => r.t), series: [
           { name: 'In today’s dollars', color: 'var(--c1)', values: rows.map(r => r.real), area: true },
           { name: 'Nominal balance', color: 'var(--c2)', values: rows.map(r => r.bal) }
-        ], endLabels: !depleted, marker: depleted ? { x: Math.min(s.f_years, Math.round(res.depletedAt * 10) / 10), y: 0, label: 'Depleted, year ' + (Math.round(res.depletedAt * 10) / 10) } : null, aria: 'Line chart of investment balance, nominal and inflation-adjusted' },
-        copy: [`Balance ${money(s.f_bal)}; expenses ${money(s.f_exp)}/yr; Social Security ${money(s.f_ss)}/yr (today’s dollars) from age ${s.f_ssage} (current age ${s.f_age}), inflation-adjusted; pension & other income ${money(s.f_inc)}/yr starting in year ${s.f_incStart}${s.f_incAdj ? ' (inflation-adjusted)' : ' (level)'}; ${pct(s.f_rate)} return compounded monthly; ${pct(s.f_infl)} inflation; ${s.f_years} years.`, depleted ? `Portfolio covers the gap for ${yrs(res.depletedAt)}; ${money(totalShort)} of expenses unfunded through year ${s.f_years}.` : `Balance at year ${s.f_years}: ${money(last.bal)} (${money(last.real)} today’s dollars).`]
+        ], endLabels: !depleted || recovered, marker: depleted ? { x: Math.min(s.f_years, Math.round(res.depletedAt * 10) / 10), y: 0, label: (recovered ? 'Ran short, year ' : 'Depleted, year ') + (Math.round(res.depletedAt * 10) / 10) } : null, aria: 'Line chart of investment balance, nominal and inflation-adjusted' },
+        copy: [`Balance ${money(s.f_bal)}; expenses ${money(s.f_exp)}/yr; Social Security ${money(s.f_ss)}/yr (today’s dollars) from age ${s.f_ssage} (current age ${s.f_age}), inflation-adjusted; pension & other income ${money(s.f_inc)}/yr starting in year ${s.f_incStart}${s.f_incAdj ? ' (inflation-adjusted)' : ' (level)'}; ${pct(s.f_rate)} return compounded monthly; ${pct(s.f_infl)} inflation; ${s.f_years} years.`, depleted ? `Portfolio covers the gap for ${yrs(res.depletedAt)}; ${money(totalShort)} of expenses unfunded through year ${lastShortYear}${recovered ? `; balance rebuilds to ${money(last.bal)} by year ${s.f_years}` : ''}.` : `Balance at year ${s.f_years}: ${money(last.bal)} (${money(last.real)} today’s dollars).`]
       };
     }
   },
@@ -1369,7 +1375,7 @@ const MODULES = [
           { label: 'Total need', value: money(total), sub: 'before existing coverage and assets' },
           { label: 'Already in place', value: money(have), accent: true, sub: `${money(s.n_cover)} coverage + ${money(s.n_assets)} assets` }
         ],
-        callout: `Income replacement is <b>${pct(total > 0 ? pv / total * 100 : 0, 0)}</b> of the total need${s.n_ss > 0 ? `, after <b>${money(s.n_ss)}</b> a year in survivor benefits` : ''}; paying off the mortgage is <b>${pct(total > 0 ? s.n_mortgage / total * 100 : 0, 0)}</b>. ${gap > 0 ? `The estimated gap is about <b>${(gap / Math.max(1, s.n_income)).toFixed(1)}×</b> household income.` : 'Existing coverage and assets cover the estimated need under these assumptions.'} Any insurance decision involves product features, costs, and underwriting that this estimate does not address.`,
+        callout: `Income replacement is <b>${pct(total > 0 ? pv / total * 100 : 0, 0)}</b> of the total need${s.n_ss > 0 ? `, after <b>${money(s.n_ss)}</b> a year in survivor benefits` : ''}; paying off the mortgage is <b>${pct(total > 0 ? s.n_mortgage / total * 100 : 0, 0)}</b>. ${gap > 0 ? (s.n_income > 0 ? `The estimated gap is about <b>${(gap / s.n_income).toFixed(1)}×</b> household income.` : 'No household income to replace is entered, so the gap comes from the mortgage, other debts, education, and final expenses.') :'Existing coverage and assets cover the estimated need under these assumptions.'} Any insurance decision involves product features, costs, and underwriting that this estimate does not address.`,
         chart: { kind: 'bars', x: [0, 1, 2, 3, 4, 5], xLabels: ['Income', 'Mortgage', 'Debts', 'Education', 'Final', 'In place'], xName: 'Component', colors: ['var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c1)', 'var(--c2)'], series: [{ name: 'Amount', color: 'var(--c1)', values: [pv, s.n_mortgage, s.n_debts, s.n_edu, s.n_final, have] }], aria: 'Column chart of the components of the life insurance need and the amount already in place' },
         copy: [`Replace ${money(I)}/yr (${money(s.n_income)} income less ${money(s.n_ss)} survivor benefits) for ${n} years (${pct(s.n_infl)} inflation, ${pct(s.n_rate)} return compounded annually); mortgage ${money(s.n_mortgage)}; other debts ${money(s.n_debts)}; education ${money(s.n_edu)}; final expenses ${money(s.n_final)}; existing coverage ${money(s.n_cover)}; assets ${money(s.n_assets)}.`, `Total need ${money(total)}; already in place ${money(have)}; ${gap > 0 ? 'additional coverage indicated ' + money(gap) : 'coverage exceeds need by ' + money(-gap)}.`]
       };
