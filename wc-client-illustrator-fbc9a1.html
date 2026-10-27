@@ -406,16 +406,16 @@ svg .end-label.a-label { fill: var(--muted); font-weight: 600; }
 .rqr-inline .qr-cap b { display: block; color: #1C2030; font-size: 9px; margin-bottom: 1px; }
 .rpage.has-qr .rtitle, .rpage.has-qr .rlede { margin-right: 1.05in; }
 .rpage.has-qr .rlede { min-height: 58px; }
-.rqr-corner { position: absolute; top: calc(.55in + 38px); right: .6in; width: .8in; text-align: center; }
+.rqr-corner { position: absolute; top: calc(.55in + var(--qr-top, 70px)); right: .6in; width: .8in; text-align: center; }
 .rqr-corner .qr-img { width: .7in; height: .7in; margin: 0 auto; }
 .rqr-corner .qr-cap { font-size: 7.5px; line-height: 1.25; color: #555; margin-top: 2px; }
 .rqr-corner .qr-cap b { font-weight: 600; color: #1C2030; }
-.rs-info { display: grid; gap: 1px; font-size: 10.5px; line-height: 1.35; color: #333; }
+.rs-info { display: grid; gap: 2px; font-size: 12px; line-height: 1.35; color: #333; }
 .rcols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: start; }
-.rs-info span { display: inline-block; width: 78px; color: #777; }
+.rs-info span { display: inline-block; width: 90px; color: #777; }
 .rs-info b { color: #1C2030; }
 .rdisc-short h4 { font-size: 12px; margin: 0 0 6px; }
-.rdisc-short p { font-size: 9px; line-height: 1.4; color: #444; margin: 0 0 5px; }
+.rdisc-short p { font-size: 10px; line-height: 1.4; color: #444; margin: 0 0 5px; }
 .feenote { font-size: 12px; color: var(--muted); margin: 12px 0 0; line-height: 1.5; }
 .feenote b { color: var(--ink-2); font-weight: 600; }
 .plan-fee { font-size: 11.5px; color: var(--muted); padding: 0 0 6px; line-height: 1.45; }
@@ -441,17 +441,18 @@ body.report-mode .subbar, body.report-mode main, body.report-mode footer { displ
 .cover-foot { height: 2.6in; display: flex; justify-content: space-between; align-items: center; padding: 0 1in; gap: 24px; }
 .cover-foot .adv { font-size: 13.5px; line-height: 1.5; color: #1C2030; }
 .cover-foot img { width: 2.6in; height: auto; }
-.rhead { display: flex; justify-content: flex-end; font-size: 10px; color: #555; }
-.rbar { height: 8px; background: #C9CDD4; margin: 4px 0 14px; }
-.rtitle { font-size: 26px; font-weight: 400; color: #333; margin: 0 0 3px; line-height: 1.2; font-family: Arial, Helvetica, sans-serif; }
-.rlede { color: #555; margin: 0 0 14px; font-size: 12px; max-width: 95ch; }
+.rhead { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; font-size: 11.5px; color: #444; }
+.rhead img { height: .44in; width: auto; display: block; }
+.rbar { height: 3px; background: #000064; margin: 8px 0 14px; }
+.rtitle { font-size: 28px; font-weight: 400; color: #333; margin: 0 0 3px; line-height: 1.2; font-family: Arial, Helvetica, sans-serif; }
+.rlede { color: #444; margin: 0 0 14px; font-size: 13.5px; max-width: 95ch; }
 .rsec { margin: 0 0 16px; break-inside: avoid; display: flow-root; } /* flow-root: child paragraph margins stay inside, so the block measures its true height when paginating */
-.rsec h3 { font-size: 14px; font-weight: 400; color: #222; margin: 0 0 6px; font-family: Arial, Helvetica, sans-serif; letter-spacing: 0; text-transform: none; }
-.rsec h3 span { font-size: 11px; color: #777; margin-left: 8px; }
-.rtab { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.rsec h3 { font-size: 16px; font-weight: 400; color: #222; margin: 0 0 6px; font-family: Arial, Helvetica, sans-serif; letter-spacing: 0; text-transform: none; }
+.rsec h3 span { font-size: 12px; color: #666; margin-left: 8px; }
+.rtab { width: 100%; border-collapse: collapse; font-size: 13px; }
 .rtab.wide1 td:first-child, .rtab.wide1 th:first-child { min-width: 200px; white-space: nowrap; }
 .rtab th { text-align: left; font-weight: 700; border-bottom: 1px solid #333; padding: 4px 6px; }
-.rtab td { padding: 4px 6px; border-bottom: 1px dashed #c8c8c8; vertical-align: top; }
+.rtab td { padding: 5px 6px; border-bottom: 1px dashed #c8c8c8; vertical-align: top; }
 .rtab td.v, .rtab th.v { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rtab td.t { width: 70px; text-align: right; }
 .rtab tr.tot td { font-weight: 700; border-bottom: 1px solid #333; }
@@ -475,35 +476,37 @@ button.tag:hover { filter: brightness(.96); }
 .namecell .basis { justify-items: start; text-align: left; max-width: 220px; }
 @media (max-width: 640px) { .namecell .basis-sub { display: none; } }
 .rprimary { padding: 2px 0 10px; }
-.rprimary .l { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #777; }
-.rprimary .v { font-size: 26px; font-weight: 700; color: #000064; line-height: 1.2; font-family: Arial, Helvetica, sans-serif; }
-.rprimary .s { font-size: 11.5px; color: #444; max-width: 95ch; }
+.rprimary .l { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #777; }
+.rprimary .v { font-size: 32px; font-weight: 700; color: #000064; line-height: 1.2; font-family: Arial, Helvetica, sans-serif; }
+.rprimary .s { font-size: 13px; color: #333; max-width: 95ch; }
 .rstats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #333; border-bottom: 1px solid #ccc; }
 .rstat { padding: 7px 8px 7px 10px; border-left: 1px solid #ddd; min-width: 0; }
 .rstat:first-child { border-left: 0; padding-left: 0; }
-.rstat .l { font-size: 10.5px; color: #555; }
-.rstat .v { font-size: 15px; font-weight: 700; color: #1C2030; line-height: 1.25; font-family: Arial, Helvetica, sans-serif; }
-.rstat .v.fit-1 { font-size: 13px; }
-.rstat .v.fit-2 { font-size: 11.5px; }
-.rprimary .v.fit-2 { font-size: 21px; }
-.rstat .s { font-size: 10px; color: #777; }
+.rstat .l { font-size: 12px; color: #444; }
+.rstat .v { font-size: 18px; font-weight: 700; color: #1C2030; line-height: 1.25; font-family: Arial, Helvetica, sans-serif; }
+.rstat .v.fit-1 { font-size: 15.5px; }
+.rstat .v.fit-2 { font-size: 13.5px; }
+.rprimary .v.fit-2 { font-size: 25px; }
+.rstat .s { font-size: 11.5px; color: #555; }
 .rstat.accent .v { color: #2F6B12; }
-.robs { font-size: 12px; color: #333; max-width: 95ch; }
+.robs { font-size: 13.5px; color: #333; max-width: 95ch; }
 .robs b { color: #000064; }
 .rchart { margin-top: 4px; }
 .rchart .chart-foot, .rchart .hint { display: none !important; }
-.rchart .legend { font-size: 10.5px; color: #555; }
+.rchart .legend { font-size: 12px; color: #444; }
+#report svg .tick { font-size: 12.5px; }
+#report .tag { font-size: 10px; }
 .rchart .dtable { max-height: none; }
 .rchart .dtable table, .rsched table { font-size: 10.5px; }
 .rsched { border: 0; max-height: none; overflow: visible; }
 .rsched thead th { position: static; background: none; border-bottom: 1px solid #333; color: #222; font-size: 10.5px; letter-spacing: 0; text-transform: none; }
-.rfoot { margin-top: auto; padding-top: 6px; border-top: 1px solid #333; display: flex; justify-content: space-between; font-size: 9.5px; color: #555; }
+.rfoot { margin-top: auto; padding-top: 6px; border-top: 1px solid #333; display: flex; justify-content: space-between; font-size: 10.5px; color: #555; }
 .rdisc { font-size: 10.5px; line-height: 1.5; color: #333; }
-.rdisc h4 { font-size: 10.5px; margin: 12px 0 4px; letter-spacing: .06em; text-transform: uppercase; }
-.rdisc p { margin: 0 0 7px; }
+.rdisc h4 { font-size: 10.5px; margin: 10px 0 4px; letter-spacing: .06em; text-transform: uppercase; }
+.rdisc p { margin: 0 0 5px; }
 .rdisc dt { font-weight: 700; display: inline; }
 .rdisc dd { display: inline; margin: 0; }
-.rdisc .def { margin-bottom: 5px; }
+.rdisc .def { margin-bottom: 4px; }
 #report svg text { font-family: Arial, Helvetica, sans-serif; }
 
 /* Footer */
@@ -530,7 +533,7 @@ footer .wrap { padding-block: 48px 28px; display: grid; gap: 28px; }
   .rpages { padding: 0; overflow: visible; }
   .rpage { width: auto; min-height: 9.85in; margin: 0; padding: 0; box-shadow: none; break-after: page; page-break-after: always; }
   .rpage:last-child { break-after: auto; page-break-after: auto; }
-  .rqr-corner { top: 38px; right: 0; } /* the page margin replaces the screen padding when printing */
+  .rqr-corner { top: var(--qr-top, 70px); right: 0; } /* the page margin replaces the screen padding when printing */
   .rpage.cover { height: 11in; min-height: 0; page: cover; } /* only the cover prints edge to edge */
   .cover-photo { min-height: 0; }
   .rsec, .rstats, .rchart, .rprimary { break-inside: avoid; }
@@ -809,7 +812,7 @@ function makeChart(card, cfg) {
 
   function render() {
     if (!data) return;
-    const W = Math.max(280, wrap.clientWidth || 600), H = Math.min(380, Math.max(220, Math.round(W * (data.ratio || 0.5))));
+    const W = Math.max(280, wrap.clientWidth || 600), H = data.fillH ? Math.round(data.fillH) : Math.min(380, Math.max(220, Math.round(W * (data.ratio || 0.5))));
     const series = data.series.filter(s => !s.overlay), over = data.series.filter(s => s.overlay), xs = data.x, n = xs.length; mainS = series; // overlay = Scenario A, drawn dotted on its own x values
     const bars = data.kind === 'bars', stacked = data.kind === 'stack';
     const aBars = bars && data.barsA ? [h('span', {}, h('i', { class: 'sw ov-bar', style: 'border-color:' + series[0].color }), 'Scenario A')] : [];
@@ -2202,7 +2205,8 @@ function openReport(andPrint, only) {
   let pageNo = 0;
   const footText = single ? ('Hypothetical illustration' + (FEE_FREE.includes(single.id) ? '' : ', gross of fees') + '. Please read the important information at the end of this document.') : 'Hypothetical and gross of fees. Please read the last page for important information about this illustration.';
   const foot = () => h('div', { class: 'rfoot' }, h('span', {}, footText), h('span', {}, 'Page ' + (++pageNo)));
-  const head = title => [h('div', { class: 'rhead' }, 'Prepared: ' + date), h('div', { class: 'rbar' }), h('h2', { class: 'rtitle' }, title)];
+  const brand = () => [h('div', { class: 'rhead' }, h('img', { src: LOGO_SRC, alt: 'WealthCare Investment Partners' }), h('span', {}, (clientName ? 'Prepared for ' + clientName + ' · ' : '') + date)), h('div', { class: 'rbar' })];
+  const head = title => [...brand(), h('h2', { class: 'rtitle' }, title)];
   // Plan page
   const info = h('table', { class: 'rtab' }, h('tbody', {},
     h('tr', {}, h('td', {}, 'Prepared for'), h('td', { class: 'v' }, client)),
@@ -2221,15 +2225,34 @@ function openReport(andPrint, only) {
   document.body.classList.add('report-mode'); reportEl.classList.add('is-on'); window.scrollTo({ top: 0 });
   const BUDGET = 930; // px available for header + blocks on a letter page: 11in (1056px) less page padding (91px) and the footer (27px), with a small margin
   const outerH = el => { const cs = getComputedStyle(el); return el.offsetHeight + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom); };
-  const paginate = (title, lede, blocks, qr) => { // measure in a temporary page, then split into real pages so print matches the preview; qr sits in the first page's top-right corner
+  const paginate = (title, lede, blocks, qr, fill) => { // measure in a temporary page, then split into real pages so print matches the preview; qr sits in the first page's top-right corner
     const temp = h('section', { class: 'rpage' + (qr ? ' has-qr' : '') }, ...head(title), h('p', { class: 'rlede' }, lede), ...blocks); pages.append(temp);
     const headH = outerH(temp.children[0]) + outerH(temp.children[1]) + outerH(temp.children[2]) + outerH(temp.children[3]);
+    const headC = headH - outerH(temp.children[3]);   // continued pages carry no lede
     const groups = []; let cur = [], used = headH;
-    blocks.forEach(bl => { const hb = outerH(bl); if (used + hb > BUDGET && cur.length) { groups.push(cur); cur = []; used = headH; } cur.push(bl); used += hb; });
+    blocks.forEach(bl => { const hb = outerH(bl); if (used + hb > BUDGET && cur.length) { groups.push(cur); cur = []; used = headC; } cur.push(bl); used += hb; });
     if (cur.length) groups.push(cur);
     temp.remove();
-    groups.forEach((g, i) => pages.append(h('section', { class: 'rpage' + (qr && !i ? ' has-qr' : '') }, ...head(title + (i ? ' (continued)' : '')), i ? null : h('p', { class: 'rlede' }, lede), ...g, foot(), qr && !i ? qr : null)));
+    groups.forEach((g, i) => pages.append(h('section', { class: 'rpage' + (qr && !i ? ' has-qr' : '') + (fill ? ' rfill' : '') }, ...head(title + (i ? ' (continued)' : '')), i ? null : h('p', { class: 'rlede' }, lede), ...g, foot(), qr && !i ? qr : null)));
     return temp;
+  };
+  /* Fill a calculator page top to bottom: charts take the free height (up to square); any space left is spread between the sections */
+  const fillPage = page => {
+    const kids = [...page.children].filter(c => !c.classList.contains('rfoot') && getComputedStyle(c).position !== 'absolute');
+    const used = () => kids.reduce((a, c) => a + outerH(c), 0);
+    let left = BUDGET - used();
+    const charts = kids.filter(c => c._chart);
+    if (charts.length && left > 4) {
+      const set = (c, add) => { const svg = c.querySelector('.chart-wrap svg'); const curH = svg ? svg.getBoundingClientRect().height : 250, W = svg ? svg.getBoundingClientRect().width : 700;
+        const H = Math.max(200, Math.min(W, curH + add)); c._chart.inst.update(Object.assign({}, c._chart.data, { fillH: H })); };
+      charts.forEach(c => set(c, left / charts.length));
+      left = BUDGET - used();
+      if (left < 0) { charts.forEach(c => set(c, left / charts.length - 1)); left = BUDGET - used(); }
+    }
+    const secs = kids.filter(c => c.classList.contains('rsec'));
+    if (left > 8 && secs.length > 1) { const per = Math.min(72, left / (secs.length - 1)); secs.slice(0, -1).forEach(c => { c.style.marginBottom = (parseFloat(getComputedStyle(c).marginBottom) + per) + 'px'; }); }
+    const t = page.querySelector('.rtitle'), qr = page.querySelector('.rqr-corner');
+    if (t && qr) page.style.setProperty('--qr-top', (t.offsetTop - parseFloat(getComputedStyle(page).paddingTop)) + 'px');
   };
   if (!single) paginate('Assumptions', 'The figures in this document are hypothetical illustrations built from the assumptions below. Rates of return and inflation are held constant in every period; actual results will vary. All investment figures and rates of return are shown gross of advisory fees and other costs; results net of fees would be lower.', [
     h('div', { class: 'rsec' }, h('h3', {}, 'General information'), info),
@@ -2253,8 +2276,7 @@ function openReport(andPrint, only) {
         h('div', {}, h('span', {}, 'Prepared for'), h('b', {}, clientName || 'Client name')),
         h('div', {}, h('span', {}, 'Prepared by'), h('b', {}, plan.pl_advisor), ' · ' + plan.pl_phone + ' · ' + plan.pl_email),
         h('div', {}, h('span', {}, 'Date'), h('b', {}, date))),
-      qrBlock(mod, 'rqr-inline', true),
-      h('img', { src: LOGO_SRC, alt: 'WealthCare Investment Partners' })));
+      qrBlock(mod, 'rqr-inline', true)));
     if (want.assump) {
       let nCustom = 0;
       const rows = mod.fields.filter(f => fieldVisible(f.id)).map(f => { const a = planFor(f.id); const d = differs(f.id); if (d) nCustom++;
@@ -2277,12 +2299,12 @@ function openReport(andPrint, only) {
     if (want.tables && r.extra) blocks.push(h('div', { class: 'rsec' }, h('h3', {}, r.extraTitle || 'Reference', r.extraSub ? h('span', {}, r.extraSub) : null), h('div', { class: 'rsched', html: r.extra.replace(/class="sched"/g, 'class="rsched"') })));
     // charts must be rendered at the real print width before measuring, so mount the blocks first
     const pre = h('section', { class: 'rpage' }, ...blocks); pages.append(pre);
-    chartBlocks.forEach(c => { makeChart(c.box, c.cfg).update(Object.assign({}, c.data, { ratio: single ? 0.3 : 0.36 })); });
+    chartBlocks.forEach(c => { const data = Object.assign({}, c.data, { ratio: single ? 0.3 : 0.36 }); const inst = makeChart(c.box, c.cfg); inst.update(data); c.sec._chart = { inst, data }; });
     pre.remove();
     if (single) blocks.push(
       h('div', { class: 'rsec' }, h('h3', {}, 'How this is calculated'), h('p', { class: 'robs' }, METHODS[mod.id])),
       h('div', { class: 'rsec rdisc rdisc-short' }, h('h4', {}, 'Important information'), ...singleDisclosures(mod.id).map(t => h('p', {}, t))));
-    paginate(mod.title, mod.lede, blocks, single ? null : qrBlock(mod, 'rqr-corner'));
+    paginate(mod.title, mod.lede, blocks, single ? null : qrBlock(mod, 'rqr-corner'), true);
   });
   // Calculators included: after the calculator pages, before the methodology appendix and disclosures
   if (!single) paginate('Calculators included', 'Each calculator in this illustration, what it shows, and whether it runs on the standard assumptions or on figures entered in the calculator.',
@@ -2293,7 +2315,7 @@ function openReport(andPrint, only) {
     ...mods.map(m => h('div', { class: 'rsec' }, h('h3', {}, m.tab), h('p', { class: 'robs' }, METHODS[m.id]))),
     h('div', { class: 'rsec' }, h('h3', {}, 'What the calculators leave out'), ...LIMITS.map(t => h('p', { class: 'robs' }, '• ' + t)))]);
   // Disclosures (full plan; a single-calculator printout carries its own condensed version)
-  if (!single) pages.append(h('section', { class: 'rpage' }, h('div', { class: 'rhead' }, 'Prepared: ' + date), h('div', { class: 'rbar' }),
+  if (!single) pages.append(h('section', { class: 'rpage' }, ...brand(),
     h('div', { class: 'rdisc' },
       h('h4', {}, 'Important disclosures'),
       h('p', {}, h('b', {}, 'Gross of fees. '), FEE_LONG),
@@ -2315,6 +2337,8 @@ function openReport(andPrint, only) {
       h('p', { style: 'margin-top:12px' }, 'Securities offered by Registered Representatives through Private Client Services. Member FINRA/SIPC. Advisory products and services offered through WealthCare Investment Partners, a Registered Investment Advisor. Private Client Services & WealthCare Investment Partners are unaffiliated entities.'),
       h('p', {}, 'WealthCare Investment Partners, LLC · 690 Douglas Pike, Smithfield, RI 02917 · 35 Dyer Street, Portsmouth, RI 02871 · (401) 735-4500 · info@wcipllc.com')),
     h('div', { class: 'rfoot' }, h('span', {}, 'Important information'), h('span', {}, 'Page ' + (++pageNo)))));
+  pages.querySelectorAll('.rpage.rfill').forEach(fillPage);
+  pages.querySelectorAll('.rpage').forEach(pg => { const t = pg.querySelector('.rtitle'), q = pg.querySelector('.rqr-corner'); if (t && q && !pg.style.getPropertyValue('--qr-top')) pg.style.setProperty('--qr-top', (t.offsetTop - parseFloat(getComputedStyle(pg).paddingTop)) + 'px'); });
   note.textContent = mods.length + ' calculator' + (mods.length === 1 ? '' : 's') + ' · ' + pages.querySelectorAll('.rpage').length + ' pages' + (canPrint ? ' · Print / Save as PDF gives a letter-size PDF' : ' · open the saved file to print');
   window.scrollTo({ top: 0 });
   if (andPrint && canPrint) setTimeout(() => window.print(), 250);
