@@ -176,6 +176,7 @@ main .wrap.pad { padding-block: 28px 56px; }
 .row-item .go { padding: 6px 4px; color: var(--green); display: inline-flex; align-items: center; transition: transform .15s; }
 .row-item .go svg { width: 30px; height: 17px; display: block; }
 .row-item:hover .go { transform: translateX(4px); color: var(--green-text); }
+.row-item .go.ent, .row-item:hover .go.ent { color: var(--navy); }
 .row-item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (max-width: 640px) { .row-item .go { grid-column: 2; grid-row: 1; align-self: start; } }
 .cat { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: start; }
@@ -464,6 +465,13 @@ button.tag { font-family: var(--ui); cursor: pointer; }
 button.tag:hover { filter: brightness(.96); }
 .legend { display: grid; grid-template-columns: auto 1fr; gap: 4px 8px; align-items: center; font-size: 11.5px; color: var(--muted); margin: 2px 0 6px; }
 .legend .tag { justify-self: start; }
+.basis-arrow { display: inline-flex; align-items: center; justify-content: center; border: 0; background: none; padding: 2px 0; line-height: 0; }
+.basis-arrow svg { width: 28px; height: 16px; display: block; }
+.basis-arrow.std { color: var(--green); }
+.basis-arrow.ent { color: var(--navy); }
+button.basis-arrow { cursor: pointer; transition: transform .15s; }
+button.basis-arrow:hover, button.basis-arrow:focus-visible { transform: translateX(3px); }
+.legend .basis-arrow { justify-self: start; }
 .chk-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 12px; align-items: start; padding: 3px 0; border-bottom: 1px solid var(--line-soft); }
 .chk-row:last-child { border-bottom: 0; }
 .chk-row .chk { padding-top: 1px; }
@@ -2078,13 +2086,16 @@ const setMore = open => { moreOpen = open; moreBody.hidden = !open; moreBtn.setA
 moreBtn.addEventListener('click', () => setMore(!moreOpen));
 const setAll = on => { plan.pl_include = on ? MODULES.map(m => m.id) : []; checks.querySelectorAll('input').forEach(c => { c.checked = on; }); if (on) setMore(true); planEdited(); };
 colPr.append(h('div', { class: 'checks-head' }, h('b', {}, 'Calculators to include'), h('span', {}, h('button', { type: 'button', onclick: () => setAll(true) }, 'all'), '·', h('button', { type: 'button', onclick: () => setAll(false) }, 'none'))));
-colPr.append(h('div', { class: 'legend' }, h('span', { class: 'tag plan' }, 'Standard'), h('span', {}, 'runs on the standard assumptions'), h('span', { class: 'tag enter' }, 'Enter'), h('span', {}, 'needs client figures typed into the calculator before printing')));
+const ARROW_SVG = '<svg viewBox="0 0 28 16" aria-hidden="true"><path d="M1 8h24M18 1l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+colPr.append(h('div', { class: 'legend' }, h('span', { class: 'basis-arrow std', role: 'img', 'aria-label': 'Green arrow', html: ARROW_SVG }), h('span', {}, 'runs on the standard assumptions'), h('span', { class: 'basis-arrow ent', role: 'img', 'aria-label': 'Blue arrow', html: ARROW_SVG }), h('span', {}, 'needs client figures typed into the calculator before printing')));
 const basisEls = {};
-function basisTag(m, withList, plain) {   // plain: a label only (the calculators list, where the name and arrow open the calculator)
-  const b = basisOf(m); const cls = 'tag ' + (b.standard ? 'plan' : b.todo.length ? 'enter' : 'done'), text = b.standard ? 'Standard' : b.todo.length ? 'Enter' : 'Entered';
-  const tag = plain ? h('span', { class: cls }, text)
-    : h('button', { type: 'button', class: cls, title: b.standard ? 'Every input comes from the standard assumptions or is a scenario setting' : 'Open ' + m.tab, onclick: () => show(m.id, true) }, text);
-  if (!withList || b.standard) return tag;
+function basisTag(m, withList, plain) {   // plain: the calculators list, where the row's own arrow carries the colour
+  const b = basisOf(m); const cls = 'basis-arrow ' + (b.standard ? 'std' : 'ent');
+  const what = b.standard ? 'Standard: runs on the standard assumptions' : b.todo.length ? 'Enter: needs client figures typed into the calculator' : 'Enter: client figures entered';
+  if (plain) { const row = document.getElementById('bh_' + m.id); const go = row && row.closest('.row-item') && row.closest('.row-item').querySelector('.go'); if (go) { go.classList.toggle('ent', !b.standard); go.title = what; } }
+  const tag = plain ? null
+    : h('button', { type: 'button', class: cls, title: what + '. Opens ' + m.tab + '.', 'aria-label': what + '. Open ' + m.tab, html: ARROW_SVG, onclick: () => show(m.id, true) });
+  if (!withList || b.standard) return tag || document.createTextNode('');
   const sub = h('span', { class: 'basis-sub' }, b.manual.map(f => f.label).join(', ') + (b.todo.length ? ' — ' + (b.todo.length === b.manual.length ? 'all' : b.todo.length) + ' still at default values' : ' — entered'));
   return h('span', { class: 'basis' }, tag, sub);
 }
