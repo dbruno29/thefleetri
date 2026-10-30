@@ -227,6 +227,9 @@ input[type="range"] { width: 100%; margin: 0; accent-color: var(--navy); height:
 .seg button:last-child { border-right: 0; }
 .seg button.is-on { background: var(--navy-band); color: #fff; }
 .seg button:focus-visible { outline-offset: -3px; }
+#rc_status { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
+#rc_status button:nth-child(2) { border-right: 0; }
+#rc_status button:nth-child(n+3) { border-top: 1px solid var(--line-soft); }
 .assump-foot { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-soft); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .btn { border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: 700 11.5px/1 var(--ui); letter-spacing: .08em; text-transform: uppercase; padding: 8px 11px; border-radius: 2px; cursor: pointer; }
 .btn:hover { border-color: var(--ink-2); }
@@ -504,9 +507,9 @@ button.tag:hover { filter: brightness(.96); }
 .rsched { border: 0; max-height: none; overflow: visible; }
 .rsched thead th { position: static; background: none; border-bottom: 1px solid #333; color: #222; font-size: 10.5px; letter-spacing: 0; text-transform: none; }
 .rfoot { margin-top: auto; padding-top: 6px; border-top: 1px solid #333; display: flex; justify-content: space-between; font-size: 10.5px; color: #555; }
-.rdisc { font-size: 10.5px; line-height: 1.5; color: #333; }
+.rdisc { font-size: 10.5px; line-height: 1.45; color: #333; }
 .rdisc h4 { font-size: 10.5px; margin: 10px 0 4px; letter-spacing: .06em; text-transform: uppercase; }
-.rdisc p { margin: 0 0 5px; }
+.rdisc p { margin: 0 0 4px; }
 .rdisc dt { font-weight: 700; display: inline; }
 .rdisc dd { display: inline; margin: 0; }
 .rdisc .def { margin-bottom: 4px; }
@@ -707,6 +710,21 @@ function requiredYears(target, P, pmt, r) {
   for (let mo = 1; mo <= 1200; mo++) { bal = bal * (1 + m) + pmt; if (bal >= target) return mo / 12; }
   return null;
 }
+/* Federal income tax rate schedules for taxable years beginning in 2026 — Rev. Proc. 2025-32 §4.01, Tables 1–4.
+   Each entry is [top of the bracket in taxable income, rate]. */
+const BRACKETS_2026 = {
+  mfj:    [[24800, .10], [100800, .12], [211400, .22], [403550, .24], [512450, .32], [768700, .35], [Infinity, .37]],
+  single: [[12400, .10], [50400, .12], [105700, .22], [201775, .24], [256225, .32], [640600, .35], [Infinity, .37]],
+  hoh:    [[17700, .10], [67450, .12], [105700, .22], [201750, .24], [256200, .32], [640600, .35], [Infinity, .37]],
+  mfs:    [[12400, .10], [50400, .12], [105700, .22], [201775, .24], [256225, .32], [384350, .35], [Infinity, .37]]
+};
+const STATUS_LABEL = { mfj: 'married filing jointly', single: 'single', hoh: 'head of household', mfs: 'married filing separately' };
+/* Federal tax on ordinary taxable income under the schedule */
+function fedTax(ti, status) { let t = 0, lo = 0; for (const [hi, r] of BRACKETS_2026[status]) { if (ti > lo) t += (Math.min(ti, hi) - lo) * r; lo = hi; } return t; }
+/* The bracket a level of taxable income falls in: its rate, its top, and its bottom */
+function bracketOf(ti, status) { let lo = 0; for (const [hi, r] of BRACKETS_2026[status]) { if (ti <= hi) return { rate: r, top: hi, lo }; lo = hi; } }
+/* How much of an added amount of income lands in each bracket on top of existing taxable income */
+function bracketSlices(ti, add, status) { const out = []; let lo = 0; for (const [hi, r] of BRACKETS_2026[status]) { const a = Math.max(lo, ti), b = Math.min(hi, ti + add); if (b > a) out.push({ rate: r, lo, hi, amount: b - a, tax: (b - a) * r }); lo = hi; } return out; }
 function amortize(P, r, years, extra) {
   const m = r / 12, n = Math.round(years * 12);
   const pay = m === 0 ? P / n : P * m / (1 - Math.pow(1 + m, -n));
@@ -960,7 +978,7 @@ function buildFields(container, specs, state, onChange) {
 
 /* ---------- Simulator groups (used by the overview and the dropdown) ---------- */
 const GROUPS = [
-  { id: 'grow', name: 'Growing money', blurb: 'Savings growth, inflation, goals, and tax treatment of contributions.' },
+  { id: 'grow', name: 'Growing money', blurb: 'Savings growth, inflation, goals, and the tax treatment of contributions and conversions.' },
   { id: 'live', name: 'Living on it', blurb: 'Retirement income, withdrawals, required distributions, and net worth.' },
   { id: 'borrow', name: 'Borrowing', blurb: 'Loan payments, mortgages, and paying down debt.' },
   { id: 'protect', name: 'Protecting', blurb: 'Life insurance needs.' }
@@ -1567,6 +1585,73 @@ const MODULES = [
     }
   },
   {
+    output: 'Tax due on the conversion; after-tax value of converting versus not; tie-point tax rate', desc: 'Applies the 2026 federal rate schedule to the amount converted on top of this year’s taxable income to show the tax due, then compares the converted Roth with leaving the money in the IRA at the assumed return, both after tax at withdrawal, with the conversion tax paid from outside funds or from the IRA.', id: 'rothconv', group: 'grow', tab: 'Roth conversion', title: 'Roth conversion: tax due now and value at withdrawal', question: 'What would converting an IRA to a Roth cost this year, and how do the two compare at withdrawal?',
+    lede: 'Shows the federal and state tax a Roth conversion adds this year, the bracket it reaches, and the after-tax value at withdrawal of converting compared with leaving the money in the IRA.',
+    fields: [
+      moneyField('rc_bal', 'Balance of all non-Roth IRAs', 0, 5000000, 10000, 500000, 'Traditional, SEP, and SIMPLE IRAs together. A spouse’s IRAs are counted separately.'),
+      moneyField('rc_basis', 'After-tax (nondeductible) contributions in those IRAs', 0, 1000000, 1000, 0, 'From IRS Form 8606. The taxable share of any conversion is 1 − this ÷ the balance.'),
+      segField('rc_mode', 'Amount to convert', [{ v: 'amt', label: 'Dollar amount' }, { v: 'all', label: 'Full balance' }], 'amt'),
+      moneyField('rc_conv', 'Amount converted this year', 0, 5000000, 5000, 100000),
+      segField('rc_status', 'Filing status', [{ v: 'mfj', label: 'Married, joint' }, { v: 'single', label: 'Single' }, { v: 'hoh', label: 'Head of household' }, { v: 'mfs', label: 'Married, separate' }], 'mfj'),
+      moneyField('rc_inc', 'Taxable income this year, before the conversion', 0, 2000000, 1000, 150000, 'Income after deductions (Form 1040, line 15), not counting the conversion.'),
+      pctField('rc_fut', 'Federal tax rate at withdrawal', 0, 50, 1, DEFAULTS.taxRetire, 'The marginal rate expected when the money is withdrawn.'),
+      segField('rc_pay', 'Conversion tax paid from', [{ v: 'out', label: 'Outside funds' }, { v: 'ira', label: 'The IRA itself' }], 'out'),
+      pctField('rc_rate', 'Assumed annual return', 0, 15, 0.1, DEFAULTS.rate, 'Gross of fees, compounded annually.'),
+      intField('rc_years', 'Years until withdrawal', 1, 50, 1, DEFAULTS.years),
+      pctField('rc_state', 'State tax rate on the conversion', 0, 15, 0.1, 0, 'A flat rate on the taxable amount converted; 0 if the state has no income tax.'),
+      pctField('rc_stfut', 'State tax rate at withdrawal', 0, 15, 0.1, 0),
+      pctField('rc_taxable', 'Tax rate on the outside account’s earnings', 0, 50, 1, DEFAULTS.taxNow, 'Used only when the conversion tax is paid from outside funds: the money that would have paid the tax is assumed to stay invested at the same return, with its earnings taxed each year at this rate.')
+    ],
+    chart: { title: 'After-tax value at each year: convert or keep', subtitle: 'Keep = IRA after tax at withdrawal, plus the outside account when the tax is paid from outside funds' },
+    onChange(id, s, specs) {
+      const convF = specs.find(x => x.id === 'rc_conv');
+      if (s.rc_mode === 'all' && (id === 'rc_mode' || id === 'rc_bal' || id === null)) convF._set(s.rc_bal);
+      document.getElementById('rc_conv').closest('.field').hidden = s.rc_mode === 'all';
+      document.getElementById('rc_taxable').closest('.field').hidden = s.rc_pay !== 'out';
+    },
+    compute(s) {
+      const B = s.rc_bal, basis = Math.min(s.rc_basis, B), C = Math.min(s.rc_mode === 'all' ? B : s.rc_conv, B), st = s.rc_status;
+      const share = B > 0 ? 1 - basis / B : 1;          // taxable share of any conversion (pro-rata across all non-Roth IRAs)
+      const taxable = C * share, basisPart = C - taxable;
+      const ti = s.rc_inc, fedBefore = fedTax(ti, st), fedAfter = fedTax(ti + taxable, st), fed = fedAfter - fedBefore;
+      const stateTax = taxable * s.rc_state / 100, T = fed + stateTax;
+      const brB = bracketOf(ti, st), brA = bracketOf(ti + taxable, st), room = Math.max(0, brB.top - ti);
+      const slices = bracketSlices(ti, taxable, st);
+      const r = s.rc_rate / 100, n = s.rc_years, te = s.rc_taxable / 100, out = s.rc_pay === 'out';
+      const tf = Math.min(0.99, (s.rc_fut + s.rc_stfut) / 100);   // combined rate on the taxable part of a withdrawal
+      const g = t => Math.pow(1 + r, t), side = t => out ? T * Math.pow(1 + r * (1 - te), t) : 0;
+      const rothStart = out ? C : Math.max(0, C - T);
+      const convertAt = t => rothStart * g(t);                                         // Roth: tax-free at withdrawal
+      const iraAfterAt = t => C * g(t) - tf * (C * g(t) - basisPart);                  // IRA kept: taxed at withdrawal, basis comes back tax-free
+      const keepAt = t => iraAfterAt(t) + side(t);
+      const convert = convertAt(n), iraAfter = iraAfterAt(n), sideEnd = side(n), keep = keepAt(n), diff = convert - keep;
+      const iraGross = C * g(n), taxLater = iraGross - iraAfter;
+      // withdrawal tax rate (federal + state) at which the two paths tie
+      const taxBase = iraGross - basisPart;
+      const tieRaw = taxBase > 0 ? (out ? sideEnd / taxBase : T * g(n) / taxBase) : null;
+      const tie = tieRaw === null ? null : tieRaw * 100;
+      const who = Math.abs(diff) < 1 ? 'tie' : diff > 0 ? 'convert' : 'keep';
+      const years = Array.from({ length: n + 1 }, (_, i) => i);
+      const effRate = C > 0 ? T / C * 100 : 0;
+      const bracketTxt = brA.rate === brB.rate ? `stays in the ${pct(brB.rate * 100, 0)} federal bracket` : `moves the top federal rate from ${pct(brB.rate * 100, 0)} to ${pct(brA.rate * 100, 0)}`;
+      const sliceRows = slices.map(x => `<tr><td>${pct(x.rate * 100, 0)}</td><td>${money(x.lo)} – ${isFinite(x.hi) ? money(x.hi) : 'and up'}</td><td>${money(x.amount)}</td><td>${money(x.tax)}</td></tr>`).join('');
+      return {
+        hero: { label: `Convert less keep, after tax, in ${plural(n, 'year')}`, value: money(who === 'tie' ? 0 : diff), sub: C <= 0 ? 'Enter an amount to convert.' : `${who === 'convert' ? 'Converting ends ahead' : who === 'keep' ? 'Keeping the IRA ends ahead' : 'The two paths tie'}: converting leaves ${money(convert)} tax-free; keeping leaves ${money(iraAfter)} after ${pct(tf * 100, 1)} tax on withdrawal${out ? ` plus ${money(sideEnd)} in the outside account that did not pay the conversion tax` : ''}. ${money(T)} of tax is due in the year of conversion.` },
+        tiles: [
+          { label: 'Tax due in the year of conversion', value: money(T), sub: C > 0 ? `${pct(effRate)} of the ${money(C)} converted; federal ${money(fed)}${stateTax ? ', state ' + money(stateTax) : ''}; ${bracketTxt}` : '—' },
+          { label: `Convert: Roth in ${plural(n, 'year')}`, value: money(convert), accent: who === 'convert', sub: out ? `${money(C)} grows tax-free at ${pct(s.rc_rate)}` : `${money(rothStart)} after the tax is withheld, growing tax-free at ${pct(s.rc_rate)}` },
+          { label: `Keep: IRA after tax in ${plural(n, 'year')}`, value: money(keep), accent: who === 'keep', sub: `${money(iraGross)} less ${money(taxLater)} tax at ${pct(tf * 100, 1)}${out ? `, plus ${money(sideEnd)} outside account` : ''}` },
+          { label: 'Withdrawal tax rate at which they tie', value: tie === null ? '—' : pct(tie, 1), sub: tie === null ? 'no taxable amount' : `federal plus state; you entered ${pct(tf * 100, 1)}` }
+        ],
+        callout: C <= 0 ? 'Enter an amount to convert to see the tax due and the comparison.' : `Converting <b>${money(C)}</b> adds <b>${money(taxable)}</b> to this year’s taxable income (${pct(share * 100, 1)} of it is taxable after the after-tax contributions) and ${bracketTxt}; <b>${money(T)}</b> of tax is due now, ${pct(effRate)} of the amount converted. ${room > 0 && room < 1e12 ? `This year’s income is ${money(room)} below the top of the ${pct(brB.rate * 100, 0)} bracket.` : ''} After ${plural(n, 'year')} at ${pct(s.rc_rate)}, converting leaves <b>${money(convert)}</b> and keeping leaves <b>${money(keep)}</b>. ${tie === null ? '' : `The two tie at a withdrawal tax rate of <b>${pct(tie, 1)}</b>; you entered ${pct(tf * 100, 1)}.`}`,
+        chart: { kind: 'line', x: years, series: [{ name: 'Convert (Roth, tax-free)', color: 'var(--c1)', values: years.map(convertAt) }, { name: 'Keep (after tax)', color: 'var(--c2)', values: years.map(keepAt) }], aria: 'Line chart of the after-tax value of converting versus keeping the IRA by year' },
+        extraTitle: 'How the conversion is taxed', extraSub: `2026 federal rate schedule, ${STATUS_LABEL[st]}; taxable income ${money(ti)} before the conversion`,
+        extra: `<table class="ref-table" style="max-width:560px"><thead><tr><th>Bracket</th><th>Taxable income</th><th>Conversion taxed here</th><th>Federal tax</th></tr></thead><tbody>${sliceRows}<tr><td><b>Total</b></td><td></td><td><b>${money(taxable)}</b></td><td><b>${money(fed)}</b></td></tr></tbody></table>`,
+        copy: [`Convert ${money(C)} of ${money(B)} (after-tax contributions ${money(basis)}); taxable income ${money(ti)} before conversion, ${STATUS_LABEL[st]}; tax paid from ${out ? 'outside funds' : 'the IRA'}; ${pct(s.rc_rate)} assumed return for ${plural(n, 'year')}; withdrawal tax ${pct(tf * 100, 1)}${s.rc_state ? `; state tax ${pct(s.rc_state)} on the conversion` : ''}.`, `Tax due now ${money(T)} (federal ${money(fed)}${stateTax ? ', state ' + money(stateTax) : ''}; ${bracketTxt}). Convert ${money(convert)} vs keep ${money(keep)} after tax; ${who === 'tie' ? 'tie' : (who === 'convert' ? 'convert' : 'keep') + ' ahead by ' + money(Math.abs(diff))}; tie at ${tie === null ? '—' : pct(tie, 1)}.`]
+      };
+    }
+  },
+  {
     output: 'Interest saved; payment difference; payoff time', desc: 'Puts two mortgage terms side by side, such as 30 years against 15, or a refinance against the current loan, and shows the payment difference, total interest, and payoff time. Option B can be paid bi-weekly.', id: 'mortcmp', group: 'borrow', tab: 'Comparing mortgage terms', title: 'Comparing mortgage terms', question: 'A shorter term or a lower rate: what does it save, and what does it cost each month?',
     lede: 'Compares the payment and total interest of two loans on the same balance with different terms or rates, including the effect of bi-weekly payments.',
     manual: ['x_rateA', 'x_rateB'],
@@ -1686,7 +1771,7 @@ MODULES.forEach(m => m.fields.forEach(f => { if (f.kind === 'pct' && /tax rate/i
 ['l_rate', 'm_rate', 'x_rateA', 'x_rateB', 'v_rate'].forEach(id => MODULES.forEach(m => m.fields.forEach(f => { if (f.id === id) f.hard = 30; })));
 ['l_years', 'm_years', 'x_yearsA', 'x_yearsB', 'v_term'].forEach(id => MODULES.forEach(m => m.fields.forEach(f => { if (f.id === id) f.hard = 50; })));
 // Client figures entered in each calculator (the plan page holds only the standard assumptions); kept in input order
-const MANUAL_ADD = { payout: ['p_bal', 'p_wd', 'p_pct'], taxdef: ['t_now', 't_wd'], roth: ['h_now', 'h_wd'], cashflow: ['f_age', 'f_ss', 'f_ssage', 'f_exp', 'f_inc'], retire: ['r2_age', 'r2_retage', 'r2_endage', 'r2_ss', 'r2_ssage', 'r2_now', 'r2_exp', 'r2_inc'], rmd: ['d_age', 'd_retage', 'd_tax', 'd_ss', 'd_bal'], mortgage: ['m_income', 'm_debts'], mortcmp: ['x_amount'], debtinv: ['v_bal'], insure: ['n_income', 'n_mortgage', 'n_cover'], networth: ['w_mort', 'w_ret'] };
+const MANUAL_ADD = { payout: ['p_bal', 'p_wd', 'p_pct'], taxdef: ['t_now', 't_wd'], roth: ['h_now', 'h_wd'], rothconv: ['rc_bal', 'rc_conv', 'rc_inc', 'rc_fut'], cashflow: ['f_age', 'f_ss', 'f_ssage', 'f_exp', 'f_inc'], retire: ['r2_age', 'r2_retage', 'r2_endage', 'r2_ss', 'r2_ssage', 'r2_now', 'r2_exp', 'r2_inc'], rmd: ['d_age', 'd_retage', 'd_tax', 'd_ss', 'd_bal'], mortgage: ['m_income', 'm_debts'], mortcmp: ['x_amount'], debtinv: ['v_bal'], insure: ['n_income', 'n_mortgage', 'n_cover'], networth: ['w_mort', 'w_ret'] };
 MODULES.forEach(m => { const want = new Set((m.manual || []).concat(MANUAL_ADD[m.id] || [])); m.manual = m.fields.map(f => f.id).filter(id => want.has(id)); });
 /* Fee disclosure: every investment figure is gross of fees; loan and mortgage math involves no advisory fee */
 const FEE_FREE = ['loan', 'mortgage', 'mortcmp', 'networth'];
@@ -1782,7 +1867,7 @@ document.getElementById('foot-year').textContent = String(new Date().getFullYear
 
 /* Calculator pages */
 // Rarely changed inputs sit under "More assumptions" on the longer calculators; they still print and still count toward plan flags
-const ADV = { grow: ['g_comp'], cashflow: ['f_incStart', 'f_incAdj', 'f_infl'], mortgage: ['m_years', 'm_front', 'm_back'], insure: ['n_rate', 'n_infl'], retire: ['r2_retret', 'r2_infl', 'r2_incAdj'], rmd: ['d_retret', 'd_infl'] };
+const ADV = { grow: ['g_comp'], rothconv: ['rc_state', 'rc_stfut', 'rc_taxable'], cashflow: ['f_incStart', 'f_incAdj', 'f_infl'], mortgage: ['m_years', 'm_front', 'm_back'], insure: ['n_rate', 'n_infl'], retire: ['r2_retret', 'r2_infl', 'r2_incAdj'], rmd: ['d_retret', 'd_infl'] };
 const fmtVal = (f, v, state) => { if (f.kind === 'seg') { const o = f.options.find(o => o.v === state[f.id]); return o ? o.label : String(v); } if (f.kind === 'money') return money(v); if (f.kind === 'pct') return (Math.round(v * 100) / 100) + '%'; if (/age$/i.test(f.label) || /^Current age/.test(f.label)) return 'age ' + v; return v + (v === 1 ? ' year' : ' years'); };
 const defaultsOf = m => { const s = {}; m.fields.forEach(f => { s[f.id] = f.value; }); return s; };
 const stateKey = s => JSON.stringify(s);
@@ -1950,6 +2035,7 @@ const METHODS = {
   wait: 'Both savers deposit the same amount monthly at the return ÷ 12, and both stop on the goal date; the late starter deposits for (years − delay) years. The saver who starts today invests the starting amount now; the late starter holds it uninvested, earning nothing, until the delay ends and then invests it. Cost of waiting = the difference between the two balances on the goal date, split into the part from skipped deposits and the part from the uninvested starting amount. Late start as a share of on time = the late starter’s balance ÷ the on-time saver’s balance.',
   goal: 'Projected balance = the starting amount plus the monthly contribution, compounded monthly at the return ÷ 12 for the years entered, with deposits at the end of each month. Projected balance less the goal = projected balance − goal amount. Share of the goal = projected balance ÷ goal amount. Each option changes one input and holds the others as entered. Option 1, monthly contribution = (goal − starting amount × (1 + m)^n) × m ÷ ((1 + m)^n − 1), with m = return ÷ 12 and n = months, never below zero. Option 2, years to the goal = the first month at which the balance reaches the goal at the entered contribution and return, up to 100 years. Option 3, assumed return = the annual rate (monthly rate × 12) at which the entered contribution reaches the goal in the years entered, found by bisection, up to 60%.',
   taxdef: 'The annual contribution is deposited at each year end and compounds annually. Tax-deferred: the full pre-tax contribution grows at the return; the ending balance is taxed once at the withdrawal rate. Taxable: the contribution after today’s tax grows at the return × (1 − tax on earnings), a simplification that taxes every year’s earnings at that one rate. Tax paid along the way = taxable growth × t ÷ (1 − t).',
+  rothconv: 'Taxable share of the conversion = 1 − after-tax contributions ÷ the balance of all non-Roth IRAs (the pro-rata rule of Form 8606); taxable amount = amount converted × that share. Federal tax due = tax on (taxable income + taxable amount) − tax on taxable income, using the 2026 federal rate schedules in Rev. Proc. 2025-32 for the filing status chosen; state tax = taxable amount × the state rate entered. The bracket table shows how much of the taxable amount falls in each bracket. Growth compounds annually at the assumed return for the years entered. Convert: the Roth starts at the amount converted (tax paid from outside funds) or at the amount converted less the tax (paid from the IRA), grows tax-free, and is withdrawn tax-free. Keep: the same amount stays in the IRA, grows at the same rate, and at withdrawal the balance less the after-tax contributions in it is taxed at the federal plus state withdrawal rates entered; when the tax is paid from outside funds, the money that would have paid it is assumed to stay invested at the same return with its earnings taxed each year at the outside-account rate, and that balance is added to Keep. Tie rate = the withdrawal tax rate at which Keep equals Convert: outside account ÷ (IRA balance − after-tax contributions) when the tax is paid from outside funds, or tax × growth factor ÷ (IRA balance − after-tax contributions) when it is paid from the IRA.',
   roth: 'Annual year-end contributions, annual compounding. Traditional: the pre-tax contribution grows at the return and the ending balance is taxed at the retirement rate. Roth on the same take-home pay: the contribution × (1 − today’s rate) grows and is not taxed. Roth on the same contribution: the same dollars go in, and because they come from after-tax pay the client gives up the deduction, so take-home pay falls by an extra contribution × today’s rate each year. In both cases the extra tax paid now is contribution × today’s rate a year. The headline = Roth after tax − traditional after tax, so a negative figure means traditional ends ahead. On the same-take-home basis the two tie exactly when the retirement rate equals today’s rate.',
   networth: 'Total assets = cash and savings + retirement accounts + taxable investments + home value + other assets. Total liabilities = mortgage + other debts. Net worth = assets − liabilities. Home equity = home value − mortgage. Investable assets = cash + taxable investments + retirement accounts.',
   payout: 'Each month the balance grows at the return ÷ 12, then the withdrawal is taken. If “rise with inflation” is on, the withdrawal increases by the inflation rate at each year end. The money is “depleted” in the month the balance falls to half a cent or less. Withdrawal rate = first-year monthly withdrawal × 12 ÷ starting balance. “Withdrawal that lasts N years” = the first-year monthly withdrawal, with the same inflation setting, that brings the balance to zero at exactly the withdrawal period entered (30 years by default), found by bisection. The balance is illustrated for 40 years, or for the withdrawal period if longer.',
@@ -1966,7 +2052,7 @@ const LIMITS = [
   'Returns are constant. Real returns vary year to year, and the order of returns changes outcomes when money is being withdrawn (sequence risk). None of the calculators models that.',
   'Ages are whole years, and a birth year is estimated from the current age; a client whose birthday falls later in the year may be treated as a year older for the RMD start age.',
   'Social Security benefits are not adjusted for claiming before or after the age entered; enter the benefit shown for that age on the client’s ssa.gov statement.',
-  'Tax treatment is simplified: one marginal rate, no brackets, no state tax, no distinction between ordinary income and capital gains, no penalties, and no taxation of Social Security benefits.',
+  'Tax treatment is simplified: one marginal rate, no brackets, no state tax, no distinction between ordinary income and capital gains, no penalties, and no taxation of Social Security benefits. The exception is Roth conversion, which applies the 2026 federal rate schedule and an optional flat state rate to the year of conversion; it still leaves out deductions and credits, the alternative minimum tax, the net investment income tax, Medicare premium surcharges (IRMAA), the taxation of Social Security benefits, the five-year rules on converted amounts, and the 10% penalty on tax withheld from the IRA before age 59½. Conversions cannot be reversed.',
   'The RMD estimate uses the Uniform Lifetime Table only; it does not cover inherited accounts, a spouse more than ten years younger, Roth accounts, or the April 1 first-year deferral.',
   'Mortgage affordability is a ratio screen; it ignores credit, mortgage insurance, HOA dues, and lender-specific rules.',
   'Retirement withdrawals in Retirement payout and Income & expenses are treated as spendable; income tax on withdrawals from pre-tax accounts is not deducted.',
@@ -2008,10 +2094,10 @@ const PLAN_INFO = [
 const PLAN_ASSUMP = [
   { id: 'pl_start', label: 'Starting amount', kind: 'money', value: DEFAULTS.principal, map: ['g_principal', 'c_principal', 'i_principal', 'o_principal', 'r_principal', 'w_principal'] },
   { id: 'pl_pmt', label: 'Monthly contribution', kind: 'money', value: DEFAULTS.monthly, map: ['g_pmt', 'c_pmt', 'i_pmt', 'w_pmt', 'o_pmt', 't_contrib*12', 'h_contrib*12', 'r2_pmt', 'd_pmt', 'v_extra'] },
-  { id: 'pl_ret', label: 'Assumed annual return', kind: 'pct', value: DEFAULTS.rate, map: ['g_rate', 'c_inv', 'i_rate', 'r_rate', 'w_rate', 'o_rate', 't_rate', 'h_rate', 'r2_ret', 'd_ret', 'v_ret'] },
+  { id: 'pl_ret', label: 'Assumed annual return', kind: 'pct', value: DEFAULTS.rate, map: ['g_rate', 'c_inv', 'i_rate', 'r_rate', 'w_rate', 'o_rate', 't_rate', 'h_rate', 'rc_rate', 'r2_ret', 'd_ret', 'v_ret'] },
   { id: 'pl_save', label: 'Savings account rate', kind: 'pct', value: DEFAULTS.savingsApy, map: ['c_save'] },
   { id: 'pl_infl', label: 'Inflation', kind: 'pct', value: DEFAULTS.inflation, map: ['i_infl', 'f_infl', 'n_infl', 'r2_infl', 'd_infl'] },
-  { id: 'pl_years', label: 'Years / horizon', kind: 'int', value: DEFAULTS.years, map: ['g_years', 'c_years', 'i_years', 'r_years', 'w_years', 'o_years', 't_years', 'f_years', 'h_years'] },
+  { id: 'pl_years', label: 'Years / horizon', kind: 'int', value: DEFAULTS.years, map: ['g_years', 'c_years', 'i_years', 'r_years', 'w_years', 'o_years', 't_years', 'f_years', 'h_years', 'rc_years'] },
   { id: 'pl_bal', label: 'Retirement balance / goal', kind: 'money', value: DEFAULTS.retireBalance, map: ['f_bal', 'o_target'] }
 ];
 const PARTS = [
@@ -2100,7 +2186,7 @@ let discEl = null;
     P('Assumptions, not predictions.', 'Rates of return, inflation, and loan rates are assumptions entered by the user and held constant for every period. They are not a forecast or an expectation of future performance and do not represent the performance of any WealthCare Investment Partners strategy, account, or recommended investment. Actual returns vary from year to year and can be negative. All investments involve risk, including the loss of principal, and the order in which returns occur can materially change outcomes when money is being withdrawn. Past performance does not guarantee future results.'),
     P('Results vary.', 'Results may vary with each use and over time as inputs and assumptions change. They depend entirely on the information entered, which is not verified; inaccurate or incomplete information will produce inaccurate results.'),
     P('No specific investments.', 'The calculators do not analyze, select, or favor any security, fund, insurance product, or strategy. Actual investments may perform better or worse than the rates assumed here.'),
-    P('Taxes.', 'Figures do not reflect taxes unless a calculator states otherwise. Where tax rates are used, they are simplified assumptions (one marginal rate, with no brackets, state taxes, capital gains rates, penalties, or taxation of Social Security benefits) and are not tax advice.'),
+    P('Taxes.', 'Figures do not reflect taxes unless a calculator states otherwise. Where tax rates are used, they are simplified assumptions (one marginal rate, with no brackets, state taxes, capital gains rates, penalties, or taxation of Social Security benefits) and are not tax advice. Roth conversion applies the 2026 federal rate schedules and an optional flat state rate to the year of conversion; it leaves out deductions and credits, the alternative minimum tax, the net investment income tax, Medicare premium surcharges, the five-year rules, and early-withdrawal penalties, and rate schedules change each year.'),
     P('Social Security and RMDs.', 'Social Security amounts are estimates entered in today’s dollars, assumed to rise with inflation, and are not adjusted for claiming earlier or later than the age entered; actual benefits depend on the earnings record, claiming age, and future law. Required minimum distribution estimates use the IRS Uniform Lifetime Table and starting ages under current law, are simplified, and are not tax advice.'),
     P('Borrowing and insurance.', 'Loan and mortgage figures are estimates, not a loan offer, credit decision, or approval; actual rates, terms, and eligibility are set by lenders. Mortgage affordability is a rough screen using common lender ratios. Life insurance figures are a needs-based estimate, not a recommendation of any product, carrier, or amount; coverage depends on underwriting, product features, and costs not addressed here.'),
     P('Savings and deposits.', 'Savings account rates are held constant and compounded monthly; actual yields change over time. Bank deposits are typically FDIC-insured up to applicable limits. Investments are not FDIC-insured, are not bank guaranteed, and may lose value.'),
@@ -2326,7 +2412,7 @@ function openReport(andPrint, only) {
       h('p', {}, h('b', {}, 'Gross of fees. '), FEE_LONG),
       h('p', {}, 'This document is being provided by your financial professional as an educational illustration and is not intended to be used as, or in lieu of, an account statement, a financial plan, or a recommendation to buy or sell any security.'),
       h('p', {}, 'All results are hypothetical illustrations and are not a guarantee, forecast, or projection of future performance. Rates of return and inflation are user-entered assumptions held constant for every period. Actual returns vary from year to year, and investments can lose value, including loss of principal. The order in which returns occur can materially change outcomes, particularly when withdrawals are being taken.'),
-      h('p', {}, 'Figures do not reflect taxes unless explicitly stated; taxes would reduce the results shown. Where tax rates are used, they are simplified assumptions, not tax advice; qualified dividends and long-term gains are often taxed at lower rates than illustrated, and the tax-deferred and Roth comparisons do not model penalties or required distributions.'),
+      h('p', {}, 'Figures do not reflect taxes unless explicitly stated; taxes would reduce the results shown. Where tax rates are used, they are simplified assumptions, not tax advice; qualified dividends and long-term gains are often taxed at lower rates than illustrated, and the tax-deferred and Roth comparisons do not model penalties or required distributions. The Roth conversion calculator applies the 2026 federal rate schedules (Rev. Proc. 2025-32) and an optional flat state rate to the year of conversion; it leaves out deductions and credits, the AMT, the net investment income tax, Medicare premium surcharges, the five-year rules, and early-withdrawal penalties. Conversions cannot be reversed.'),
       h('p', {}, 'Savings account comparisons hold one annual rate constant, compounded monthly; actual yields change over time. Bank deposits are typically FDIC-insured up to applicable limits; investments are not. Mortgage affordability figures are a rough screen using common lender ratios and do not represent a credit decision. Life insurance figures are a needs-based estimate and do not recommend any product or carrier; any insurance decision involves product features, costs, and underwriting not addressed here.'),
       h('p', {}, 'Social Security figures are estimates entered by the client or advisor in today’s dollars and are assumed to rise with inflation once they begin. Actual benefits depend on the earnings record, the claiming age, and future law; the calculators do not adjust the entered benefit for claiming earlier or later than the stated age. Required minimum distribution estimates use the IRS Uniform Lifetime Table and the starting age under current law (73, or 75 for those born in 1960 or later); they are simplified, do not reflect inherited accounts, Roth accounts, or the April 1 first-year deferral, and are not tax advice.'),
       h('p', {}, 'This document does not recommend any specific investment, product, or strategy and is not investment, tax, or legal advice. Please consult your advisor, tax professional, or attorney about your individual situation.'),
@@ -2355,6 +2441,7 @@ function singleDisclosures(id) {
   out.push('This illustration is hypothetical, provided for educational purposes, and is not a guarantee, forecast, or projection of future performance or a recommendation to buy or sell any security. Rates of return and inflation are assumptions held constant for every period; actual returns vary and investments can lose value, including principal. The order in which returns occur can materially change outcomes when withdrawals are being taken. Figures do not reflect taxes unless stated.');
   if (id === 'compare') out.push('Savings account comparisons hold one annual rate constant, compounded monthly; actual yields change over time. Bank deposits are typically FDIC-insured up to applicable limits; investments are not.');
   if (['taxdef', 'roth', 'rmd'].includes(id)) out.push('Tax rates are simplified assumptions, not tax advice; brackets, state taxes, and penalties are not modeled.');
+  if (id === 'rothconv') out.push('The conversion tax applies the 2026 federal rate schedules (Rev. Proc. 2025-32) to taxable income as entered, plus a flat state rate if one is entered. It does not reflect deductions or credits, the alternative minimum tax, the net investment income tax, Medicare premium surcharges (IRMAA), the taxation of Social Security benefits, the five-year rules on converted amounts, or the 10% penalty on tax withheld from the IRA before age 59½. Rate schedules change each year. A conversion cannot be reversed. This is not tax advice.');
   if (['cashflow', 'retire', 'rmd', 'insure'].includes(id)) out.push('Social Security and survivor benefits are estimates in today’s dollars, assumed to rise with inflation; actual benefits depend on the earnings record, claiming age, and future law, and the calculators do not adjust the benefit for claiming earlier or later than the age entered.');
   if (id === 'rmd') out.push('RMD estimates use the IRS Uniform Lifetime Table and current starting ages (73, or 75 for those born in 1960 or later); they do not reflect inherited accounts, a spouse more than ten years younger, Roth accounts, or the April 1 first-year deferral.');
   if (id === 'mortgage') out.push('Mortgage affordability is a rough screen using common lender ratios and does not represent a credit decision.');
